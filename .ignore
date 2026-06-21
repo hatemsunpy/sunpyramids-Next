@@ -1,0 +1,11 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+output/
+.playwright-cli/
+*.tgz
+*.log
+.env*
+!.env.example
