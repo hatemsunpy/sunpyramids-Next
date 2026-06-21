@@ -1,0 +1,5 @@
+import { LocalizedGenericRoute } from "@/components/LocalizedGenericRoute";
+import { localizedGenericMetadata } from "@/lib/localized-generic-metadata";
+type Props = { params: Promise<{ locale: string }> };
+export const generateMetadata = ({ params }: Props) => localizedGenericMetadata("rent-car", params);
+export default function Page({ params }: Props) { return <LocalizedGenericRoute route="rent-car" params={params} />; }
