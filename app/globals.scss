@@ -1210,6 +1210,44 @@ select {
   font-size: clamp(2rem, 5vw, 4rem);
 }
 
+.payment-mark {
+  display: grid;
+  place-items: center;
+  width: 7rem;
+  height: 7rem;
+  margin: 0 auto 1.5rem;
+  border-radius: 999px;
+  background: var(--secondary);
+  color: #fff;
+  font-size: 4rem;
+  font-weight: 800;
+}
+
+.payment-mark.is-loading {
+  border: 6px solid #f3f4f6;
+  border-top-color: var(--secondary);
+  background: transparent;
+  animation: spin 900ms linear infinite;
+}
+
+.payment-mark.is-error {
+  background: #dc2626;
+}
+
+.status-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .trips-layout {
   display: grid;
   grid-template-columns: 20rem minmax(0, 1fr);

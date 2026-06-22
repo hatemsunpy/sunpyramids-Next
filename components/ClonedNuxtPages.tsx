@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import type { ApiPage, Locale, Tour } from "@/types/api";
 import { BlogCard } from "@/components/BlogCard";
 import { ContactForm } from "@/components/ContactForm";
 import { DestinationCard } from "@/components/DestinationCard";
+import { PaymentCallbackKind, PaymentCallbackStatus } from "@/components/PaymentCallbackStatus";
 import { TourCard } from "@/components/TourCard";
 import { TrustIndexLoader } from "@/components/TrustIndexLoader";
 import { withLocale } from "@/lib/locales";
@@ -99,15 +101,22 @@ export function CartClonePage({ checkout = false, locale = "en" }: { checkout?: 
   );
 }
 
-export function PaymentStatusPage({ provider, status }: { provider: string; status: string }) {
-  const ok = ["success", "verify"].includes(status);
+export function PaymentStatusPage({ provider, status, callback }: { provider: string; status: string; callback: PaymentCallbackKind }) {
+  return (
+    <Suspense fallback={<PaymentCallbackShell provider={provider} title="Updating Payment" />}>
+      <PaymentCallbackStatus provider={provider} status={status} callback={callback} />
+    </Suspense>
+  );
+}
+
+function PaymentCallbackShell({ provider, title }: { provider: string; title: string }) {
   return (
     <main className="payment-status">
       <section className="status-card">
         <p className="eyebrow">{provider}</p>
-        <h1>{ok ? "Payment Confirmed" : status === "pending" ? "Payment Pending" : "Payment Canceled"}</h1>
-        <p className="muted">Your payment callback was received. Check your email or account bookings for the latest invoice state.</p>
-        <Link className="btn-primary" href="/profile/bookings">View Bookings</Link>
+        <div className="payment-mark is-loading" aria-hidden="true" />
+        <h1>{title}</h1>
+        <p className="muted">Please wait while we confirm your payment with Sun Pyramids Tours.</p>
       </section>
     </main>
   );
