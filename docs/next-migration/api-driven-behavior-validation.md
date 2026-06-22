@@ -10,24 +10,43 @@
 | Server fetch can pass auth token | `lib/api.ts` reads `sunpyramids-token` cookie. | Passed in code; auth flow pending. |
 | Public pages fetch API data | `lib/data.ts` uses pages/tours/blogs/categories/destinations/faqs endpoints. | Partial pass. |
 | Client contact form posts to backend | `components/ContactForm.tsx` posts `contact-requests`. | Partial pass; recaptcha/tracking pending. |
+| Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear, and checkout booking creation to confirmed endpoints. | Code pass; staging credentials/data pending. |
 | Payment callbacks call API client-side only | `components/PaymentCallbackStatus.tsx` is `"use client"` and calls in `useEffect`. | Passed in code; backend sandbox pending. |
+| Homepage hydration error fixed | `components/BlogCard.tsx` renders dashboard blog summaries as plain text after stripping HTML, avoiding browser/React HTML mismatch inside the card link. | Browser console pass; no React #418 observed. |
 
 ## Confirmed Gaps / Pending Validation
 
 | Area | Gap | Required action |
 |---|---|---|
 | Settings/header/footer | Nuxt fetches `settings`, `countries`, `currencies`; Next may use static shell values. | Confirm whether dashboard-managed header/footer/currency must be API-driven before cutover. |
-| Auth | Nuxt posts login/register/password endpoints; Next routes are UI clones. | Implement/validate endpoint behavior if required for cutover. |
-| Profile | Nuxt fetches profile bookings/favourites and patches settings; Next routes are UI clones. | Implement/validate authenticated APIs. |
-| Cart | Nuxt has cart list/edit/remove/coupon APIs; Next route is UI clone. | Implement/validate cart behavior. |
-| Checkout | Nuxt creates bookings and updates booking/payment state; Next route is UI clone. | Critical cutover blocker. |
+| Auth | Next now posts login/register/password endpoints. | Validate with staging credentials and expired/invalid session cases. |
+| Profile | Next now patches profile and fetches bookings/favourites client-side after token check. | Validate with staging account data. |
+| Cart | Next now fetches cart list and clears cart; edit/remove/coupon remain pending. | Complete cart parity and validate with populated cart state. |
+| Checkout | Next now posts `bookings` and redirects to returned payment URL; `bookings/update/{id}` remains pending. | Critical staging cutover blocker. |
 | Make Your Trip | Nuxt posts `custom/trips`; Next route needs full flow validation. | Implement/validate. |
 | Rent Car | Nuxt fetches locations/destinations and appends rentals to cart; Next route needs full flow validation. | Implement/validate. |
 | Search/trips | Nuxt filters categories/destinations/tours with query params; Next representative route exists. | Validate filters, pagination, query behavior. |
 
 ## Cutover Status
 
-Not approved. Public content API behavior is partially implemented, and local route smoke tests passed for the priority route set. Customer/revenue flows require staging backend validation.
+Not approved. Public content API behavior is partially implemented, customer/revenue flows have a first-pass client API layer, and local route smoke tests passed for the Sprint 3 route set. Customer/revenue flows still require staging backend validation.
+
+## Sprint 3 Validation Result
+
+Date: 2026-06-22
+
+Target: local Next production build at `http://localhost:3000`, connected to the configured backend API domain.
+
+| Area | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for `/`, all required auth/profile/cart/checkout/thankful routes, all required payment callback routes, `/sitemap.xml`, and `/robots.txt`. |
+| Homepage browser console | Passed; no console errors and no React hydration #418. Only localhost/headless third-party warnings from Hotjar/Plausible. |
+| Payment no-invoice callback | Passed; browser network log for `/order/payment/callback/paypal/verify` without `invoice_id` made no `payments/paypal/*` or `payments/fawaterk/*` request. |
+| SEO raw HTML | Passed for `/`, `/egypt-tours/one-day-tours`, representative tour slug, and `/contact-us`: title/description/canonical/OG URL/robots present, no meta keywords, no backend domain leak in canonical/OG URLs. |
+| reCAPTCHA | Contact form now attempts Enterprise token generation and submits `recaptcha_token`; real backend acceptance remains pending because no staging validation data was available. |
+| Lighthouse mobile | Home performance 51, LCP 9.9s, CLS 0.029, TBT 1,100ms. Representative tour performance 47, LCP 12.7s, CLS 0.002, TBT 1,030ms. Reports were written, but Lighthouse emitted a Windows temp-profile cleanup warning after each run. |
 
 ## Local Route Smoke Result
 

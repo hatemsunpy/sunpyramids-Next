@@ -1,22 +1,38 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiPost } from "@/lib/client-api";
+import { generateRecaptchaToken } from "@/lib/recaptcha";
+import { withLocale } from "@/lib/locales";
 import type { Locale } from "@/types/api";
 
 export function ContactForm({ locale = "en" }: { locale?: Locale }) {
+  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("loading");
     const form = new FormData(event.currentTarget);
-    const payload = Object.fromEntries(form.entries());
+    const token = await generateRecaptchaToken("submit");
+    const name = String(form.get("name") || "");
+    const payload = {
+      name,
+      email: String(form.get("email") || ""),
+      phone: String(form.get("phone") || ""),
+      country: String(form.get("country") || ""),
+      subject: "contact-us",
+      message: String(form.get("message") || ""),
+      recaptcha_token: token,
+      type: "form_contact",
+    };
 
     try {
       await apiPost("contact-requests", payload, locale);
       setStatus("success");
       event.currentTarget.reset();
+      router.push(`${withLocale("/thankful", locale)}?name=${encodeURIComponent(name)}`);
     } catch {
       setStatus("error");
     }
@@ -32,6 +48,9 @@ export function ContactForm({ locale = "en" }: { locale?: Locale }) {
       </div>
       <div className="form-field">
         <input name="phone" placeholder="Phone number" />
+      </div>
+      <div className="form-field">
+        <input name="country" placeholder="Country" />
       </div>
       <div className="form-field">
         <textarea name="message" placeholder="How can we help?" rows={5} required />

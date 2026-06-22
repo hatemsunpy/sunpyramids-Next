@@ -4,7 +4,7 @@
 
 | File | Behavior | Status |
 |---|---|---|
-| `app/robots.ts` | Allows `/`, disallows `/api/`, `/admin/`, `/dashboard/`, `/checkout`, points to frontend-domain sitemap. | Partial pass. Confirm whether `/checkout` is the intended disallow path or whether `/cart/checkout` should be handled differently. |
+| `app/robots.ts` | Allows `/`, disallows `/api/`, `/admin/`, `/dashboard/`, `/cart/checkout`, points to frontend-domain sitemap. | Passed for current route structure. |
 | `app/sitemap.ts` | Emits static paths plus paginated tours/blogs, categories, destinations, and blog categories from API. Uses 15-second timeout per API call and returns valid list even if a content group fails. | Improved in Sprint 2. |
 
 ## Local Validation Result
@@ -58,3 +58,11 @@ Target: `http://localhost:3000/sitemap.xml` from the production build after the 
 ## Cutover Status
 
 Not approved. Sitemap coverage is improved and passes local checks for confirmed API groups, but custom marketing page discovery still needs a backend endpoint or explicit exclusion/approval.
+
+## Sprint 3 Status
+
+Date: 2026-06-22
+
+- `/sitemap.xml` returned HTTP 200 in the local production route smoke test.
+- `/robots.txt` returned HTTP 200 in the local production route smoke test.
+- Custom marketing page discovery remains blocked. The confirmed Nuxt behavior uses `custom-pages/{slug}` detail pages, while the attempted list endpoint `custom-pages?page_limit=2` returned 404 in Sprint 2 discovery. No alternate discoverable list endpoint was confirmed in Sprint 3, so no hardcoded marketing slugs were added.

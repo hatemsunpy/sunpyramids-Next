@@ -985,7 +985,7 @@ Migration is accepted only when:
 30. Rollback plan is ready before cutover.
 31. Nuxt-only flows such as auth, profile, cart, checkout, payment, and booking confirmation are either implemented in Next.js or explicitly documented as intentionally excluded before cutover.
 32. Payment callback pages are SSR-safe clones and do not trigger payment mutation APIs server-side.
-31. Payment callback pages are UI-safe clones and do not trigger payment mutation APIs server-side.
+33. Payment callback pages are UI-safe clones and do not trigger payment mutation APIs server-side.
 
 ==================================================
 19. Testing Checklist

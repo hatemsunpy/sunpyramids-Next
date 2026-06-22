@@ -7,10 +7,10 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 | Area | Nuxt | Next | Status |
 |---|---|---|---|
 | Base URL | `runtimeConfig.public.baseURL` | `API_BASE`, default `https://sunpyramidtours.com/api/` | Preserved backend domain separation. |
-| Locale header | `X-Localize: locale.value` | `X-Localize: options.locale || "en"` | Preserved concept. Needs locale response validation. |
-| Auth header | Bearer from `sunpyramids-token` cookie | Server reads cookie in `apiFetch`; client reads cookie in `apiGet`/`apiPost` | Preserved concept. Customer flows need validation. |
+| Locale header | `X-Localize: locale.value` | `X-Localize: options.locale \|\| "en"` | Preserved concept. Needs locale response validation. |
+| Auth header | Bearer from `sunpyramids-token` cookie | Server reads cookie in `apiFetch`; client reads cookie in `apiGet`/`apiPost`/`apiPatch`/`apiPut`/`apiDelete` when requested | Preserved concept. Customer flows need staging validation. |
 | Error handling | Throws from `useFetch` / `$fetch` | Server returns `null`; client throws on non-OK | Acceptable but must be considered in UI validation. |
-| Cache | Nuxt SSR/useFetch behavior | Server `force-cache` with default `revalidate: 300`; selected tour fetch `180`; sitemap `1800` | Needs final dashboard freshness approval. |
+| Cache | Nuxt SSR/useFetch behavior | Server `force-cache` with default `revalidate: 300`; selected tour fetch `180`; sitemap API fetches use `cache: "no-store"` with a 15-second timeout | Needs final dashboard freshness approval. |
 
 ## Public Content Endpoints
 
@@ -38,29 +38,29 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 
 | Endpoint / pattern | Nuxt usage | Current Next status | Auth | Cutover status |
 |---|---|---|---|---|
-| `contact-requests` | Contact, landing, need-help, event booking style leads | `ContactForm` posts here | Public | Needs recaptcha/tracking parity validation. |
+| `contact-requests` | Contact, landing, need-help, event booking style leads | `ContactForm` posts Nuxt-compatible fields here | Public | Needs backend recaptcha/tracking parity validation. |
 | `custom/trips` | Make Your Trip submission | Route/UI clone only | Optional token | Pending implementation/validation. |
 | `locations?page_limit=200&order_by=id,asc` | Rent car and shortcuts | Not fully wired | Public | Pending. |
 | `car/rental/available/destinations?...` | Rent car dependent destination options | Not fully wired | Public | Pending. |
 | `car/rental/search/for/route` | Rent car search | Not fully wired | Public | Pending. |
 | `cart/rentals/append` | Add rental to cart | Not fully wired | Optional token | Pending. |
 | `cart/tours/append` | Add tour to cart | Not fully wired | Optional/auth | Pending. |
-| `cart/list` | Cart page | Route/UI clone only | Optional/auth | Pending. |
+| `cart/list` | Cart page | `/cart` fetches with optional token from client | Optional/auth | Implemented; staging validation pending. |
 | `cart/remove/{id}` | Remove cart item | Not wired | Auth/context-dependent | Pending. |
-| `cart/clear` | Clear cart | Not wired | Auth/context-dependent | Pending. |
+| `cart/clear` | Clear cart | `/cart` clear action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
 | `coupons/{code}/validate` | Cart coupon | Not wired | Auth/context-dependent | Pending. |
-| `bookings` | Checkout booking creation | Route/UI clone only | Auth/context-dependent | Critical blocker. |
+| `bookings` | Checkout booking creation | `/cart/checkout` posts from client and redirects to returned payment URL | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
 | `bookings/update/{id}` | Checkout/payment status update | Route/UI clone only | Auth/context-dependent | Critical blocker. |
-| `wishlist/{id}/toggle` | Tour cards/profile favourites | Not wired in Next cards | Auth | Pending. |
-| `wishlist?page=1&page_limit=200` | Profile favourites | Route/UI clone only | Auth | Pending. |
-| `bookings?page_limit=200&includes=currency,tours` | Profile bookings | Route/UI clone only | Auth | Pending. |
-| `profile` PATCH | Profile settings | Route/UI clone only | Auth | Pending. |
-| `auth/login` | Sign in | Route/UI clone only | Public | Pending. |
-| `auth/register` | Sign up | Route/UI clone only | Public | Pending. |
-| `auth/password/forget` | Forgot/confirm resend | Route/UI clone only | Public | Pending. |
-| `auth/password/otp/verify` | Confirm code | Route/UI clone only | Public | Pending. |
-| `auth/password/reset` | Create password | Route/UI clone only | Public | Pending. |
-| `client/reset-password` | Reset password | Route/UI clone only | Public | Pending. |
+| `wishlist/{id}/toggle` | Tour cards/profile favourites | Helper added in `CustomerFlows`; card wiring pending | Auth | Partial; staging validation pending. |
+| `wishlist?page=1&page_limit=200` | Profile favourites | `/profile/favourites` fetches from client after token check | Auth | Implemented; staging validation pending. |
+| `bookings?page_limit=200&includes=currency,tours` | Profile bookings | `/profile/bookings` fetches from client after token check | Auth | Implemented; staging validation pending. |
+| `profile` PATCH | Profile settings | `/profile/settings` patches from client after token check | Auth | Implemented; staging validation pending. |
+| `auth/login` | Sign in | `/auth/sign-in` posts login and stores Nuxt cookies | Public | Implemented; staging credentials pending. |
+| `auth/register` | Sign up | `/auth/sign-up` posts registration | Public | Implemented; staging validation pending. |
+| `auth/password/forget` | Forgot/confirm resend | `/auth/forget-password` posts email; confirm resend still pending | Public | Partial; staging validation pending. |
+| `auth/password/otp/verify` | Confirm code | `/auth/confirm-code` posts email/OTP | Public | Implemented; staging validation pending. |
+| `auth/password/reset` | Create password | `/auth/create-password` posts email/OTP/password | Public | Implemented; staging validation pending. |
+| `client/reset-password` | Reset password | `/auth/reset-password` posts email/token/password | Public | Implemented; staging validation pending. |
 | `payments/paypal/capture?invoice_id=...` | PayPal verify callback | Client-only `PaymentCallbackStatus` | Browser invoice id | Implemented client-side only; backend validation pending. |
 | `payments/paypal/cancel?invoice_id=...` | PayPal canceled callback | Client-only `PaymentCallbackStatus` | Browser invoice id | Implemented client-side only; backend validation pending. |
 | `payments/fawaterk/update/invoice?invoice_id=...` | Fawaterk callbacks | Client-only `PaymentCallbackStatus` | Browser invoice id | Implemented client-side only; backend validation pending. |
@@ -72,3 +72,4 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 - Confirm recaptcha enterprise action names and required backend validation fields.
 - Confirm payment callback endpoints are still approved for client-side Nuxt-equivalent calls.
 - Confirm whether settings/footer/menu/currency are dashboard-managed and must be wired dynamically before cutover.
+- Confirm checkout `bookings/update/{id}` timing/payment method contract with staging data before production cutover.

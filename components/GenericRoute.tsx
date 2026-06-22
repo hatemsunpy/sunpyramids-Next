@@ -9,7 +9,7 @@ export async function GenericRoute({ route, locale = "en" }: { route: string; lo
   const config = genericPages[route];
   const [page, faqs, categories, tours, blogs] = await Promise.all([
     getPage(config.apiSlug, locale),
-    ["faqs", "about-us", "accessible-travel", "sustainability", "events"].includes(route) ? getFaqs(locale, 200) : Promise.resolve([]),
+    ["faqs", "about-us", "accessible-travel", "sustainability"].includes(route) ? getFaqs(locale, 200) : Promise.resolve([]),
     route === "events" ? getCategories("categories?parent_id=55&order_by=display_order,asc", locale, 100) : Promise.resolve([]),
     route === "accessible-travel"
       ? getTours("tours?categories.slug=disabled&order_by=display_order,asc", locale, 4)

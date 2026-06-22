@@ -6,6 +6,7 @@ import { DestinationCard } from "@/components/DestinationCard";
 import { TourCard } from "@/components/TourCard";
 import { BlogCard } from "@/components/BlogCard";
 import { withLocale } from "@/lib/locales";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 type GenericPageProps = {
   page: ApiPage | null;
@@ -63,7 +64,7 @@ export function GenericPage({
   }
 
   if (route === "faqs") {
-    return <FaqPage page={page} title={title} image={image} faqs={faqs} />;
+    return <FaqPage page={page} title={title} image={image} faqs={faqs} locale={locale} />;
   }
 
   if (route === "events") {
@@ -94,7 +95,7 @@ function ContentPage({ page, title, image }: { page: ApiPage | null; title: stri
     <main>
       <PageHero title={title} image={image} />
       <section className="original-content-section container-shell">
-        <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(page?.content || page?.description || "") }} />
+        <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description) }} />
       </section>
     </main>
   );
@@ -108,7 +109,7 @@ function ContactPage({ page, title, image, locale }: { page: ApiPage | null; tit
         <div className="contact-info-panel">
           <p className="eyebrow">Contact Info</p>
           <h2>Send Your Feedback</h2>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(page?.content || page?.description || "We would be happy to help you plan your Egypt trip.") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description || "We would be happy to help you plan your Egypt trip.") }} />
           <div className="contact-methods">
             <a href="tel:+201095888830">+20 109 588 8830</a>
             <a href="tel:+201095888831">+20 109 588 8831</a>
@@ -136,7 +137,7 @@ function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null;
         <div>
           <p className="eyebrow">Since 1970</p>
           <h2>Sun Pyramids Tours</h2>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: metaHtml(page, "about-sun-pyramids") || String(page?.content || "") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(metaHtml(page, "about-sun-pyramids") || page?.content) }} />
         </div>
         <Image src={String(page?.feature_1 || gallery[0] || "/images/aboutusmainbanner.png")} alt={title} width={720} height={520} />
       </section>
@@ -149,7 +150,7 @@ function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null;
         {goals.map(([goalTitle, html]) => (
           <article key={goalTitle}>
             <h3>{goalTitle}</h3>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }} />
           </article>
         ))}
       </section>
@@ -171,24 +172,19 @@ function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null;
   );
 }
 
-function FaqPage({ page, title, image, faqs }: { page: ApiPage | null; title: string; image: string; faqs: ApiPage[] }) {
+function FaqPage({ title, image, faqs, locale }: { page: ApiPage | null; title: string; image: string; faqs: ApiPage[]; locale: Locale }) {
   return (
     <main>
       <PageHero title={title} image={image} />
-      <section className="faq-search-section">
-        <div className="container-shell">
-          <input aria-label="Search FAQs" placeholder="Search in frequently asked questions" />
-        </div>
-      </section>
       <section className="faq-list container-shell">
         {faqs.map((faq) => (
           <details key={faq.id} className="faq-item">
             <summary>{String(faq.question || faq.title || "Question")}</summary>
-            <div dangerouslySetInnerHTML={{ __html: String(faq.answer || faq.description || "") }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer || faq.description) }} />
           </details>
         ))}
       </section>
-      <NeedHelp />
+      <NeedHelp locale={locale} />
     </main>
   );
 }
@@ -199,7 +195,7 @@ function EventsPage({ page, title, image, categories, locale }: { page: ApiPage 
       <PageHero title={title} image={image} />
       {page?.short_description ? (
         <section className="event-description container-shell">
-          <div dangerouslySetInnerHTML={{ __html: String(page.short_description) }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.short_description) }} />
         </section>
       ) : null}
       <section className="event-grid">
@@ -224,9 +220,9 @@ function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | nu
         <div>
           <p className="eyebrow">{isCar ? "Private transfers" : "Tailor made travel"}</p>
           <h2>{isCar ? "Rent A Car" : "Make Your Trip"}</h2>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(page?.content || page?.description || "") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description) }} />
         </div>
-        <form className="planner-form">
+        <div className="planner-form">
           <div className="step-label">Quick Info</div>
           <input placeholder={isCar ? "Pickup location" : "Destination"} />
           <input placeholder={isCar ? "Drop-off location" : "Travel date"} />
@@ -236,7 +232,7 @@ function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | nu
           <input placeholder="Email address" />
           <input placeholder="Phone number" />
           <button className="btn-primary" type="button">{isCar ? "Request Car" : "Start Planning"}</button>
-        </form>
+        </div>
       </section>
       <NeedHelp locale={locale} />
     </main>
@@ -269,7 +265,7 @@ function ImpactPage({
         <div>
           <p className="eyebrow">{route === "sustainability" ? "Responsible travel" : "Accessible travel"}</p>
           <h2>{title}</h2>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(page?.content || page?.description || "") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description) }} />
         </div>
         <Image src={route === "sustainability" ? "/images/certification.png" : "/images/wheelChair.png"} alt={title} width={520} height={420} />
       </section>
@@ -313,7 +309,7 @@ function FaqTeaser({ faqs, locale = "en" }: { faqs: ApiPage[]; locale?: Locale }
         {faqs.slice(0, 5).map((faq) => (
           <details key={faq.id} className="faq-item">
             <summary>{String(faq.question || faq.title || "Question")}</summary>
-            <div dangerouslySetInnerHTML={{ __html: String(faq.answer || faq.description || "") }} />
+            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer || faq.description) }} />
           </details>
         ))}
       </div>

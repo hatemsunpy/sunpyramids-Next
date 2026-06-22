@@ -1124,6 +1124,41 @@ select {
   font-weight: 700;
 }
 
+.social-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.social-row button,
+.btn-outline {
+  border: 1px solid #eeeeee;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 0.9rem 1rem;
+  color: var(--primary);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+}
+
+.form-message {
+  margin: 1rem 0 0;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.form-message.error {
+  color: #dc2626;
+}
+
 .auth-image {
   position: sticky;
   top: 0;
@@ -1175,6 +1210,37 @@ select {
   border-radius: 1rem;
   background: #fff;
   padding: 1.5rem;
+}
+
+.account-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-form input,
+.checkout-form-card input,
+.checkout-form-card textarea {
+  width: 100%;
+  border: 1px solid #eeeeee;
+  border-radius: 1rem;
+  padding: 1rem;
+  outline: 0;
+}
+
+.account-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.account-list article {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid #eeeeee;
+  border-radius: 1rem;
+  padding: 1rem;
 }
 
 .account-card h2,

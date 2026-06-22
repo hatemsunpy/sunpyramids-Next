@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/client-api";
 
 type CallbackState = "loading" | "success" | "error" | "missing";
@@ -35,6 +35,7 @@ export function PaymentCallbackStatus({
   const invoiceId = params.get("invoice_id");
   const [state, setState] = useState<CallbackState>("loading");
   const [message, setMessage] = useState("");
+  const processedKey = useRef<string | null>(null);
 
   const expectedSuccess = useMemo(() => ["success", "verify"].includes(status), [status]);
 
@@ -47,6 +48,9 @@ export function PaymentCallbackStatus({
         setMessage("Missing invoice id in the payment callback URL.");
         return;
       }
+      const requestKey = `${callback}:${invoiceId}`;
+      if (processedKey.current === requestKey) return;
+      processedKey.current = requestKey;
 
       try {
         const response = await apiGet<ApiStatus>(`${endpointMap[callback]}?invoice_id=${encodeURIComponent(invoiceId)}`);

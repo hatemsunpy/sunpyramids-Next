@@ -36,6 +36,8 @@ const staticPaths = [
   "/thankful",
 ];
 
+const frontendHostname = new URL(FRONTEND_ORIGIN).hostname;
+
 async function fetchGroup(endpoint: string): Promise<SitemapItem[]> {
   const json = await fetchJson(endpoint);
   return itemsFromResponse(json);
@@ -45,7 +47,7 @@ async function fetchPaginatedGroup(endpoint: string, pageLimit = 100): Promise<S
   const separator = endpoint.includes("?") ? "&" : "?";
   const first = await fetchJson(`${endpoint}${separator}page=1&page_limit=${pageLimit}`);
   const items = itemsFromResponse(first);
-  const lastPage = Math.min(Number(first?.data?.last_page || 1), 20);
+  const lastPage = Number(first?.data?.last_page || 1);
 
   if (lastPage <= 1) return items;
 
@@ -99,7 +101,7 @@ function publicPathFromLink(link: string | null | undefined) {
 
   try {
     const url = new URL(link);
-    if (url.hostname !== "sunpyramidstours.com") return null;
+    if (url.hostname !== frontendHostname) return null;
     return `${url.pathname}${url.search}` || "/";
   } catch {
     return null;

@@ -4,47 +4,24 @@ import { Suspense } from "react";
 import type { ApiPage, Locale, Tour } from "@/types/api";
 import { BlogCard } from "@/components/BlogCard";
 import { ContactForm } from "@/components/ContactForm";
+import { AccountFlow, AuthFlow, CartFlow } from "@/components/CustomerFlows";
 import { DestinationCard } from "@/components/DestinationCard";
 import { PaymentCallbackKind, PaymentCallbackStatus } from "@/components/PaymentCallbackStatus";
 import { TourCard } from "@/components/TourCard";
 import { TrustIndexLoader } from "@/components/TrustIndexLoader";
 import { withLocale } from "@/lib/locales";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export function AuthPage({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
-  const titles: Record<string, string> = {
-    "sign-in": "Sign In",
-    "sign-up": "Sign Up",
-    "forget-password": "Forget Password",
-    "reset-password": "Reset Password",
-    "create-password": "Create Password",
-    "confirm-code": "Confirm Code",
-  };
-  const isSignup = mode === "sign-up";
-  const isCode = mode === "confirm-code";
-  const isPassword = mode.includes("password");
-
   return (
     <main className="auth-clone">
       <section className="auth-panel">
         <div className="auth-top">
           <Link href={withLocale("/", locale)}><Image src="/images/Artboard 5.png" alt="Sun Pyramids" width={86} height={86} /></Link>
         </div>
-        <div className="auth-form-wrap">
-          <p className="eyebrow">Sun Pyramids Tours</p>
-          <h1>{titles[mode] || "Account"}</h1>
-          <form className="auth-form">
-            {isSignup ? <input placeholder="Full name" /> : null}
-            {!isCode ? <input type="email" placeholder="Email address" /> : <input placeholder="Confirmation code" />}
-            {mode === "sign-in" || isSignup || isPassword ? <input type="password" placeholder="Password" /> : null}
-            {isSignup || mode === "create-password" || mode === "reset-password" ? <input type="password" placeholder="Confirm password" /> : null}
-            <button className="btn-primary" type="button">{titles[mode] || "Continue"}</button>
-          </form>
-          <div className="auth-links">
-            <Link href={withLocale("/auth/sign-in", locale)}>Sign in</Link>
-            <Link href={withLocale("/auth/sign-up", locale)}>Create account</Link>
-            <Link href={withLocale("/auth/forget-password", locale)}>Forgot password?</Link>
-          </div>
-        </div>
+        <Suspense fallback={<div className="auth-form-wrap"><p className="eyebrow">Sun Pyramids Tours</p><h1>Account</h1></div>}>
+          <AuthFlow mode={mode} locale={locale} />
+        </Suspense>
       </section>
       <section className="auth-image"><Image src="/images/authHero.png" alt="Egypt travel" fill sizes="50vw" /></section>
     </main>
@@ -66,12 +43,7 @@ export function AccountPage({ view = "profile", locale = "en" }: { view?: string
             ["Settings", "/profile/settings"],
           ].map(([label, href]) => <Link key={href} href={withLocale(href, locale)}>{label}</Link>)}
         </aside>
-        <div className="account-card">
-          <p className="eyebrow">Account area</p>
-          <h2>{view === "bookings" ? "Upcoming and past bookings" : view === "favourites" ? "Saved tours" : "Your profile"}</h2>
-          <p className="muted">Sign in to sync your bookings, favourites, profile settings, and checkout activity.</p>
-          <Link className="btn-primary" href={withLocale("/auth/sign-in", locale)}>Sign in</Link>
-        </div>
+        <AccountFlow view={view} locale={locale} />
       </section>
     </main>
   );
@@ -84,12 +56,7 @@ export function CartClonePage({ checkout = false, locale = "en" }: { checkout?: 
         <h1>{checkout ? "Checkout" : "Cart"}</h1>
       </section>
       <section className="cart-layout container-shell">
-        <div className="cart-empty">
-          <p className="eyebrow">{checkout ? "Secure checkout" : "Your cart"}</p>
-          <h2>{checkout ? "Complete Your Booking" : "Your cart is ready for your next Egypt tour"}</h2>
-          <p className="muted">Add tours or car rentals to continue. Signed-in users can recover saved cart items from their account.</p>
-          <Link className="btn-primary" href={withLocale("/trips", locale)}>Explore Trips</Link>
-        </div>
+        <CartFlow checkout={checkout} locale={locale} />
         <aside className="cart-summary">
           <h3>Summary</h3>
           <p>Subtotal</p>
@@ -171,7 +138,7 @@ export function EventDetailPage({ event, relatedTours, locale = "en" }: { event:
       <section className="event-detail-layout container-shell">
         <article>
           <h2>{title}</h2>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(event?.description || event?.content || "") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(event?.description || event?.content) }} />
         </article>
         <aside className="booking-panel">
           <p className="eyebrow">Event details</p>
@@ -191,7 +158,7 @@ export function MarketingLandingPage({ page, tours, locale = "en" }: { page: Api
         <div>
           <p className="eyebrow">Sun Pyramids Tours</p>
           <h1>{page?.title || "Book Egypt Trip"}</h1>
-          <div dangerouslySetInnerHTML={{ __html: String(page?.short_description || page?.description || "") }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.short_description || page?.description) }} />
           <Link className="btn-primary" href={withLocale("/make-your-trip", locale)}>Plan Your Trip</Link>
         </div>
       </section>

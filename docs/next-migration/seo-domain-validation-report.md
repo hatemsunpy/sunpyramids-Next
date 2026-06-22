@@ -74,4 +74,21 @@ Backend media URLs may still appear in image metadata where dashboard media uses
 
 ## Cutover Status
 
-Code safeguards are present and Sprint 2 local raw HTML checks passed for the requested pages. Production SEO/domain approval is still pending staging validation.
+Code safeguards are present and Sprint 2/Sprint 3 local raw HTML checks passed for the requested pages. Production SEO/domain approval is still pending staging validation.
+
+## Sprint 3 Raw HTML Validation Result
+
+Date: 2026-06-22
+
+Target: local production build at `http://localhost:3000`.
+
+Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis`.
+
+| Route | Title | Description | Canonical | `og:url` frontend domain | Robots | JSON-LD | Meta keywords absent | Backend SEO URL leak |
+|---|---|---|---|---|---|---|---|---|
+| `/` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
+| `/egypt-tours/one-day-tours` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | Pass |
+| `/tour/from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | Pass |
+| `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
+
+No backend/API domain was found in canonical or `og:url`. Backend media URLs remain allowed where dashboard media supplies image URLs.

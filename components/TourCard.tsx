@@ -17,7 +17,7 @@ function categoryOf(tour: Tour) {
 }
 
 function priceOf(tour: Tour) {
-  return tour.price || tour.start_from || tour.adult_price;
+  return tour.price ?? tour.start_from ?? tour.adult_price;
 }
 
 function formatPrice(price: number | string) {
@@ -47,7 +47,7 @@ export function TourCard({ tour, locale = "en" }: { tour: Tour; locale?: Locale 
           <div className="tour-card-bottom">
             <div>
               <span>Start From</span>
-              <strong>{price ? formatPrice(price) : "Request Price"}</strong>
+              <strong>{price !== null && price !== undefined ? formatPrice(price) : "Request Price"}</strong>
             </div>
             <p>{tour.duration || "Flexible"}</p>
           </div>
