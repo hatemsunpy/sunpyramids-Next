@@ -2,7 +2,9 @@ import { apiFetch } from "@/lib/api";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
 
 function listData<T>(response: ApiList<T> | null | undefined): T[] {
-  return Array.isArray(response?.data) ? response.data : [];
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.data)) return response.data.data;
+  return [];
 }
 
 export async function getPage(slug: string, locale: Locale) {
@@ -40,7 +42,7 @@ export async function getTour(slug: string, locale: Locale) {
     `tours?slug=${encodeURIComponent(slug)}&includes=seo,gallery,category,destination`,
     { locale, next: { revalidate: 180 } },
   );
-  return fallback?.data?.[0] ?? null;
+  return listData(fallback)[0] ?? null;
 }
 
 export async function getBlogs(locale: Locale, limit = 9) {

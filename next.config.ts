@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "new-sunpyramids-demo.vercel.app",
       },
+      {
+        protocol: "https",
+        hostname: "pub-5ccb6ad334fb427684d7f3fa11a34197.r2.dev",
+      },
     ],
   },
 };

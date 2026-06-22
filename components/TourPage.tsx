@@ -4,7 +4,7 @@ import { ContactForm } from "@/components/ContactForm";
 
 export function TourPage({ tour, locale = "en" }: { tour: Tour | null; locale?: Locale }) {
   const title = tour?.title || tour?.name || "Egypt Tour";
-  const image = tour?.gallery?.[0] || tour?.images?.[0] || tour?.banner || tour?.image || "/images/mainBanner.png";
+  const image = tour?.featured_image || tour?.gallery?.[0] || tour?.images?.[0] || tour?.banner || tour?.image || "/images/mainBanner.png";
 
   return (
     <main>

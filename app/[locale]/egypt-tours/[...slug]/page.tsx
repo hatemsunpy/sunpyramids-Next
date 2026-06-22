@@ -33,7 +33,10 @@ export default async function Page({ params }: Props) {
   return (
     <SiteShell locale={locale}>
       <main>
-        <section className="page-hero">
+        <section
+          className="page-hero"
+          style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.38)), url(${page?.banner || "/images/mainBanner.png"})` }}
+        >
           <h1>{page?.title || page?.name || "Egypt Tours"}</h1>
         </section>
         <section className="section-pad container-shell grid-cards">

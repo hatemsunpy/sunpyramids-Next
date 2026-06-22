@@ -21,7 +21,10 @@ export default async function Page({ params }: Props) {
     <SiteShell locale={locale}>
       <JsonLd schema={page?.seo?.structure_schema} />
       <main>
-        <section className="page-hero" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.38)), url(/images/blogsHero.png)" }}>
+        <section
+          className="page-hero"
+          style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.38)), url(${page?.banner || "/images/blogsHero.png"})` }}
+        >
           <h1>{page?.title || "Travel Blogs"}</h1>
         </section>
         <section className="section-pad container-shell grid-cards">

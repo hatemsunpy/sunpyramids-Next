@@ -6,7 +6,8 @@ import { withLocale } from "@/lib/locales";
 export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Locale }) {
   const slug = blog.slug || String(blog.id || "");
   const title = blog.title || blog.name || "Egypt Travel Guide";
-  const image = blog.image || blog.banner || "/images/blogsHero.png";
+  const image = blog.featured_image || blog.image || blog.banner || "/images/blogsHero.png";
+  const description = blog.short_description || blog.description || "Read the latest Egypt travel insights.";
 
   return (
     <article className="blog-card">
@@ -16,7 +17,7 @@ export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Loca
         </div>
         <div className="card-body">
           <h3 className="line-clamp-2">{title}</h3>
-          <p className="muted line-clamp-3">{blog.description || "Read the latest Egypt travel insights."}</p>
+          <p className="muted line-clamp-3">{description}</p>
         </div>
       </Link>
     </article>

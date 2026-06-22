@@ -5,6 +5,7 @@ import { withLocale } from "@/lib/locales";
 
 function imageOf(item: Tour) {
   return (
+    item.featured_image ||
     item.image ||
     item.banner ||
     item.gallery?.[0] ||
@@ -16,6 +17,7 @@ function imageOf(item: Tour) {
 export function TourCard({ tour, locale = "en" }: { tour: Tour; locale?: Locale }) {
   const slug = tour.slug || String(tour.id || "");
   const title = tour.title || tour.name || "Egypt Tour";
+  const description = tour.short_description || tour.description || tour.duration || "Explore Egypt with Sun Pyramids Tours.";
 
   return (
     <article className="tour-card">
@@ -25,7 +27,7 @@ export function TourCard({ tour, locale = "en" }: { tour: Tour; locale?: Locale 
         </div>
         <div className="card-body">
           <h3 className="line-clamp-2">{title}</h3>
-          <p className="muted line-clamp-2">{tour.description || tour.duration || "Explore Egypt with Sun Pyramids Tours."}</p>
+          <p className="muted line-clamp-2">{description}</p>
           <p style={{ color: "var(--primary)", fontWeight: 700 }}>
             {tour.price || tour.start_from ? `Start From $${tour.price || tour.start_from}` : "View Details"}
           </p>

@@ -25,8 +25,10 @@ export type ApiPage = {
   name?: string;
   slug?: string;
   description?: string;
+  short_description?: string | null;
   content?: string;
   banner?: string;
+  featured_image?: string;
   image?: string;
   gallery?: string[];
   seo?: SeoFields | null;
@@ -34,7 +36,7 @@ export type ApiPage = {
 };
 
 export type ApiList<T> = {
-  data?: T[];
+  data?: T[] | { data?: T[] };
   meta?: unknown;
   links?: unknown;
 };
