@@ -46,6 +46,31 @@ export async function getCategories(endpoint: string, locale: Locale, limit = 10
   return listData(response);
 }
 
+export async function getCategory(slug: string, locale: Locale) {
+  const response = await apiFetch<{ data?: ApiPage }>(
+    `categories/${encodeURIComponent(slug)}?includes=seo,children`,
+    { locale },
+  );
+  return response?.data ?? null;
+}
+
+export async function getBlogCategories(locale: Locale, parentId: number | null = null) {
+  const parent = parentId === null ? "%5Bnull%5D" : String(parentId);
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `blog-categories?page=1&parent_id=${parent}`,
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getBlogCategory(slugOrId: string | number, locale: Locale) {
+  const response = await apiFetch<{ data?: ApiPage }>(
+    `blog-categories/${encodeURIComponent(String(slugOrId))}?page=1`,
+    { locale },
+  );
+  return response?.data ?? null;
+}
+
 export async function getFaqs(locale: Locale, limit = 200) {
   const response = await apiFetch<ApiList<ApiPage>>(`faqs?page_limit=${limit}`, {
     locale,
