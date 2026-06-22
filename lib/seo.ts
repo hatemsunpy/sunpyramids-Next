@@ -18,6 +18,28 @@ type OpenGraphType =
 
 type TwitterCard = "summary" | "summary_large_image" | "app" | "player";
 
+const VALID_OPEN_GRAPH_TYPES = new Set<OpenGraphType>([
+  "website",
+  "article",
+  "book",
+  "profile",
+  "music.song",
+  "music.album",
+  "music.playlist",
+  "music.radio_station",
+  "video.movie",
+  "video.episode",
+  "video.tv_show",
+  "video.other",
+]);
+
+const VALID_TWITTER_CARDS = new Set<TwitterCard>([
+  "summary",
+  "summary_large_image",
+  "app",
+  "player",
+]);
+
 export const FRONTEND_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL || "https://sunpyramidstours.com";
 
@@ -96,27 +118,11 @@ export function metadataFromPage(
 }
 
 function openGraphType(type: string | null | undefined): OpenGraphType {
-  const validTypes = new Set([
-    "website",
-    "article",
-    "book",
-    "profile",
-    "music.song",
-    "music.album",
-    "music.playlist",
-    "music.radio_station",
-    "video.movie",
-    "video.episode",
-    "video.tv_show",
-    "video.other",
-  ]);
-
-  return type && validTypes.has(type) ? (type as OpenGraphType) : "website";
+  return type && VALID_OPEN_GRAPH_TYPES.has(type as OpenGraphType) ? (type as OpenGraphType) : "website";
 }
 
 function twitterCard(card: string | null | undefined): TwitterCard {
-  const validCards = new Set(["summary", "summary_large_image", "app", "player"]);
-  return card && validCards.has(card) ? (card as TwitterCard) : "summary_large_image";
+  return card && VALID_TWITTER_CARDS.has(card as TwitterCard) ? (card as TwitterCard) : "summary_large_image";
 }
 
 function normalizeCanonical(canonical: string | null | undefined, path: string) {
