@@ -26,8 +26,27 @@ export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Loca
 }
 
 function stripHtml(value: unknown) {
-  return String(value)
+  return decodeHtmlEntities(String(value)
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim());
+}
+
+function decodeHtmlEntities(value: string) {
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: "\"",
+  };
+
+  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (entity, code: string) => {
+    const normalized = code.toLowerCase();
+    if (normalized in namedEntities) return namedEntities[normalized];
+    if (normalized.startsWith("#x")) return String.fromCodePoint(Number.parseInt(normalized.slice(2), 16));
+    if (normalized.startsWith("#")) return String.fromCodePoint(Number.parseInt(normalized.slice(1), 10));
+    return entity;
+  });
 }

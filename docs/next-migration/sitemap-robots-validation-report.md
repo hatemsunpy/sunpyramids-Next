@@ -66,3 +66,12 @@ Date: 2026-06-22
 - `/sitemap.xml` returned HTTP 200 in the local production route smoke test.
 - `/robots.txt` returned HTTP 200 in the local production route smoke test.
 - Custom marketing page discovery remains blocked. The confirmed Nuxt behavior uses `custom-pages/{slug}` detail pages, while the attempted list endpoint `custom-pages?page_limit=2` returned 404 in Sprint 2 discovery. No alternate discoverable list endpoint was confirmed in Sprint 3, so no hardcoded marketing slugs were added.
+
+## Sprint 4 Status
+
+Date: 2026-06-22
+
+- `/sitemap.xml` returned HTTP 200 in the local production route smoke test.
+- `/robots.txt` returned HTTP 200 in the local production route smoke test.
+- Re-checking Nuxt source again found only `components/MarktingPages/index.vue` using `custom-pages/{slug}` detail reads. No custom marketing list/discovery endpoint was confirmed.
+- Custom marketing sitemap coverage remains blocked pending backend list endpoint support or explicit business exclusion approval.

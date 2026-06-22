@@ -11,6 +11,9 @@ type SitemapItem = {
   seo?: { robots?: string | null };
 };
 
+const DEFAULT_FRONTEND_HOSTNAME = "sunpyramidstours.com";
+const MAX_SITEMAP_PAGES_PER_GROUP = 50;
+
 const staticPaths = [
   "/",
   "/about-us",
@@ -36,7 +39,15 @@ const staticPaths = [
   "/thankful",
 ];
 
-const frontendHostname = new URL(FRONTEND_ORIGIN).hostname;
+const frontendHostname = frontendHostnameFromOrigin(FRONTEND_ORIGIN);
+
+function frontendHostnameFromOrigin(origin: string) {
+  try {
+    return new URL(origin).hostname;
+  } catch {
+    return DEFAULT_FRONTEND_HOSTNAME;
+  }
+}
 
 async function fetchGroup(endpoint: string): Promise<SitemapItem[]> {
   const json = await fetchJson(endpoint);
@@ -47,7 +58,7 @@ async function fetchPaginatedGroup(endpoint: string, pageLimit = 100): Promise<S
   const separator = endpoint.includes("?") ? "&" : "?";
   const first = await fetchJson(`${endpoint}${separator}page=1&page_limit=${pageLimit}`);
   const items = itemsFromResponse(first);
-  const lastPage = Number(first?.data?.last_page || 1);
+  const lastPage = Math.min(Number(first?.data?.last_page || 1), MAX_SITEMAP_PAGES_PER_GROUP);
 
   if (lastPage <= 1) return items;
 

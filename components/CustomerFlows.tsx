@@ -24,12 +24,36 @@ type ApiResponse<T = any> = {
 
 type LoadState = "idle" | "loading" | "success" | "error";
 
+const allowedPaymentRedirectHosts = new Set([
+  "paypal.com",
+  "www.paypal.com",
+  "sandbox.paypal.com",
+  "www.sandbox.paypal.com",
+  "fawaterk.com",
+  "www.fawaterk.com",
+  "checkout.fawaterk.com",
+  "staging-checkout.fawaterk.com",
+  "sunpyramidtours.com",
+  "www.sunpyramidtours.com",
+  "sunpyramidstours.com",
+  "www.sunpyramidstours.com",
+]);
+
 function messageFromError(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong. Please try again.";
 }
 
 function statusClass(state: LoadState) {
   return state === "error" ? "form-message error" : "form-message";
+}
+
+function isAllowedPaymentRedirect(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && allowedPaymentRedirectHosts.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 function readUserCookie() {
@@ -407,7 +431,11 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       setState("success");
       setMessage(res.message || "Booking created.");
       const redirect = res.data?.payment?.redirect?.location;
-      if (redirect) window.location.href = redirect;
+      if (redirect && isAllowedPaymentRedirect(redirect)) {
+        window.location.href = redirect;
+        return;
+      }
+      if (redirect) throw new Error("Payment redirect URL was not approved.");
     } catch (error) {
       setState("error");
       setMessage(messageFromError(error));

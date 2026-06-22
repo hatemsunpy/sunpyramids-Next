@@ -11,8 +11,8 @@
 | Tour detail booking/options/seasons may be incomplete | Revenue/UX | High | Nuxt fetches options/days/seasons and has complex right panel; Next includes differ. | Compare representative tour detail and validate booking panel. |
 | Recaptcha/tracking parity incomplete | Forms/marketing | Medium | Contact form now generates/submits `recaptcha_token` when Enterprise script is available; backend acceptance and conversion tracking are not validated. | Confirm backend requirement and tracking scripts before cutover. |
 | Locale SEO fallback behavior needs backend confirmation | SEO/i18n | Medium | Next sends `X-Localize`, but locale response content must be tested. | Raw HTML checks per locale on staging. |
-| Image optimization/stable dimensions need audit | Performance | Medium | Next components use current image helpers/card styles; LCP not fully measured. | Lighthouse and screenshot audits for homepage/tour detail. |
-| Third-party scripts may affect CWV or tracking | Performance/tracking | Medium | TrustIndex and other production scripts need parity. | Test official Lighthouse with third-party scripts enabled. |
+| Image optimization/stable dimensions need audit | Performance | Medium | Sprint 4 fixed tour fallback hero loading a raw 2 MB CSS background; other pages still need image audits. | Continue Lighthouse and screenshot audits for priority pages. |
+| Third-party scripts affect CWV | Performance/tracking | High | Sprint 4 normal Lighthouse remained low while `?no-third-party=1` scored home 100 and tour 94; GTM loads TikTok/Clarity and TrustIndex adds work. | Optimize/approve tag behavior with marketing before cutover. |
 | Homepage hydration error regression risk | Rendering | Medium | Sprint 3 fixed the confirmed BlogCard HTML mismatch and browser validation showed no React #418. | Keep console check in pre-cutover validation. |
 | Custom marketing pages missing from sitemap discovery | SEO | High | `custom-pages?page_limit=2` returned 404; Nuxt confirms only `custom-pages/{slug}` detail usage. | Backend list endpoint or explicit business approval required. |
 

@@ -13,6 +13,8 @@
 | Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear, and checkout booking creation to confirmed endpoints. | Code pass; staging credentials/data pending. |
 | Payment callbacks call API client-side only | `components/PaymentCallbackStatus.tsx` is `"use client"` and calls in `useEffect`. | Passed in code; backend sandbox pending. |
 | Homepage hydration error fixed | `components/BlogCard.tsx` renders dashboard blog summaries as plain text after stripping HTML, avoiding browser/React HTML mismatch inside the card link. | Browser console pass; no React #418 observed. |
+| Third-party diagnostic mode | `components/ThirdPartyScripts.tsx`, `components/TrustIndexLoader.tsx`, and `lib/recaptcha.ts` skip third-party loads when the URL contains `no-third-party=1`. | Implemented for local diagnosis; normal tracking parity remains active. |
+| reCAPTCHA submit-time loading | `lib/recaptcha.ts` injects Enterprise script only when `generateRecaptchaToken()` runs. | Implemented; backend acceptance pending. |
 
 ## Confirmed Gaps / Pending Validation
 
@@ -30,6 +32,28 @@
 ## Cutover Status
 
 Not approved. Public content API behavior is partially implemented, customer/revenue flows have a first-pass client API layer, and local route smoke tests passed for the Sprint 3 route set. Customer/revenue flows still require staging backend validation.
+
+## Sprint 4 Performance and Behavior Validation
+
+Date: 2026-06-22
+
+Target: local Next production build at `http://localhost:3000`.
+
+| Area | Result |
+|---|---|
+| Performance root cause | Normal Lighthouse runs are dominated by third-party scripts loaded through GTM/TrustIndex: GA/GTM, TikTok, Clarity, and TrustIndex. Home improves from 52 to 100 with `?no-third-party=1`. |
+| Tour LCP root cause | The representative tour page loaded `/images/mainBanner.png` as a raw 2 MB CSS background when dashboard tour media was missing/fallback. |
+| Performance fixes | Added diagnostic third-party gate, moved reCAPTCHA to submit-time loading, and changed tour hero to optimized `next/image`. |
+| Customer-flow bundle scope | `CustomerFlows` is imported through `ClonedNuxtPages` for auth/profile/cart/payment/landing clones only; homepage and tour detail do not import auth/profile/cart/checkout flows. |
+| Payment no-invoice callback | Fresh browser context with `/order/payment/callback/paypal/verify?no-third-party=1` had no payment API requests and no console errors. |
+| Browser console | Fresh diagnostic home and tour contexts had no console errors. Normal tour mode showed a third-party page error, so production third-party behavior still needs validation. |
+| reCAPTCHA | No global reCAPTCHA request is made on page load. Token generation remains submit-time only and backend acceptance is blocked without staging validation. |
+| Route smoke | Passed HTTP 200 for the Sprint 4 route list, including public pages, auth/profile/cart/checkout, payment callback, sitemap, and robots. |
+| SEO raw HTML | Passed for `/`, `/egypt-tours/one-day-tours`, representative tour slug, and `/contact-us`: title/description/canonical/OG/Twitter/robots present, no meta keywords, no backend canonical/OG leak. |
+| Lighthouse mobile home normal | 52, LCP 6.8s, CLS 0.03, TBT 1,280ms. Low score remains due third-party scripts. |
+| Lighthouse mobile home diagnostic | 100, LCP 1.2s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile tour normal after hero fix | 65, LCP 2.9s, CLS 0.002, TBT 960ms. Low score remains due third-party scripts. |
+| Lighthouse mobile tour diagnostic after hero fix | 94, LCP 1.7s, CLS 0.002, TBT 60ms. |
 
 ## Sprint 3 Validation Result
 

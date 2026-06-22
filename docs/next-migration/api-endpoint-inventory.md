@@ -73,3 +73,9 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 - Confirm payment callback endpoints are still approved for client-side Nuxt-equivalent calls.
 - Confirm whether settings/footer/menu/currency are dashboard-managed and must be wired dynamically before cutover.
 - Confirm checkout `bookings/update/{id}` timing/payment method contract with staging data before production cutover.
+
+## Sprint 4 Notes
+
+- No new backend endpoints were invented or added.
+- reCAPTCHA script loading moved from global layout loading to submit-time client loading in `lib/recaptcha.ts`; the submitted `recaptcha_token` field for `contact-requests` is unchanged.
+- Diagnostic `?no-third-party=1` mode suppresses third-party script loading only; it does not change API endpoints or public SEO output.

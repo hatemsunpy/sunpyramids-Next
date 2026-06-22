@@ -31,13 +31,13 @@ The current Next app has a compact React component set that clones major public 
 | Breadcrumbs | `components/Shared/Breadcrumb.vue` | Current route/page components | Server component | Route/page data | Medium | Not a dedicated Next component. Add only if parity screenshots confirm missing UX. |
 | Pagination | `components/UI/Pagination.vue` | Current list pages | Client component if needed | API pagination meta | Medium | Not fully ported. Blog/trips pagination require backend/API validation. |
 | Gallery/carousel | `components/Shared/MainSwiper.vue`, `components/UI/SwiperModal.vue`, tour/event galleries | Current static/scrolling sections | Client component if needed | Gallery API | Medium | Not one-to-one. Add only for confirmed visual/functional gaps. |
-| Trust/review widgets | TrustIndex/global scripts in Nuxt components | `components/TrustIndexLoader.tsx` | Client script loader | Third-party DOM/widget | Low SEO, high trust UX | Exists. Need production script behavior validation. |
+| Trust/review widgets | TrustIndex/global scripts in Nuxt components | `components/TrustIndexLoader.tsx` | Client script loader | Third-party DOM/widget | Low SEO, high trust UX | Exists. Sprint 4 adds `?no-third-party=1` diagnostic suppression; normal production behavior still needs validation. |
 
 ## Forms and Customer Flow Components
 
 | Category | Nuxt source | Next target | Type | Data source / endpoint | SEO relevance | Status / gap |
 |---|---|---|---|---|---|---|
-| Contact form | `components/ContactUs/Form.vue`, landing page contact forms | `components/ContactForm.tsx` | Client component | `POST contact-requests` | Low | Exists. Needs recaptcha/tracking parity validation. |
+| Contact form | `components/ContactUs/Form.vue`, landing page contact forms | `components/ContactForm.tsx`, `lib/recaptcha.ts` | Client component | `POST contact-requests` | Low | Exists. reCAPTCHA loads on submit and sends token; backend acceptance/tracking parity pending. |
 | Make Your Trip form | `components/MakeYourTrip/Form/*` | `components/ClonedNuxtPages.tsx` route UI | Client component required for full parity | `POST custom/trips` | Medium | Route/UI exists. Full multi-step submission needs validation/implementation. |
 | Rent car form | `components/RentACar/Form/*` | `components/ClonedNuxtPages.tsx` route UI | Client component required | Locations, available destinations, `POST car/rental/search/for/route`, `POST cart/rentals/append` | Medium | Route/UI exists. Full API flow pending. |
 | Booking form / tour right panel | `components/Tours/RightPanal/index.vue` | `components/TourPage.tsx` | Client component required | Tour options/seasons/cart/wishlist API | Medium | Tour page exists. Booking panel parity is a cutover blocker. |
@@ -66,3 +66,12 @@ Date: 2026-06-22
 | Cart/checkout components | `CartClonePage` is a static empty-cart/checkout shell. | Port cart list/edit/coupon/checkout components and booking creation flow. |
 | Tour detail | `TourPage` is a simplified server detail page and does not yet port the full Nuxt left/right panels. | Port gallery, options/seasons, itinerary, includes/excludes, reviews, related tours, and booking panel. |
 | Contact/lead forms | `ContactForm` posts to `contact-requests`, but does not yet include Nuxt recaptcha token or all route-specific fields. | Add recaptcha token and field parity where backend requires it. |
+
+## Sprint 4 Component Notes
+
+Date: 2026-06-22
+
+- `components/ThirdPartyScripts.tsx` centralizes normal GA4/GTM loading and suppresses it for diagnostic URLs with `?no-third-party=1`.
+- `components/TrustIndexLoader.tsx` also honors `?no-third-party=1`.
+- `components/TourPage.tsx` now renders the hero image through `next/image` instead of a raw CSS background to avoid loading the 2 MB fallback image unoptimized.
+- No broad visual parity changes were made in Sprint 4; UI parity approval remains blocked.

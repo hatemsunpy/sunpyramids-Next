@@ -28,11 +28,14 @@ export default async function Page({ params }: Props) {
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
   const pageSlug = pageSlugMap[resolved.slug[0]] || "tours-search-results";
   const isOneDayRoute = resolved.slug?.[0] === "one-day-tours";
+  const isOneDayIndex = isOneDayRoute && resolved.slug.length === 1;
+  const filterParam = isOneDayRoute ? "destinations.slug" : "categories.slug";
+  const filterSlug = resolved.slug.at(-1) || resolved.slug[0];
   const [page, items] = await Promise.all([
     getPage(pageSlug, locale),
-    isOneDayRoute
+    isOneDayIndex
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", locale)
-      : getTours(`tours?categories.slug=${encodeURIComponent(resolved.slug.at(-1) || resolved.slug[0])}&order_by=display_order,asc`, locale, 12),
+      : getTours(`tours?${filterParam}=${encodeURIComponent(filterSlug)}&order_by=display_order,asc`, locale, 12),
   ]);
 
   return (
@@ -44,8 +47,8 @@ export default async function Page({ params }: Props) {
         >
           <h1>{page?.title || page?.name || "Egypt Tours"}</h1>
         </section>
-        <section className={isOneDayRoute ? "destination-grid-section" : "section-pad container-shell grid-cards"}>
-          {isOneDayRoute
+        <section className={isOneDayIndex ? "destination-grid-section" : "section-pad container-shell grid-cards"}>
+          {isOneDayIndex
             ? items.map((destination) => (
                 <DestinationCard
                   key={destination.id || destination.slug}
