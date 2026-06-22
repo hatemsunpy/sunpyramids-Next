@@ -16,6 +16,10 @@ export function ContactForm({ locale = "en" }: { locale?: Locale }) {
     setStatus("loading");
     const form = new FormData(event.currentTarget);
     const token = await generateRecaptchaToken("submit");
+    if (!token) {
+      setStatus("error");
+      return;
+    }
     const name = String(form.get("name") || "");
     const payload = {
       name,

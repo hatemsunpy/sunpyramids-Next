@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { ThirdPartyScripts } from "@/components/ThirdPartyScripts";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -24,24 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           />
         </noscript>
         {children}
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-NKZ6W32C4J" strategy="afterInteractive" />
-        <Script id="sunpyramids-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-NKZ6W32C4J');
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-KDF33T7');
-          `}
-        </Script>
-        <Script
-          src="https://www.google.com/recaptcha/enterprise.js?render=6LeaVMEqAAAAANXKFLnQvxeAoWvTeEOUlatRYIFn"
-          strategy="lazyOnload"
-        />
+        <ThirdPartyScripts />
       </body>
     </html>
   );

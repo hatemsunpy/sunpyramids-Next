@@ -9,7 +9,8 @@ export function TourPage({ tour, locale = "en" }: { tour: Tour | null; locale?: 
 
   return (
     <main>
-      <section className="page-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.38)), url(${image})` }}>
+      <section className="page-hero tour-page-hero">
+        <Image src={image} alt="" fill priority sizes="100vw" className="page-hero-media" />
         <h1>{title}</h1>
       </section>
       <section className="section-pad container-shell tour-layout">

@@ -73,3 +73,9 @@ Representative tour slug:
 | Mobile | Screenshots captured. Nuxt and Next page heights/section structure differ substantially on tour, profile, contact, and category pages. | Blocks mobile UI parity approval. |
 
 Sprint 2 included substantial Next UI/component work, including Header, HomePage, TourCard, BlogCard, ClonedNuxtPages, and global CSS updates, alongside sitemap coverage fixes. Remaining parity gaps are still significant and require planned component/flow work for richer Nuxt page sections, customer areas, booking panels, mobile layouts, and full form behavior rather than small cosmetic tweaks.
+
+## Sprint 4 UI Notes
+
+Date: 2026-06-22
+
+No broad visual polish was performed. The only UI-adjacent change was a targeted tour hero implementation change from CSS background image to optimized `next/image` to fix a confirmed LCP problem while preserving the existing hero appearance. UI parity approval remains pending.

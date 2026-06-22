@@ -42,6 +42,7 @@ Source of truth: `nuxt_sunpyramids/composables/useSeo.js`, `nuxt_sunpyramids/uti
 - Confirm localized pages return locale-specific SEO data rather than English unless fields are empty.
 - Confirm dashboard canonical overrides with backend host are rewritten to frontend host.
 - Confirm JSON-LD uses dashboard schema only and never invented business values.
+- Sprint 4 raw HTML checks passed for the same priority route set after third-party diagnostic and tour hero changes.
 
 ## Sprint 2 Note
 

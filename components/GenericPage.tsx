@@ -64,7 +64,7 @@ export function GenericPage({
   }
 
   if (route === "faqs") {
-    return <FaqPage page={page} title={title} image={image} faqs={faqs} locale={locale} />;
+    return <FaqPage title={title} image={image} faqs={faqs} locale={locale} />;
   }
 
   if (route === "events") {
@@ -172,7 +172,7 @@ function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null;
   );
 }
 
-function FaqPage({ title, image, faqs, locale }: { page: ApiPage | null; title: string; image: string; faqs: ApiPage[]; locale: Locale }) {
+function FaqPage({ title, image, faqs, locale }: { title: string; image: string; faqs: ApiPage[]; locale: Locale }) {
   return (
     <main>
       <PageHero title={title} image={image} />

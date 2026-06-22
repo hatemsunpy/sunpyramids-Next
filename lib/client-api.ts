@@ -102,10 +102,12 @@ export async function apiPut<T>(
   endpoint: string,
   locale: Locale = "en",
   withToken = true,
+  body?: unknown,
 ): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
     method: "PUT",
     headers: authHeaders(locale, withToken),
+    body: body === undefined ? undefined : JSON.stringify(body),
     cache: "no-store",
   });
 

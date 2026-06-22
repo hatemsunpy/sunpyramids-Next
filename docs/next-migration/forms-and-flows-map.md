@@ -66,6 +66,18 @@ Still blocked:
 - No staging credentials, valid customer account, populated cart, checkout test data, or sandbox payment invoice IDs were available in this run.
 - Rent car, make-your-trip, coupon, cart item edit/remove, full booking panel options/seasons, and `bookings/update/{id}` remain pending implementation/validation.
 
+## Sprint 4 reCAPTCHA and Tracking Status
+
+Date: 2026-06-22
+
+- Nuxt globally loaded Enterprise reCAPTCHA in `nuxt.config.ts`; Next now loads the Enterprise script only when a form calls `generateRecaptchaToken()` immediately before submission.
+- Contact form still submits Nuxt-compatible `recaptcha_token`, `subject`, `type`, `country`, and contact fields.
+- `?no-third-party=1` suppresses diagnostic third-party loading, including reCAPTCHA, GTM/GA, TrustIndex, TikTok, and Clarity.
+- Backend reCAPTCHA acceptance was not validated because staging credentials/backend test context are unavailable.
+- Conversion/thank-you tracking remains code-level parity only: Nuxt and Next both load GA4/GTM globally in normal mode, but no GTM preview or conversion account validation was available.
+
+No additional customer-flow endpoint parity was implemented in Sprint 4 because staging data and confirmed payment/cart state remain missing. `bookings/update/{id}`, cart edit/remove/coupon, rent-car, and make-your-trip remain Sprint 5 candidates after endpoint/payload confirmation.
+
 ## Sprint 2 Backend Validation Result
 
 Date: 2026-06-22

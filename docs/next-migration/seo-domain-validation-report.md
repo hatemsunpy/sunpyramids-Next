@@ -92,3 +92,20 @@ Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-de
 | `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
 
 No backend/API domain was found in canonical or `og:url`. Backend media URLs remain allowed where dashboard media supplies image URLs.
+
+## Sprint 4 Raw HTML Validation Result
+
+Date: 2026-06-22
+
+Target: local production build at `http://localhost:3000`.
+
+Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis`.
+
+| Route | Title | Description | Canonical | Open Graph | `og:url` frontend domain | Twitter | Robots | JSON-LD | Meta keywords absent | Backend SEO URL leak |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `/` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
+| `/egypt-tours/one-day-tours` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | Pass |
+| `/tour/from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | Pass |
+| `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
+
+No backend/API domain was found in canonical or `og:url`. `?no-third-party=1` does not alter server-rendered SEO raw HTML.

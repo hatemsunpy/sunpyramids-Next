@@ -43,6 +43,16 @@ Result: passed for no-invoice safety. A real Chrome browser loaded `/order/payme
 
 Sandbox invoice validation was not performed because no approved staging/sandbox invoice IDs were available.
 
+## Sprint 4 Revalidation
+
+Date: 2026-06-22
+
+Target: local production build at `http://localhost:3000`.
+
+Result: passed for no-invoice safety. A fresh Chrome browser context loaded `/order/payment/callback/paypal/verify?no-third-party=1`; no `payments/paypal/*` or `payments/fawaterk/*` request was made and there were no console errors.
+
+Static code status remains unchanged: payment endpoints are only referenced by the client-only `PaymentCallbackStatus` component and are not called from layouts, metadata generation, static generation, or Server Components.
+
 ## Cutover Status
 
 Code-level SSR safety: passed.

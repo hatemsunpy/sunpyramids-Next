@@ -6,6 +6,7 @@ const loadedScripts = new Set<string>();
 
 export function TrustIndexLoader({ containerId, script }: { containerId: string; script: string }) {
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("no-third-party") === "1") return;
     const container = document.getElementById(containerId);
     if (!container || loadedScripts.has(script)) return;
 
