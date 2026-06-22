@@ -2,6 +2,22 @@ import type { Metadata } from "next";
 import type { ApiPage, Locale, SeoFields } from "@/types/api";
 import { locales, withLocale } from "@/lib/locales";
 
+type OpenGraphType =
+  | "website"
+  | "article"
+  | "book"
+  | "profile"
+  | "music.song"
+  | "music.album"
+  | "music.playlist"
+  | "music.radio_station"
+  | "video.movie"
+  | "video.episode"
+  | "video.tv_show"
+  | "video.other";
+
+type TwitterCard = "summary" | "summary_large_image" | "app" | "player";
+
 export const FRONTEND_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL || "https://sunpyramidstours.com";
 
@@ -65,18 +81,42 @@ export function metadataFromPage(
       description: seo.og_description || description,
       url: canonical,
       siteName: "Sun Pyramids Tours",
-      type: (seo.og_type as "website") || "website",
+      type: openGraphType(seo.og_type),
       images: seo.og_image ? [{ url: seo.og_image }] : undefined,
       locale,
     },
     twitter: {
-      card: (seo.twitter_card as "summary_large_image") || "summary_large_image",
+      card: twitterCard(seo.twitter_card),
       title: seo.twitter_title || seo.og_title || title,
       description: seo.twitter_description || seo.og_description || description,
       images: seo.twitter_image ? [seo.twitter_image] : undefined,
       creator: seo.twitter_creator || "@sunpyramidstours",
     },
   };
+}
+
+function openGraphType(type: string | null | undefined): OpenGraphType {
+  const validTypes = new Set([
+    "website",
+    "article",
+    "book",
+    "profile",
+    "music.song",
+    "music.album",
+    "music.playlist",
+    "music.radio_station",
+    "video.movie",
+    "video.episode",
+    "video.tv_show",
+    "video.other",
+  ]);
+
+  return type && validTypes.has(type) ? (type as OpenGraphType) : "website";
+}
+
+function twitterCard(card: string | null | undefined): TwitterCard {
+  const validCards = new Set(["summary", "summary_large_image", "app", "player"]);
+  return card && validCards.has(card) ? (card as TwitterCard) : "summary_large_image";
 }
 
 function normalizeCanonical(canonical: string | null | undefined, path: string) {
