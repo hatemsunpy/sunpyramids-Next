@@ -827,6 +827,256 @@ select {
   margin: 0;
 }
 
+.original-page-hero {
+  min-height: 26rem;
+  display: flex;
+  align-items: end;
+  color: #fff;
+  background-position: center;
+  background-size: cover;
+  padding: 9rem clamp(1rem, 4vw, 5rem) 3rem;
+}
+
+.original-page-hero h1 {
+  width: min(100%, 75rem);
+  margin: 0 auto;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  text-shadow: 0 4px 40px #00000066, 0 4px 24px #00000033;
+}
+
+.original-content-section {
+  padding-block: 4rem;
+  background: #fff;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: var(--secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.about-intro,
+.impact-overview,
+.planner-layout,
+.contact-clone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(22rem, 0.9fr);
+  gap: 2rem;
+  align-items: center;
+  padding-block: 4rem;
+}
+
+.about-intro {
+  background: #fff;
+}
+
+.about-intro h2,
+.impact-overview h2,
+.planner-layout h2,
+.contact-info-panel h2 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+.about-intro img,
+.impact-overview img {
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.about-gallery,
+.gallery-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 2rem clamp(1rem, 4vw, 5rem);
+  background: #fff;
+}
+
+.about-gallery img,
+.gallery-strip img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.about-goals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding-block: 3rem;
+}
+
+.about-goals article,
+.contact-info-panel,
+.planner-form,
+.faq-item {
+  background: #fff;
+  border: 1px solid #eeeeee;
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.about-goals h3 {
+  margin: 0 0 0.75rem;
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.team-section,
+.faq-teaser {
+  padding-block: 4rem;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.team-grid img {
+  width: 100%;
+  height: auto;
+  border-radius: 1rem;
+  background: #f7f7f7;
+  object-fit: cover;
+}
+
+.faq-search-section {
+  padding: 2rem clamp(1rem, 4vw, 5rem);
+  background: #fff;
+}
+
+.faq-search-section input {
+  width: 100%;
+  border: 1px solid #eeeeee;
+  border-radius: 999px;
+  padding: 1.25rem 1.5rem;
+  outline: 0;
+}
+
+.faq-search-section input:focus {
+  border-color: #4d78e5;
+  box-shadow: 0 0 0 4px #e9eefc;
+}
+
+.faq-list {
+  display: grid;
+  gap: 1rem;
+  padding-block: 2rem 4rem;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  color: var(--text-dark);
+  font-weight: 700;
+}
+
+.faq-item div {
+  margin-top: 1rem;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+.event-description {
+  padding-block: 3rem 1rem;
+  color: #6b7280;
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  padding: 3rem clamp(1rem, 4vw, 5rem);
+}
+
+.event-card {
+  position: relative;
+}
+
+.event-card .destination-card {
+  min-height: 21rem;
+}
+
+.event-read-more {
+  position: absolute;
+  left: 1.25rem;
+  bottom: 1rem;
+  z-index: 3;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+}
+
+.planner-layout {
+  align-items: start;
+}
+
+.planner-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.planner-form input,
+.contact-clone input,
+.contact-clone textarea {
+  width: 100%;
+  border: 1px solid #eeeeee;
+  border-radius: 1rem;
+  padding: 1rem;
+  outline: 0;
+}
+
+.step-label {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.contact-methods {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.contact-methods a {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.impact-overview {
+  background: #fff;
+}
+
+.need-help-band {
+  padding: 3rem clamp(1rem, 4vw, 5rem);
+  background: #f9fafb;
+}
+
+.need-help-band .container-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  border-radius: 1rem;
+  background: #fff url("/images/linearNeedHelp.png") right center/auto 100% no-repeat;
+  padding: 2rem;
+}
+
+.need-help-band h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
 .content-prose {
   font-size: 1.05rem;
   line-height: 1.8;
@@ -896,9 +1146,20 @@ select {
   }
 
   .tour-layout,
+  .about-intro,
+  .impact-overview,
+  .planner-layout,
+  .contact-clone,
   .two-col,
   .footer-grid {
     grid-template-columns: 1fr;
+  }
+
+  .event-grid,
+  .team-grid,
+  .about-gallery,
+  .gallery-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -948,6 +1209,25 @@ select {
   .destination-grid-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
+  }
+
+  .about-goals,
+  .event-grid,
+  .team-grid,
+  .about-gallery,
+  .gallery-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .original-page-hero {
+    min-height: 18rem;
+    padding-top: 5rem;
+  }
+
+  .need-help-band .container-shell {
+    align-items: start;
+    flex-direction: column;
+    background-image: none;
   }
 
   .destination-card {

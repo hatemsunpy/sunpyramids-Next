@@ -31,6 +31,7 @@ export type ApiPage = {
   featured_image?: string;
   image?: string;
   gallery?: string[];
+  metas?: { meta_key?: string; meta_value?: string; value?: string; title?: string; description?: string; [key: string]: unknown }[];
   seo?: SeoFields | null;
   [key: string]: unknown;
 };

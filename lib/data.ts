@@ -38,6 +38,21 @@ export async function getDestinations(endpoint: string, locale: Locale, limit = 
   return listData(response);
 }
 
+export async function getCategories(endpoint: string, locale: Locale, limit = 100) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `${endpoint}${endpoint.includes("?") ? "&" : "?"}page_limit=${limit}`,
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getFaqs(locale: Locale, limit = 200) {
+  const response = await apiFetch<ApiList<ApiPage>>(`faqs?page_limit=${limit}`, {
+    locale,
+  });
+  return listData(response);
+}
+
 export async function getTour(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: Tour }>(
     `tours/${encodeURIComponent(slug)}?includes=seo,gallery,category,destination,itinerary,includes,excludes,faqs,reviews`,
