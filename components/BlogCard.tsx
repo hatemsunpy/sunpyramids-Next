@@ -12,12 +12,13 @@ export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Loca
   return (
     <article className="blog-card">
       <Link href={withLocale(`/blog/${slug}`, locale)}>
-        <div style={{ position: "relative", aspectRatio: "4 / 3" }}>
+        <div className="blog-card-media">
           <Image src={image} alt={title} fill sizes="(max-width: 768px) 100vw, 33vw" />
         </div>
-        <div className="card-body">
+        <div className="blog-card-body">
+          <p>Travel Guide</p>
           <h3 className="line-clamp-2">{title}</h3>
-          <p className="muted line-clamp-3">{description}</p>
+          <div className="line-clamp-3" dangerouslySetInnerHTML={{ __html: String(description) }} />
         </div>
       </Link>
     </article>

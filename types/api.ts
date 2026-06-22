@@ -44,9 +44,12 @@ export type ApiList<T> = {
 export type Tour = ApiPage & {
   price?: number | string;
   start_from?: number | string;
+  adult_price?: number | string;
   duration?: string;
   city?: string;
   destination?: string;
   category?: { name?: string; slug?: string };
+  categories?: { name?: string; title?: string; slug?: string }[];
+  destinations?: { name?: string; title?: string; slug?: string }[];
   images?: string[];
 };
