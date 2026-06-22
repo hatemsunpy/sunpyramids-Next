@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Locale, Tour } from "@/types/api";
 import { ContactForm } from "@/components/ContactForm";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export function TourPage({ tour, locale = "en" }: { tour: Tour | null; locale?: Locale }) {
   const title = tour?.title || tour?.name || "Egypt Tour";
@@ -16,7 +17,7 @@ export function TourPage({ tour, locale = "en" }: { tour: Tour | null; locale?: 
           <div style={{ position: "relative", aspectRatio: "16 / 9", borderRadius: "1.25rem", overflow: "hidden", marginBottom: "1.5rem" }}>
             <Image src={image} alt={title} fill priority sizes="(max-width: 1024px) 100vw, 70vw" />
           </div>
-          <div className="content-prose" dangerouslySetInnerHTML={{ __html: String(tour?.content || tour?.description || "Tour details are loaded from the dashboard API.") }} />
+          <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(tour?.content || tour?.description || "Tour details are loaded from the dashboard API.") }} />
         </article>
         <aside className="booking-panel">
           <p className="muted">Start From</p>

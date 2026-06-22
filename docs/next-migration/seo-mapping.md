@@ -37,8 +37,8 @@ Source of truth: `nuxt_sunpyramids/composables/useSeo.js`, `nuxt_sunpyramids/uti
 
 ## Remaining Validation
 
-- Raw HTML checks passed locally for `/`, `/egypt-tours/one-day-tours`, representative `/tour/[slug]`, and `/contact-us` on 2026-06-22.
-- Confirm no `<meta name="keywords">` in rendered HTML.
+- Raw HTML checks passed locally for `/`, `/egypt-tours/one-day-tours`, representative `/tour/[slug]`, and `/contact-us` on 2026-06-22 in both Sprint 2 and Sprint 3.
+- Confirmed no `<meta name="keywords">` in rendered HTML for the Sprint 3 priority route set.
 - Confirm localized pages return locale-specific SEO data rather than English unless fields are empty.
 - Confirm dashboard canonical overrides with backend host are rewritten to frontend host.
 - Confirm JSON-LD uses dashboard schema only and never invented business values.

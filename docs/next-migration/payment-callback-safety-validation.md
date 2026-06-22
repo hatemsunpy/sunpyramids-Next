@@ -33,6 +33,16 @@ Payment callback pages are UI-safe / SSR-safe clones. They must not trigger paym
 - Browser console on the no-invoice payment route had no errors; only headless localhost third-party warnings from Hotjar/Plausible.
 - Runtime backend validation with real/sandbox invoice IDs is still required.
 
+## Sprint 3 Revalidation
+
+Date: 2026-06-22
+
+Target: local production build at `http://localhost:3000`.
+
+Result: passed for no-invoice safety. A real Chrome browser loaded `/order/payment/callback/paypal/verify` without `invoice_id`; the network log contained no `payments/paypal/*` or `payments/fawaterk/*` request, and the console had no errors.
+
+Sandbox invoice validation was not performed because no approved staging/sandbox invoice IDs were available.
+
 ## Cutover Status
 
 Code-level SSR safety: passed.

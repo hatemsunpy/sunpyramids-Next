@@ -28,13 +28,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   const pageSlug = pageSlugMap[slug[0]] || "tours-search-results";
-  const isOneDayIndex = slug.length === 1 && slug[0] === "one-day-tours";
+  const isOneDayRoute = slug[0] === "one-day-tours";
+  const destinationSlug = slug[1];
   const [page, items] = await Promise.all([
     getPage(pageSlug, "en"),
-    isOneDayIndex
+    isOneDayRoute
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", "en")
       : getTours(`tours?categories.slug=${encodeURIComponent(slug.at(-1) || slug[0])}&order_by=display_order,asc`, "en", 12),
   ]);
+  const tourQuery = destinationSlug
+    ? `tours?destinations.slug=${encodeURIComponent(destinationSlug)}&order_by=display_order,asc`
+    : "";
+  const destinationTours = destinationSlug ? await getTours(tourQuery, "en", 12) : [];
+  const displayItems = destinationSlug ? destinationTours : items;
 
   return (
     <SiteShell locale="en">
@@ -45,9 +51,9 @@ export default async function Page({ params }: Props) {
         >
           <h1>{page?.title || page?.name || "Egypt Tours"}</h1>
         </section>
-        <section className={isOneDayIndex ? "destination-grid-section" : "section-pad container-shell grid-cards"}>
-          {isOneDayIndex
-            ? items.map((destination) => (
+        <section className={isOneDayRoute && !destinationSlug ? "destination-grid-section" : "section-pad container-shell grid-cards"}>
+          {isOneDayRoute && !destinationSlug
+            ? displayItems.map((destination) => (
                 <DestinationCard
                   key={destination.id || destination.slug}
                   destination={destination}
@@ -55,7 +61,7 @@ export default async function Page({ params }: Props) {
                   locale="en"
                 />
               ))
-            : items.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale="en" />)}
+            : displayItems.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale="en" />)}
         </section>
       </main>
     </SiteShell>

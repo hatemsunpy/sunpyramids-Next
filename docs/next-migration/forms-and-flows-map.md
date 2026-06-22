@@ -6,7 +6,7 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
-| Contact form | `components/ContactUs/Form.vue` | `POST contact-requests` with recaptcha token | `components/ContactForm.tsx` posts `contact-requests` | Implemented, but recaptcha/tracking parity pending. |
+| Contact form | `components/ContactUs/Form.vue` | `POST contact-requests` with recaptcha token | `components/ContactForm.tsx` posts `contact-requests` with `subject`, `type`, `country`, and `recaptcha_token` | Implemented; backend recaptcha/tracking parity pending. |
 | Landing/contact forms | `components/BookEgyptTrip/ContactUs.vue`, `EgyptTripLanding*`, `MarktingPages/ContactUs.vue`, `Home/NeedHelp.vue` | `POST contact-requests` | Generic cloned route/contact form surfaces | Needs route-specific field parity validation. |
 | Event booking/lead | `components/Event/RightPanal/Book.vue` | `POST contact-requests` | Event detail page exists | Needs form parity validation. |
 | Make Your Trip | `components/MakeYourTrip/Form/*` | `POST custom/trips` | Route/UI clone exists | Functional flow pending. |
@@ -17,23 +17,23 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
 | Tour booking panel | `components/Tours/RightPanal/index.vue` | `cart/tours/append`, wishlist toggle, tour options/seasons | Tour detail route exists | Booking panel parity pending. |
-| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` route/UI clone exists | Functional flow pending. |
-| Checkout billing/payment | `components/Checkout/*` | `POST bookings`, `POST bookings/update/{id}` | `/cart/checkout` route/UI clone exists | Critical blocker. |
+| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear | Partial implementation; edit/remove/coupon/staging validation pending. |
+| Checkout billing/payment | `components/Checkout/*` | `POST bookings`, `POST bookings/update/{id}` | `/cart/checkout` posts `bookings` from client and redirects to returned payment URL | Partial implementation; `bookings/update/{id}` and staging payment validation pending. |
 | Thank-you / confirmation | `pages/thankful.vue` | Redirect/result display | `/thankful` exists | Copy/redirect/history validation pending. |
 
 ## Auth and Customer Account
 
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
-| Sign in | `components/Auth/SignIn.vue` | `POST auth/login` | `/auth/sign-in` exists | Functional validation pending. |
-| Sign up | `components/Auth/SignUp.vue` | `POST auth/register` | `/auth/sign-up` exists | Functional validation pending. |
-| Forgot password | `components/Auth/ForgetPassword.vue` | `POST auth/password/forget` | `/auth/forget-password` exists | Functional validation pending. |
-| Confirm code | `components/Auth/ConfirmCode.vue` | `POST auth/password/otp/verify`, `POST auth/password/forget` | `/auth/confirm-code` exists | Functional validation pending. |
-| Create password | `components/Auth/CreatePassword.vue` | `POST auth/password/reset` | `/auth/create-password` exists | Functional validation pending. |
-| Reset password | `components/Auth/ResetPassword.vue` | `POST client/reset-password` | `/auth/reset-password` exists | Functional validation pending. |
-| Profile | `pages/profile.vue`, `pages/profile/settings.vue` | `PATCH profile` | `/profile`, `/profile/settings` exist | Auth guard/API pending. |
-| Bookings | `pages/profile/bookings.vue` | `bookings?page_limit=200&includes=currency,tours` | `/profile/bookings` exists | Auth/API pending. |
-| Favourites | `pages/profile/favourites.vue` | `wishlist?page=1&page_limit=200`, wishlist toggle | `/profile/favourites` exists | Auth/API pending. |
+| Sign in | `components/Auth/SignIn.vue` | `POST auth/login` | `/auth/sign-in` posts login and stores `sunpyramids-token`, `sunpyramids-user`, optional `sunpyramids-email` | Implemented; staging credential validation pending. |
+| Sign up | `components/Auth/SignUp.vue` | `POST auth/register` | `/auth/sign-up` posts registration and redirects to sign-in | Implemented; backend validation pending. |
+| Forgot password | `components/Auth/ForgetPassword.vue` | `POST auth/password/forget` | `/auth/forget-password` posts email and redirects to confirm-code | Implemented; backend validation pending. |
+| Confirm code | `components/Auth/ConfirmCode.vue` | `POST auth/password/otp/verify`, `POST auth/password/forget` | `/auth/confirm-code` verifies OTP and redirects to create-password | Implemented; resend flow still pending. |
+| Create password | `components/Auth/CreatePassword.vue` | `POST auth/password/reset` | `/auth/create-password` posts email/OTP/password | Implemented; backend validation pending. |
+| Reset password | `components/Auth/ResetPassword.vue` | `POST client/reset-password` | `/auth/reset-password` posts email/token/password | Implemented; backend validation pending. |
+| Profile | `pages/profile.vue`, `pages/profile/settings.vue` | `PATCH profile` | `/profile`, `/profile/settings` load cookie user client-side and patch profile | Implemented; staging auth validation pending. |
+| Bookings | `pages/profile/bookings.vue` | `bookings?page_limit=200&includes=currency,tours` | `/profile/bookings` fetches after client auth cookie check | Implemented; staging auth/data validation pending. |
+| Favourites | `pages/profile/favourites.vue` | `wishlist?page=1&page_limit=200`, wishlist toggle | `/profile/favourites` fetches wishlist; toggle helper added | Partial implementation; card integration/staging validation pending. |
 
 ## Payment Callback Flows
 
@@ -45,8 +45,26 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 
 ## Cutover Blockers
 
-- Auth, profile, wishlist, cart, checkout, payment, and booking confirmation require staging backend validation.
+- Auth, profile, wishlist, cart, checkout, payment, and booking confirmation now have a first-pass client API layer where listed above, but still require staging backend validation.
 - Recaptcha and conversion tracking parity must be confirmed before replacing production Nuxt.
+
+## Sprint 3 Customer Flow Implementation
+
+Date: 2026-06-22
+
+Confirmed Nuxt sources inspected before implementation: `components/Auth/*`, `pages/profile*.vue`, `components/Cart/steps/Cart/*`, `components/Checkout/index.vue`, `components/Tours/RightPanal/index.vue`, `components/Shared/TourCard.vue`, and `components/ContactUs/Form.vue`.
+
+Implemented in Next:
+
+- `components/CustomerFlows.tsx` wires auth/password/profile/bookings/favourites/cart/checkout behavior to the Nuxt-confirmed endpoints.
+- Private profile, bookings, favourites, cart, and checkout state is loaded client-side after hydration and is not exposed in public server HTML.
+- `lib/client-api.ts` now supports client auth headers, `GET`, `POST`, `PATCH`, `PUT`, and `DELETE` helpers using the existing backend API base.
+- `components/ContactForm.tsx` now submits Nuxt-compatible contact payload fields and redirects to `/thankful?name=...`.
+
+Still blocked:
+
+- No staging credentials, valid customer account, populated cart, checkout test data, or sandbox payment invoice IDs were available in this run.
+- Rent car, make-your-trip, coupon, cart item edit/remove, full booking panel options/seasons, and `bookings/update/{id}` remain pending implementation/validation.
 
 ## Sprint 2 Backend Validation Result
 

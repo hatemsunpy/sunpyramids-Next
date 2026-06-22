@@ -72,4 +72,4 @@ Representative tour slug:
 | `/contact-us` | Next route renders contact form, but Nuxt page is longer and includes richer contact/social/map layout. | Needs visual/form parity work. |
 | Mobile | Screenshots captured. Nuxt and Next page heights/section structure differ substantially on tour, profile, contact, and category pages. | Blocks mobile UI parity approval. |
 
-No broad visual rewrites were made in Sprint 2 beyond the sitemap code fix because most mismatches require planned component/flow implementation rather than small cosmetic fixes.
+Sprint 2 included substantial Next UI/component work, including Header, HomePage, TourCard, BlogCard, ClonedNuxtPages, and global CSS updates, alongside sitemap coverage fixes. Remaining parity gaps are still significant and require planned component/flow work for richer Nuxt page sections, customer areas, booking panels, mobile layouts, and full form behavior rather than small cosmetic tweaks.

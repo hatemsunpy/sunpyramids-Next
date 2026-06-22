@@ -7,7 +7,7 @@ export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Loca
   const slug = blog.slug || String(blog.id || "");
   const title = blog.title || blog.name || "Egypt Travel Guide";
   const image = blog.featured_image || blog.image || blog.banner || "/images/blogsHero.png";
-  const description = blog.short_description || blog.description || "Read the latest Egypt travel insights.";
+  const description = stripHtml(blog.short_description || blog.description || "Read the latest Egypt travel insights.");
 
   return (
     <article className="blog-card">
@@ -18,9 +18,16 @@ export function BlogCard({ blog, locale = "en" }: { blog: ApiPage; locale?: Loca
         <div className="blog-card-body">
           <p>Travel Guide</p>
           <h3 className="line-clamp-2">{title}</h3>
-          <div className="line-clamp-3" dangerouslySetInnerHTML={{ __html: String(description) }} />
+          <p className="line-clamp-3">{description}</p>
         </div>
       </Link>
     </article>
   );
+}
+
+function stripHtml(value: unknown) {
+  return String(value)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
