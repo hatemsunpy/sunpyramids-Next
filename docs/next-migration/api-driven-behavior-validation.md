@@ -10,7 +10,7 @@
 | Server fetch can pass auth token | `lib/api.ts` reads `sunpyramids-token` cookie. | Passed in code; auth flow pending. |
 | Public pages fetch API data | `lib/data.ts` uses pages/tours/blogs/categories/destinations/faqs endpoints. | Partial pass. |
 | Client contact form posts to backend | `components/ContactForm.tsx` posts `contact-requests`. | Partial pass; recaptcha/tracking pending. |
-| Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear, and checkout booking creation to confirmed endpoints. | Code pass; staging credentials/data pending. |
+| Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear/remove/coupon/edit, checkout booking creation/payment update, rent-car, and make-your-trip to confirmed endpoints. | Code pass; staging credentials/data pending. |
 | Payment callbacks call API client-side only | `components/PaymentCallbackStatus.tsx` is `"use client"` and calls in `useEffect`. | Passed in code; backend sandbox pending. |
 | Homepage hydration error fixed | `components/BlogCard.tsx` renders dashboard blog summaries as plain text after stripping HTML, avoiding browser/React HTML mismatch inside the card link. | Browser console pass; no React #418 observed. |
 | Third-party diagnostic mode | `components/ThirdPartyScripts.tsx`, `components/TrustIndexLoader.tsx`, and `lib/recaptcha.ts` skip third-party loads when the URL contains `no-third-party=1`. | Implemented for local diagnosis; normal tracking parity remains active. |
@@ -23,10 +23,10 @@
 | Settings/header/footer | Nuxt fetches `settings`, `countries`, `currencies`; Next may use static shell values. | Confirm whether dashboard-managed header/footer/currency must be API-driven before cutover. |
 | Auth | Next now posts login/register/password endpoints. | Validate with staging credentials and expired/invalid session cases. |
 | Profile | Next now patches profile and fetches bookings/favourites client-side after token check. | Validate with staging account data. |
-| Cart | Next now fetches cart list and clears cart; edit/remove/coupon remain pending. | Complete cart parity and validate with populated cart state. |
-| Checkout | Next now posts `bookings` and redirects to returned payment URL; `bookings/update/{id}` remains pending. | Critical staging cutover blocker. |
-| Make Your Trip | Nuxt posts `custom/trips`; Next route needs full flow validation. | Implement/validate. |
-| Rent Car | Nuxt fetches locations/destinations and appends rentals to cart; Next route needs full flow validation. | Implement/validate. |
+| Cart | Next now fetches cart list and supports clear/remove/coupon/tour edit via confirmed endpoints. | Validate with populated staging cart state. |
+| Checkout | Next now posts `bookings`, optionally posts `bookings/update/{id}`, and redirects to approved payment URLs. | Critical staging payment validation blocker. |
+| Make Your Trip | Next now posts `custom/trips` with submit-time reCAPTCHA token. | Validate backend acceptance in staging. |
+| Rent Car | Next now fetches locations/destinations and appends rentals to cart. | Validate with staging cart/rental data. |
 | Search/trips | Nuxt filters categories/destinations/tours with query params; Next representative route exists. | Validate filters, pagination, query behavior. |
 
 ## Cutover Status
@@ -54,6 +54,51 @@ Target: local Next production build at `http://localhost:3000`.
 | Lighthouse mobile home diagnostic | 100, LCP 1.2s, CLS 0.029, TBT 50ms. |
 | Lighthouse mobile tour normal after hero fix | 65, LCP 2.9s, CLS 0.002, TBT 960ms. Low score remains due third-party scripts. |
 | Lighthouse mobile tour diagnostic after hero fix | 94, LCP 1.7s, CLS 0.002, TBT 60ms. |
+
+## Sprint 5 Validation Status
+
+Date: 2026-06-22
+
+| Area | Result |
+|---|---|
+| Staging credentials | Not available in this run. Auth/profile/cart/checkout cannot be marked passed. |
+| Test cart/account data | Not available. Cart edit/remove/coupon and checkout are code-wired only. |
+| Sandbox invoice IDs | Not available. Payment callback success/failure/pending backend behavior remains blocked. |
+| reCAPTCHA backend acceptance | Not validated. Contact and make-your-trip generate tokens on submit, but staging acceptance is blocked. |
+| Conversion/thank-you tracking | Not approved. Nuxt/Next tag loading was inspected at code level; no GTM preview or conversion account validation was available. |
+| Customer-flow parity implementation | First-pass parity added for cart remove/coupon/edit, `bookings/update/{id}`, make-your-trip, and rent-car confirmed endpoints. |
+| Third-party performance decision | Not approved. Diagnostic mode proves first-party performance; normal mode remains marketing/tag-owner decision. |
+
+### Local Validation
+
+Target: local production build at `http://127.0.0.1:3000`.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for `/`, `/egypt-tours/one-day-tours`, representative tour, `/contact-us`, `/cart`, `/cart/checkout`, `/thankful`, auth routes, profile routes, no-invoice PayPal callback, `/sitemap.xml`, `/robots.txt`, `/make-your-trip`, and `/rent-car`. |
+| Browser diagnostic console | Passed for home, tour, cart, make-your-trip, contact, and no-invoice payment callback; no console errors. |
+| Browser diagnostic network | No payment API requests without `invoice_id`; no reCAPTCHA requests on page load. External diagnostic requests on cart/make-your-trip were backend API calls only. |
+| Raw SEO HTML | Public routes passed canonical/OG/Twitter/frontend-domain checks; cart routes render basic/private-flow metadata only. |
+| Lighthouse mobile home normal | 71, LCP 3.2s, CLS 0.029, TBT 970ms. |
+| Lighthouse mobile home diagnostic | 88, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile tour normal | 70, LCP 2.7s, CLS 0.002, TBT 920ms. |
+| Lighthouse mobile tour diagnostic | 92, LCP 2.7s, CLS 0.002, TBT 0ms. |
+
+Lighthouse produced valid JSON reports under `output/lighthouse/` but emitted Windows temp-profile cleanup `EPERM` warnings after each run.
+
+### Tag/Tracking Parity Matrix
+
+| Tag/event | Nuxt trigger | Next trigger | Route/action | Diagnostic mode | Approved | Status | Risk |
+|---|---|---|---|---|---|---|---|
+| GA4 `G-NKZ6W32C4J` | `nuxt.config.ts` global script | `ThirdPartyScripts` client effect | All normal routes | No | No | Code parity pending marketing validation | Medium |
+| GTM `GTM-KDF33T7` | `nuxt.config.ts` global script | `ThirdPartyScripts` client effect | All normal routes | No | No | Code parity pending GTM preview validation | High |
+| TikTok | Loaded through GTM/original tags | Loaded through GTM in normal mode | Marketing tags | No | No | Detected as third-party performance contributor | High |
+| Clarity | Loaded through GTM/original tags | Loaded through GTM in normal mode | Analytics/session recording | No | No | Detected as third-party performance contributor | High |
+| TrustIndex | Nuxt widget/script surfaces | `TrustIndexLoader` client effect | Widget routes/components | No | No | Functional validation pending | Medium |
+| reCAPTCHA Enterprise | Nuxt global script/token calls | Submit-time `generateRecaptchaToken()` | Contact and make-your-trip submit | No | No | Backend acceptance pending | Medium |
+| Thank-you conversion | Needs GTM/account confirmation | No explicit invented event added | `/thankful` | No | No | Must not fire purchase before confirmed success | Critical |
 
 ## Sprint 3 Validation Result
 

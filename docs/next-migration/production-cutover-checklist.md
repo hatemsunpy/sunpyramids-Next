@@ -7,10 +7,10 @@
 | Required migration docs completed | In progress | This folder contains the required discovery/validation docs. |
 | Route parity | Passed for route existence | See `docs/nuxt-route-inventory.md`; customer flows still require validation. |
 | UI parity | Partial | Sprint 2 captured Nuxt and Next screenshots for all priority pages desktop/mobile; parity not approved due documented gaps. |
-| API-driven behavior | Partial | Public content mostly wired; Sprint 3 added first-pass customer-flow API layer. Staging validation, settings/menu/footer, and revenue flow parity remain pending. |
+| API-driven behavior | Partial | Public content mostly wired; Sprint 5 added confirmed customer-flow parity gaps. Staging validation, settings/menu/footer, and revenue flow approval remain pending. |
 | SEO/domain validation | Partial | Code safeguards exist and Sprint 3 raw HTML checks passed locally for priority pages; staging still required. |
 | Sitemap/robots validation | Partial | Sprint 2 added paginated tours/blogs plus categories/destinations/blog categories. Custom marketing page discovery still blocked by missing list endpoint. |
-| Customer flows | Partial | Auth/profile/bookings/favourites/cart list/clear/checkout booking creation are client API-wired; staging validation and remaining parity gaps are blockers. |
+| Customer flows | Partial | Auth/profile/bookings/favourites/cart/checkout/rent-car/make-your-trip are client API-wired; staging validation is still a blocker. |
 | Payment callback safety | Partial pass | Client-only implementation exists and no-invoice browser validation passed; sandbox invoice validation pending. |
 | Forms | Partial | Contact posts Nuxt-compatible payload with recaptcha token attempt; backend recaptcha/tracking and other forms pending. |
 | `npm run lint` | Passed | Passed on 2026-06-22. |
@@ -107,6 +107,31 @@ Blocking items:
 4. reCAPTCHA backend acceptance and conversion/thank-you tracking parity require validation.
 5. Custom marketing sitemap discovery needs backend support or explicit exclusion approval.
 6. UI parity is not approved yet.
+
+## Sprint 5 Status
+
+Date: 2026-06-22
+
+| Check | Result |
+|---|---|
+| Confirmed parity gaps implemented | Cart remove/coupon/edit, checkout `bookings/update/{id}`, rent-car append, and make-your-trip submission. |
+| `npm run lint` | Passed |
+| `npm run build` | Passed |
+| Route smoke tests | Passed HTTP 200 for required Sprint 5 route list plus `/make-your-trip` and `/rent-car`. |
+| Browser validation | Diagnostic home/tour/customer/contact/payment routes had no console errors; no payment mutation request without `invoice_id`; no reCAPTCHA request on page load. |
+| SEO raw HTML | Public routes passed frontend-domain SEO URL checks. Cart/checkout render basic metadata only and need business decision if richer SEO is required. |
+| Lighthouse mobile homepage normal | 71, LCP 3.2s, CLS 0.029, TBT 970ms. |
+| Lighthouse mobile homepage diagnostic | 88, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile representative tour normal | 70, LCP 2.7s, CLS 0.002, TBT 920ms. |
+| Lighthouse mobile representative tour diagnostic | 92, LCP 2.7s, CLS 0.002, TBT 0ms. |
+| Staging auth/profile validation | Blocked; no staging credentials or test account provided. |
+| Staging cart/checkout validation | Blocked; no populated cart, coupon, payment method, or sandbox data provided. |
+| Payment sandbox callback validation | Blocked; no PayPal/Fawaterk sandbox invoice IDs provided. |
+| reCAPTCHA backend acceptance | Blocked; no staging validation context provided. |
+| Conversion/thank-you tracking | Blocked; no GTM preview/account approval provided. |
+| Third-party performance approval | Blocked pending marketing/tag owner decision. |
+| Custom marketing sitemap decision | Blocked pending backend list endpoint, approved manual slugs, or explicit exclusion. |
+| Production cutover | Still blocked. |
 
 ## Rollback Triggers
 

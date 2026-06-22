@@ -39,18 +39,18 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 | Endpoint / pattern | Nuxt usage | Current Next status | Auth | Cutover status |
 |---|---|---|---|---|
 | `contact-requests` | Contact, landing, need-help, event booking style leads | `ContactForm` posts Nuxt-compatible fields here | Public | Needs backend recaptcha/tracking parity validation. |
-| `custom/trips` | Make Your Trip submission | Route/UI clone only | Optional token | Pending implementation/validation. |
-| `locations?page_limit=200&order_by=id,asc` | Rent car and shortcuts | Not fully wired | Public | Pending. |
-| `car/rental/available/destinations?...` | Rent car dependent destination options | Not fully wired | Public | Pending. |
-| `car/rental/search/for/route` | Rent car search | Not fully wired | Public | Pending. |
-| `cart/rentals/append` | Add rental to cart | Not fully wired | Optional token | Pending. |
+| `custom/trips` | Make Your Trip submission | `PlannerRequestFlow` posts Nuxt-aligned request payload with `recaptcha_token` | Optional token | Implemented; staging validation pending. |
+| `locations?page_limit=200&order_by=id,asc` | Rent car and shortcuts | `PlannerRequestFlow` fetches pickup locations | Public | Implemented; staging validation pending. |
+| `car/rental/available/destinations?...` | Rent car dependent destination options | `PlannerRequestFlow` fetches drop-off destinations after pickup selection | Public | Implemented; staging validation pending. |
+| `car/rental/search/for/route` | Rent car search | Confirmed in Nuxt but not required for current minimal append flow | Public | Documented; optional price preview pending. |
+| `cart/rentals/append` | Add rental to cart | `PlannerRequestFlow` posts Nuxt-aligned rental payload | Optional token | Implemented; staging validation pending. |
 | `cart/tours/append` | Add tour to cart | Not fully wired | Optional/auth | Pending. |
 | `cart/list` | Cart page | `/cart` fetches with optional token from client | Optional/auth | Implemented; staging validation pending. |
-| `cart/remove/{id}` | Remove cart item | Not wired | Auth/context-dependent | Pending. |
+| `cart/remove/{id}` | Remove cart item | `/cart` remove action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
 | `cart/clear` | Clear cart | `/cart` clear action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
-| `coupons/{code}/validate` | Cart coupon | Not wired | Auth/context-dependent | Pending. |
+| `coupons/{code}/validate` | Cart coupon | `/cart` coupon form calls endpoint with token | Auth/context-dependent | Implemented; staging validation pending. |
 | `bookings` | Checkout booking creation | `/cart/checkout` posts from client and redirects to returned payment URL | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
-| `bookings/update/{id}` | Checkout/payment status update | Route/UI clone only | Auth/context-dependent | Critical blocker. |
+| `bookings/update/{id}` | Checkout/payment status update | `/cart/checkout` calls after booking creation when payment method is selected | Auth/context-dependent | Implemented first pass; sandbox validation remains critical. |
 | `wishlist/{id}/toggle` | Tour cards/profile favourites | Helper added in `CustomerFlows`; card wiring pending | Auth | Partial; staging validation pending. |
 | `wishlist?page=1&page_limit=200` | Profile favourites | `/profile/favourites` fetches from client after token check | Auth | Implemented; staging validation pending. |
 | `bookings?page_limit=200&includes=currency,tours` | Profile bookings | `/profile/bookings` fetches from client after token check | Auth | Implemented; staging validation pending. |
@@ -79,3 +79,9 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 - No new backend endpoints were invented or added.
 - reCAPTCHA script loading moved from global layout loading to submit-time client loading in `lib/recaptcha.ts`; the submitted `recaptcha_token` field for `contact-requests` is unchanged.
 - Diagnostic `?no-third-party=1` mode suppresses third-party script loading only; it does not change API endpoints or public SEO output.
+
+## Sprint 5 Notes
+
+- Confirmed customer-flow endpoints were wired without inventing backend routes or response fields.
+- `bookings/update/{id}`, cart remove/coupon/edit, rent-car append, and make-your-trip submission now have Next client-side entry points.
+- Runtime staging validation is still pending because credentials, cart data, coupon data, and sandbox invoice IDs were not available.

@@ -109,3 +109,22 @@ Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-de
 | `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass |
 
 No backend/API domain was found in canonical or `og:url`. `?no-third-party=1` does not alter server-rendered SEO raw HTML.
+
+## Sprint 5 Raw HTML Validation Result
+
+Date: 2026-06-22
+
+Target: local production build at `http://127.0.0.1:3000`.
+
+Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis`.
+
+| Route | Title | Description | Canonical | Hreflang | Open Graph | Twitter | Robots | JSON-LD | Meta keywords absent | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|
+| `/` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Backend media URLs appear in image metadata only. |
+| `/egypt-tours/one-day-tours` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | Backend media URLs appear in image metadata only. |
+| `/tour/from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No backend canonical/OG URL leak. |
+| `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Pass | Backend media URLs appear in image metadata only. |
+| `/cart` | Basic metadata only | Basic metadata only | Not present | Not present | Not present | Not present | Not present | Not present | Pass | Private/customer flow route; public SEO enrichment requires business decision. |
+| `/cart/checkout` | Basic metadata only | Basic metadata only | Not present | Not present | Not present | Not present | Not present | Not present | Pass | Disallowed in robots; private checkout route. |
+
+No backend/API domain was found in canonical or `og:url` for public SEO routes. Backend media URLs remain allowed where dashboard media supplies image URLs. No hardcoded SEO values were added for cart/checkout.
