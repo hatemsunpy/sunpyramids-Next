@@ -31,6 +31,7 @@ export type ApiPage = {
   featured_image?: string;
   image?: string;
   gallery?: string[];
+  metas?: { meta_key?: string; meta_value?: string; value?: string; title?: string; description?: string; [key: string]: unknown }[];
   seo?: SeoFields | null;
   [key: string]: unknown;
 };
@@ -44,9 +45,12 @@ export type ApiList<T> = {
 export type Tour = ApiPage & {
   price?: number | string;
   start_from?: number | string;
+  adult_price?: number | string;
   duration?: string;
   city?: string;
   destination?: string;
   category?: { name?: string; slug?: string };
+  categories?: { name?: string; title?: string; slug?: string }[];
+  destinations?: { name?: string; title?: string; slug?: string }[];
   images?: string[];
 };

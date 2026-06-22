@@ -19,7 +19,7 @@ export default async function Page({ params }: Props) {
   return (
     <SiteShell locale="en">
       <JsonLd schema={blog?.seo?.structure_schema} />
-      <GenericPage page={blog} fallbackTitle="Egypt Travel Guide" />
+      <GenericPage page={blog} fallbackTitle="Egypt Travel Guide" route="blog" />
     </SiteShell>
   );
 }

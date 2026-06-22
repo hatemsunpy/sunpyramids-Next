@@ -4,33 +4,53 @@ import type { Locale, Tour } from "@/types/api";
 import { withLocale } from "@/lib/locales";
 
 function imageOf(item: Tour) {
-  return (
-    item.featured_image ||
-    item.image ||
-    item.banner ||
-    item.gallery?.[0] ||
-    item.images?.[0] ||
-    "/images/mainBanner.png"
-  );
+  return item.featured_image || item.image || item.banner || item.gallery?.[0] || item.images?.[0] || "/images/mainBanner.png";
+}
+
+function placeOf(tour: Tour) {
+  const destination = tour.destinations?.[0]?.title || tour.destinations?.[0]?.name;
+  return destination || tour.city || tour.destination || "Egypt";
+}
+
+function categoryOf(tour: Tour) {
+  return tour.categories?.[0]?.title || tour.categories?.[0]?.name || tour.category?.name || "Egypt Tours";
+}
+
+function priceOf(tour: Tour) {
+  return tour.price || tour.start_from || tour.adult_price;
+}
+
+function formatPrice(price: number | string) {
+  const numeric = Number(price);
+  return Number.isFinite(numeric) ? `$${numeric.toFixed(2)}` : `$${price}`;
 }
 
 export function TourCard({ tour, locale = "en" }: { tour: Tour; locale?: Locale }) {
   const slug = tour.slug || String(tour.id || "");
   const title = tour.title || tour.name || "Egypt Tour";
-  const description = tour.short_description || tour.description || tour.duration || "Explore Egypt with Sun Pyramids Tours.";
+  const description = tour.short_description || tour.description || title;
+  const price = priceOf(tour);
 
   return (
     <article className="tour-card">
       <Link href={withLocale(`/tour/${slug}`, locale)}>
-        <div style={{ position: "relative", aspectRatio: "4 / 3" }}>
+        <div className="tour-card-media">
           <Image src={imageOf(tour)} alt={title} fill sizes="(max-width: 768px) 100vw, 25vw" />
         </div>
-        <div className="card-body">
+        <div className="tour-card-body">
           <h3 className="line-clamp-2">{title}</h3>
-          <p className="muted line-clamp-2">{description}</p>
-          <p style={{ color: "var(--primary)", fontWeight: 700 }}>
-            {tour.price || tour.start_from ? `Start From $${tour.price || tour.start_from}` : "View Details"}
-          </p>
+          <p className="line-clamp-2 tour-card-summary">{description}</p>
+          <div className="tour-card-meta">
+            <span>{placeOf(tour)}</span>
+            <span>{categoryOf(tour)}</span>
+          </div>
+          <div className="tour-card-bottom">
+            <div>
+              <span>Start From</span>
+              <strong>{price ? formatPrice(price) : "Request Price"}</strong>
+            </div>
+            <p>{tour.duration || "Flexible"}</p>
+          </div>
         </div>
       </Link>
     </article>
