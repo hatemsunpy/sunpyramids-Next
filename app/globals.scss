@@ -335,6 +335,63 @@ select {
   object-fit: cover;
 }
 
+.destination-grid-section {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.5rem;
+  padding: 4rem clamp(1rem, 4vw, 5rem);
+  background: #fff;
+}
+
+.destination-card {
+  position: relative;
+  min-height: 18rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #111;
+}
+
+.destination-card a {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+.destination-card img {
+  object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.destination-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 70%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  pointer-events: none;
+}
+
+.destination-card h2 {
+  position: absolute;
+  left: 1.25rem;
+  right: 1.25rem;
+  bottom: 1.5rem;
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: bottom 180ms ease;
+}
+
+.destination-card:hover img {
+  transform: scale(1.08);
+}
+
+.destination-card:hover h2 {
+  bottom: 2.25rem;
+}
+
 .card-body {
   padding: 1rem;
 }
@@ -463,6 +520,10 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .destination-grid-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .tour-layout,
   .two-col,
   .footer-grid {
@@ -482,6 +543,15 @@ select {
   .shortcut-panel,
   .grid-cards {
     grid-template-columns: 1fr;
+  }
+
+  .destination-grid-section {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .destination-card {
+    min-height: 14rem;
   }
 
   .hero {

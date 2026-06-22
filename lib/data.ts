@@ -30,6 +30,14 @@ export async function getTours(endpoint: string, locale: Locale, limit = 8) {
   return listData(response);
 }
 
+export async function getDestinations(endpoint: string, locale: Locale, limit = 200) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `${endpoint}${endpoint.includes("?") ? "&" : "?"}page_limit=${limit}`,
+    { locale },
+  );
+  return listData(response);
+}
+
 export async function getTour(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: Tour }>(
     `tours/${encodeURIComponent(slug)}?includes=seo,gallery,category,destination,itinerary,includes,excludes,faqs,reviews`,
