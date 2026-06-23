@@ -6,19 +6,19 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
-| Contact form | `components/ContactUs/Form.vue` | `POST contact-requests` with recaptcha token | `components/ContactForm.tsx` posts `contact-requests` with `subject`, `type`, `country`, and `recaptcha_token` | Implemented; backend recaptcha/tracking parity pending. |
+| Contact form | `components/ContactUs/Form.vue` | `POST contact-requests` with recaptcha token | `components/ContactForm.tsx` posts backend-required contact fields and includes `recaptcha_token` when submit-time generation succeeds | Implemented; backend discovery found no Laravel reCAPTCHA validator, tracking parity pending. |
 | Landing/contact forms | `components/BookEgyptTrip/ContactUs.vue`, `EgyptTripLanding*`, `MarktingPages/ContactUs.vue`, `Home/NeedHelp.vue` | `POST contact-requests` | Generic cloned route/contact form surfaces | Needs route-specific field parity validation. |
 | Event booking/lead | `components/Event/RightPanal/Book.vue` | `POST contact-requests` | Event detail page exists | Needs form parity validation. |
-| Make Your Trip | `components/MakeYourTrip/Form/*` | `POST custom/trips` | `PlannerRequestFlow` posts confirmed payload with submit-time `recaptcha_token` | Implemented; staging/backend reCAPTCHA validation pending. |
-| Rent Car | `components/RentACar/Form/*` | `locations`, `car/rental/available/destinations`, `cart/rentals/append` | `PlannerRequestFlow` fetches locations/destinations and appends rental to cart | Implemented; staging cart validation pending. |
+| Make Your Trip | `components/MakeYourTrip/Form/*` | `POST custom/trips` | `PlannerRequestFlow` posts backend-aligned payload fields and includes `recaptcha_token` when submit-time generation succeeds | Implemented; staging/backend reCAPTCHA validation pending. |
+| Rent Car | `components/RentACar/Form/*` | `locations`, `car/rental/available/destinations`, `cart/rentals/append` | `PlannerRequestFlow` fetches locations, posts `pickup_location_id` for destinations, and appends rental to cart | Implemented; staging cart validation pending. |
 
 ## Booking, Cart, and Checkout
 
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
 | Tour booking panel | `components/Tours/RightPanal/index.vue` | `cart/tours/append`, wishlist toggle, tour options/seasons | Tour detail route exists | Booking panel parity pending. |
-| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear/remove/coupon and tour edit via `cart/tours/append` | Implemented first pass; staging populated-cart validation pending. |
-| Checkout billing/payment | `components/Checkout/*` | `POST bookings`, `POST bookings/update/{id}` | `/cart/checkout` posts `bookings`; optional payment method selection posts `bookings/update/{id}` before redirect | Implemented first pass; staging payment validation pending. |
+| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{item}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear/remove/coupon and tour edit via `cart/tours/append`; remove sends tour product ID for tour rows and rental row ID for rental rows | Implemented first pass; staging populated-cart validation pending. |
+| Checkout billing/payment | `components/Checkout/*` | `POST bookings` | `/cart/checkout` posts `bookings` with `payment_method`; no active `bookings/update/{id}` call remains | Implemented first pass; staging payment validation pending. |
 | Thank-you / confirmation | `pages/thankful.vue` | Redirect/result display | `/thankful` exists | Copy/redirect/history validation pending. |
 
 ## Auth and Customer Account
@@ -43,6 +43,21 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 | PayPal canceled | `payments/paypal/cancel?invoice_id=...` | Client-only call in `PaymentCallbackStatus` | SSR-safe implementation exists; backend validation pending. |
 | Fawaterk success/pending/canceled | `payments/fawaterk/update/invoice?invoice_id=...` | Client-only call in `PaymentCallbackStatus` | SSR-safe implementation exists; backend validation pending. |
 
+## Sprint 8 Backend Discovery Notes
+
+- Laravel `POST /api/bookings` validates `payment_method` directly and resolves the payment gateway during booking creation.
+- No inspected Laravel route matches `bookings/update/{id}`; Sprint 9 removed the active Next checkout call and aligned checkout to `POST /api/bookings`.
+- Laravel `POST /api/car/rental/available/destinations` and `POST /api/car/rental/search/for/route` require location IDs in the request body.
+- Laravel contact/custom-trip request classes do not validate `recaptcha_token`; backend/security confirmation is still required before treating reCAPTCHA as accepted.
+
+## Sprint 9 Backend Contract Alignment
+
+- Checkout now sends `payment_method` in the `POST bookings` payload and no longer calls the unconfirmed `bookings/update/{id}` endpoint.
+- Cart removal now follows inspected Laravel semantics: tour rows remove by tour product ID, while rental rows remove by the rental cart row ID.
+- Rent-car dependent destinations now post `pickup_location_id` in the request body.
+- Contact and make-your-trip forms no longer hard-fail when submit-time reCAPTCHA is intentionally unavailable; `recaptcha_token` is included only when generated.
+- Contact phone/country and custom-trip first/last name payloads were aligned to backend-required fields.
+
 ## Cutover Blockers
 
 - Auth, profile, wishlist, cart, checkout, payment, and booking confirmation now have a first-pass client API layer where listed above, but still require staging backend validation.
@@ -64,7 +79,7 @@ Implemented in Next:
 Still blocked:
 
 - No staging credentials, valid customer account, populated cart, checkout test data, or sandbox payment invoice IDs were available in this run.
-- Rent car, make-your-trip, coupon, cart item edit/remove, full booking panel options/seasons, and `bookings/update/{id}` remain pending implementation/validation.
+- Rent car, make-your-trip, coupon, cart item edit/remove, full booking panel options/seasons, and checkout payment behavior remain pending implementation/validation. Sprint 9 later removed the unconfirmed active `bookings/update/{id}` call.
 
 ## Sprint 4 reCAPTCHA and Tracking Status
 
@@ -86,10 +101,10 @@ Confirmed Nuxt sources inspected: `components/Checkout/index.vue`, `components/C
 
 Implemented in Next:
 
-- Cart remove uses confirmed `DELETE cart/remove/{id}` from cart item actions.
+- Cart remove uses confirmed `DELETE cart/remove/{item}` from cart item actions.
 - Cart coupon uses confirmed `GET coupons/{code}/validate` and requires the auth token like Nuxt.
 - Cart tour edit posts confirmed `POST cart/tours/append` with `tour_id`, `start_date`, passenger counts, and option IDs.
-- Checkout supports confirmed `POST bookings/update/{id}` when a payment method is selected after booking creation.
+- Checkout now uses `POST bookings` with `payment_method`; Sprint 9 removed the unconfirmed active `bookings/update/{id}` call after backend discovery found no matching Laravel API route.
 - Make Your Trip posts confirmed `POST custom/trips` with submit-time reCAPTCHA token and Nuxt-aligned field names.
 - Rent Car fetches `locations`, fetches dependent destinations through `car/rental/available/destinations`, and posts confirmed `cart/rentals/append`.
 
@@ -117,6 +132,23 @@ No staging credentials, test account, approved cart data, coupon codes, checkout
 | Payment callbacks | Blocked for sandbox behavior | PayPal/Fawaterk sandbox invoice IDs for valid, invalid, duplicate, refresh, success, pending, and canceled states. |
 | Contact/make-your-trip reCAPTCHA | Blocked for backend acceptance | Staging key/settings and backend valid/missing/invalid token responses. |
 | Thank-you/conversion tracking | Blocked | GTM Preview, GA4 DebugView, Google Ads test method, TikTok/Clarity owner validation. |
+
+## Sprint 7 Staging Flow Validation
+
+Date: 2026-06-23
+
+No staging URL, backend URL, customer credentials, cart/coupon data, rental data, checkout billing details, payment configuration, sandbox invoice IDs, or reCAPTCHA/tracking settings were available. No staging flow is marked passed.
+
+| Flow | Sprint 7 status | Missing evidence |
+|---|---|---|
+| Auth routes | Blocked | Valid/invalid login, logout if implemented, token/cookie behavior, session persistence, protected redirect, expired/invalid session, validation messages, and Nuxt parity. |
+| Profile routes | Blocked | Auth guard, profile loading/update, bookings, favourites add/remove, empty/error/unauthorized/expired-session states. |
+| Cart and coupon | Blocked | Tour append, edit, remove by cart row ID, clear, valid/invalid coupon, totals, passenger/date/options behavior, reload/login persistence, guest/auth behavior. |
+| Rent-car | Blocked | Location/destination loading, rental append, cart display, rental removal if supported, Nuxt parity. |
+| Checkout/booking | Blocked | Billing validation, booking creation, payment URL/redirect, failed booking, backend validation errors, cart state after booking, `/thankful`, profile booking appearance. |
+| Payment callbacks | Blocked for sandbox behavior | Valid/invalid/duplicate/refresh invoice behavior and backend response handling. |
+| reCAPTCHA acceptance | Blocked | Submit-time token generation can be checked locally; backend accept/reject behavior requires staging settings. |
+| Conversion tracking | Blocked | GTM/GA/Ads/TikTok/Clarity debug evidence. |
 
 ## Sprint 2 Backend Validation Result
 

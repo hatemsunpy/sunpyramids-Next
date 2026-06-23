@@ -38,19 +38,19 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 
 | Endpoint / pattern | Nuxt usage | Current Next status | Auth | Cutover status |
 |---|---|---|---|---|
-| `contact-requests` | Contact, landing, need-help, event booking style leads | `ContactForm` posts Nuxt-compatible fields here | Public | Needs backend recaptcha/tracking parity validation. |
-| `custom/trips` | Make Your Trip submission | `PlannerRequestFlow` posts Nuxt-aligned request payload with `recaptcha_token` | Optional token | Implemented; staging validation pending. |
+| `contact-requests` | Contact, landing, need-help, event booking style leads | `ContactForm` posts backend-required contact fields and includes `recaptcha_token` only when submit-time generation succeeds | Public | Implemented; backend discovery found no Laravel reCAPTCHA validator, tracking parity still pending. |
+| `custom/trips` | Make Your Trip submission | `PlannerRequestFlow` posts backend-aligned request payload and includes `recaptcha_token` only when submit-time generation succeeds | Optional token | Implemented; staging validation pending. |
 | `locations?page_limit=200&order_by=id,asc` | Rent car and shortcuts | `PlannerRequestFlow` fetches pickup locations | Public | Implemented; staging validation pending. |
-| `car/rental/available/destinations?...` | Rent car dependent destination options | `PlannerRequestFlow` fetches drop-off destinations after pickup selection | Public | Implemented; staging validation pending. |
+| `car/rental/available/destinations` | Rent car dependent destination options | `PlannerRequestFlow` posts `pickup_location_id` in the request body after pickup selection | Public | Implemented; staging validation pending. |
 | `car/rental/search/for/route` | Rent car search | Confirmed in Nuxt but not required for current minimal append flow | Public | Documented; optional price preview pending. |
 | `cart/rentals/append` | Add rental to cart | `PlannerRequestFlow` posts Nuxt-aligned rental payload | Optional token | Implemented; staging validation pending. |
 | `cart/tours/append` | Add tour to cart | Not fully wired | Optional/auth | Pending. |
 | `cart/list` | Cart page | `/cart` fetches with optional token from client | Optional/auth | Implemented; staging validation pending. |
-| `cart/remove/{id}` | Remove cart item | `/cart` remove action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
+| `cart/remove/{item}` | Remove cart item | `/cart` remove action sends the tour product ID for tour rows and the rental row ID for rental rows, matching inspected Laravel behavior | Auth/context-dependent | Implemented; staging validation pending. |
 | `cart/clear` | Clear cart | `/cart` clear action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
 | `coupons/{code}/validate` | Cart coupon | `/cart` coupon form calls endpoint with token | Auth/context-dependent | Implemented; staging validation pending. |
-| `bookings` | Checkout booking creation | `/cart/checkout` posts from client and redirects to returned payment URL | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
-| `bookings/update/{id}` | Checkout/payment status update | `/cart/checkout` calls after booking creation when payment method is selected | Auth/context-dependent | Implemented first pass; sandbox validation remains critical. |
+| `bookings` | Checkout booking creation | `/cart/checkout` posts billing data plus `payment_method` from the client and redirects to the returned payment URL | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
+| `bookings/update/{id}` | Nuxt-observed checkout/payment status update | No active Next call after Sprint 9 alignment | Auth/context-dependent | Backend discovery found no matching Laravel API route; keep removed unless deployed backend evidence proves this route exists. |
 | `wishlist/{id}/toggle` | Tour cards/profile favourites | Helper added in `CustomerFlows`; card wiring pending | Auth | Partial; staging validation pending. |
 | `wishlist?page=1&page_limit=200` | Profile favourites | `/profile/favourites` fetches from client after token check | Auth | Implemented; staging validation pending. |
 | `bookings?page_limit=200&includes=currency,tours` | Profile bookings | `/profile/bookings` fetches from client after token check | Auth | Implemented; staging validation pending. |
@@ -67,12 +67,14 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 
 ## Backend Requirements / Unknowns
 
+- Confirm whether `bookings/update/{id}` exists in deployed backend despite not appearing in inspected Laravel routes. Active Next checkout no longer calls it.
+- Confirm `APP_FRONT_URL` vs `APP_FRONTEND_URL` deployment configuration because backend `site_url()` uses `APP_FRONT_URL` for payment callbacks and sitemap URLs.
 - Confirm current API response envelopes for authenticated cart/profile/checkout endpoints.
 - Confirm whether wishlist/listing endpoints require auth or support optional token state.
 - Confirm recaptcha enterprise action names and required backend validation fields.
 - Confirm payment callback endpoints are still approved for client-side Nuxt-equivalent calls.
 - Confirm whether settings/footer/menu/currency are dashboard-managed and must be wired dynamically before cutover.
-- Confirm checkout `bookings/update/{id}` timing/payment method contract with staging data before production cutover.
+- Confirm checkout `POST /api/bookings` payment redirect behavior with staging data before production cutover.
 
 ## Sprint 4 Notes
 
@@ -83,7 +85,7 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 ## Sprint 5 Notes
 
 - Confirmed customer-flow endpoints were wired without inventing backend routes or response fields.
-- `bookings/update/{id}`, cart remove/coupon/edit, rent-car append, and make-your-trip submission now have Next client-side entry points.
+- Cart remove/coupon/edit, rent-car append, and make-your-trip submission now have Next client-side entry points. Sprint 9 removed the active `bookings/update/{id}` checkout call because Sprint 8 backend discovery did not find a matching Laravel route.
 - Runtime staging validation is still pending because credentials, cart data, coupon data, and sandbox invoice IDs were not available.
 
 ## Sprint 6 Notes

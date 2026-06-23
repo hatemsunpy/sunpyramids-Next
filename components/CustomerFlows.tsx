@@ -71,6 +71,13 @@ function couponIdFrom(value: any) {
   return value?.id || value?.coupon_id || value?.coupon?.id || null;
 }
 
+function cartRemoveIdentifier(item: any) {
+  if (item?.type === "tour") return item?.tour?.id || null;
+  if (item?.type === "rental") return item?.id || null;
+  if (item?.tour?.id) return item.tour.id;
+  return item?.id || null;
+}
+
 export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -413,11 +420,15 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
   }
 
   async function removeCartItem(item: any) {
-    const cartId = item?.id || item?.tour?.id;
-    if (!cartId) return;
+    const removeId = cartRemoveIdentifier(item);
+    if (!removeId) {
+      setState("error");
+      setMessage("This cart item cannot be safely removed because its backend identifier is missing.");
+      return;
+    }
     setState("loading");
     try {
-      const res = await apiDelete<ApiResponse>(`cart/remove/${cartId}`, locale, true);
+      const res = await apiDelete<ApiResponse>(`cart/remove/${removeId}`, locale, true);
       await loadCart(hasToken);
       setMessage(res.message || "Cart item removed.");
     } catch (error) {
@@ -488,7 +499,8 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     const form = new FormData(event.currentTarget);
     const fullName = String(form.get("fullName") || "");
     const [firstName, ...lastParts] = fullName.split(" ");
-    const body = {
+    const paymentMethod = String(form.get("paymentMethod") || "card");
+    const body: Record<string, unknown> = {
       first_name: firstName,
       last_name: lastParts.join(" ") || "none",
       phone: String(form.get("phone") || ""),
@@ -496,24 +508,21 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       country: String(form.get("country") || ""),
       state: String(form.get("state") || ""),
       pickup_location: String(form.get("pickupLocation") || ""),
-      note: String(form.get("note") || ""),
+      notes: String(form.get("note") || ""),
+      payment_method: paymentMethod,
       currency_id: Number(form.get("currencyId") || 1),
-      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : coupon?.id ?? null,
+      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : couponIdFrom(coupon),
     };
+    if (paymentMethod === "card") {
+      body.payment_method_id = Number(form.get("paymentMethodId") || 9);
+    }
     let bookingCreated = false;
 
     try {
-      const paymentMethod = String(form.get("paymentMethod") || "");
       const res = await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } }; booking?: { id?: number } }>>("bookings", body, locale, true);
       const bookingId = res.data?.booking?.id;
       bookingCreated = !!bookingId;
-      const paymentResponse = bookingId && paymentMethod
-        ? await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } } }>>(`bookings/update/${bookingId}`, {
-            payment_method: paymentMethod,
-            payment_method_id: paymentMethod === "card" ? 9 : null,
-          }, locale, true)
-        : null;
-      const redirect = paymentResponse?.data?.payment?.redirect?.location || res.data?.payment?.redirect?.location;
+      const redirect = res.data?.payment?.redirect?.location;
       if (redirect && isAllowedPaymentRedirect(redirect)) {
         window.location.href = redirect;
         return;
@@ -523,8 +532,13 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       setMessage(res.message || "Booking created.");
     } catch (error) {
       if (bookingCreated) {
+        const redirectRejected = /redirect URL was not approved/i.test(messageFromError(error));
         setState("error");
-        setMessage("Booking was created, but payment method update failed. Please contact support or open your bookings before retrying checkout.");
+        setMessage(
+          redirectRejected
+            ? "Booking was created, but the payment redirect was not approved. Please contact support or open your bookings before retrying checkout."
+            : "Booking was created, but checkout could not finish. Please contact support or open your bookings before retrying checkout."
+        );
         return;
       }
       setState("error");
@@ -542,15 +556,15 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
           <input name="email" type="email" placeholder="Email" required />
           <input name="phone" placeholder="Phone" required />
           <input name="country" placeholder="Country" required />
-          <input name="state" placeholder="State" />
+          <input name="state" placeholder="State" required />
           <input name="pickupLocation" placeholder="Pickup location" />
           <input name="currencyId" type="number" placeholder="Currency ID" defaultValue={1} />
           <input name="couponId" type="number" placeholder="Coupon ID" defaultValue={checkoutData?.discountID || ""} />
-          <select name="paymentMethod" defaultValue="">
-            <option value="">Use booking default payment redirect</option>
+          <select name="paymentMethod" defaultValue="card" required>
             <option value="paypal">PayPal</option>
             <option value="card">Card</option>
           </select>
+          <input name="paymentMethodId" type="number" placeholder="Card payment method ID" defaultValue={9} />
           <textarea name="note" placeholder="Note" rows={4} />
           <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Creating booking..." : "Create Booking"}</button>
         </form>
@@ -640,7 +654,9 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
   async function loadRentalDestinations(pickupId: string) {
     if (!pickupId) return;
     try {
-      const res = await apiPost<ApiResponse<any[]>>(`car/rental/available/destinations?page_limit=200&pickup_location_id=${encodeURIComponent(pickupId)}`, {}, locale);
+      const res = await apiPost<ApiResponse<any[]>>("car/rental/available/destinations", {
+        pickup_location_id: Number(pickupId),
+      }, locale);
       setDestinations(Array.isArray(res.data) ? res.data : []);
     } catch {
       setDestinations([]);
@@ -688,12 +704,14 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
 
       const token = await generateRecaptchaToken("submit");
       const tripType = String(form.get("type") || "exact_time");
+      const fullName = String(form.get("fullName") || "").trim();
+      const [firstName = "", ...lastNameParts] = fullName.split(/\s+/).filter(Boolean);
       const body: Record<string, unknown> = {
         destination: "egypt",
         type: tripType,
-        name: String(form.get("fullName") || ""),
-        first_name: String(form.get("fullName") || ""),
-        last_name: "",
+        name: fullName,
+        first_name: firstName || fullName,
+        last_name: lastNameParts.join(" ") || "none",
         phone_number: String(form.get("phone") || ""),
         email: String(form.get("email") || ""),
         adults: Number(form.get("adults") || 1),
@@ -716,10 +734,15 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         body.end_date = endDate;
       } else if (tripType === "approx_time") {
         const month = String(form.get("month") || "");
+        const days = Number(form.get("days") || 0);
         if (!month) {
           throw new Error("Month is required for approximate time trips.");
         }
+        if (!days || days < 1) {
+          throw new Error("Days must be a valid number of days.");
+        }
         body.month = month;
+        body.days = days;
       } else {
         const days = Number(form.get("days") || 0);
         if (!days || days < 1) {

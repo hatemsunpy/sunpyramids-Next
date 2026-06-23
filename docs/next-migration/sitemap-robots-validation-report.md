@@ -44,6 +44,12 @@ Target: `http://localhost:3000/sitemap.xml` from the production build after the 
 | Requirement | Current status | Gap |
 |---|---|---|
 | Use `https://sunpyramidstours.com` | Implemented through `FRONTEND_ORIGIN`. | Raw XML validation pending. |
+
+## Sprint 8 Backend Sitemap Discovery
+
+Laravel backend exposes `GET /api/pages` and `GET /api/pages/{key}`. Backend `SitemapGenerator` hardcodes static routes including `hidden-gems`, `global-tours`, `sun-pyramids-reward-program`, and `responsible-travel-policy`, and dynamically includes enabled tours, active blogs, active blog categories, and enabled Egypt child destinations.
+
+This improves source evidence for custom marketing pages, but it is not final approval to hardcode every static route in Next. SEO/business must approve the manual/static route set or confirm a backend source-of-truth strategy.
 | Pull live indexable pages from API/database | Improved. Tours/blogs/categories/destinations/blog categories fetched from API. | Custom marketing list endpoint missing. |
 | Include static pages | Implemented via `staticPaths`. | Confirm all indexable static routes included. |
 | Include tours | Implemented with paginated API fetch. | Confirm maximum page cap remains enough as catalog grows. |
@@ -58,6 +64,12 @@ Target: `http://localhost:3000/sitemap.xml` from the production build after the 
 ## Cutover Status
 
 Not approved. Sitemap coverage is improved and passes local checks for confirmed API groups, but custom marketing page discovery still needs a backend endpoint or explicit exclusion/approval.
+
+## Sprint 9 Backend Contract Alignment
+
+No sitemap code changed in Sprint 9. The backend discovery of `GET /api/pages` is documented, but it was not promoted into the production sitemap because SEO/business approval is still needed for the custom marketing source-of-truth strategy.
+
+Current decision remains blocked: either approve backend/API-driven marketing page discovery, approve a manual custom marketing slug set, or explicitly exclude those pages from cutover scope.
 
 ## Sprint 3 Status
 
@@ -99,3 +111,17 @@ Rules still in force:
 - Preserve frontend-domain URLs in sitemap output.
 - Do not leak backend/admin/API URLs into public SEO output.
 - Keep custom marketing sitemap coverage open until backend support or explicit business/SEO decision is available.
+
+## Sprint 7 Custom Marketing Page Decision Status
+
+Date: 2026-06-23
+
+Decision remains blocked. No backend list endpoint, alternate confirmed API slug source, business/SEO-approved manual slug list, or explicit exclusion approval was provided.
+
+Accepted resolution paths remain:
+
+1. Backend provides a list endpoint.
+2. Slugs are discovered from another confirmed API endpoint.
+3. Custom marketing pages are explicitly excluded from sitemap for now.
+4. Manual slugs are approved by the business/SEO owner.
+5. Blocker remains open.

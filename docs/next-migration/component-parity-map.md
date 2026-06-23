@@ -91,3 +91,12 @@ Date: 2026-06-23
 - No component rewrites were made in Sprint 6 because staging credentials and revenue-flow test data were not available.
 - `CustomerFlows` remains the active client API layer for auth, profile, favourites, cart, checkout, make-your-trip, and rent-car, but all customer/revenue behavior remains unpassed until staging evidence is captured.
 - UI parity fixes should start only after staging revenue flows are validated or formally blocked by missing access/test data. Focus first on small confirmed mismatches in screenshots under `output/playwright/sprint2/`.
+
+## Sprint 7 Component Parity Notes
+
+Date: 2026-06-23
+
+- No broad component rewrites were started.
+- `CustomerFlows` remains the customer/revenue flow surface that must be validated against staging before UI approval.
+- Payment callback mutation behavior remains isolated to `PaymentCallbackStatus` client hydration.
+- Focused UI fixes are deferred until staging revenue validation is passed or confirmed blocked with documented missing access.

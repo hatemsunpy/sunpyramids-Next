@@ -49,7 +49,7 @@ Sprint 6 goal: validate customer and revenue flows end to end with staging crede
 
 ## Local Validation Performed
 
-This Sprint 6 pass did not change production code. Local validation was rerun against a production build at `http://127.0.0.1:3106`:
+This Sprint 6 pass was validation-only and did not change production code (distinct from the code-fixing passes elsewhere in this stack). Local validation was rerun against a production build at `http://127.0.0.1:3106`:
 
 | Check | Result |
 |---|---|

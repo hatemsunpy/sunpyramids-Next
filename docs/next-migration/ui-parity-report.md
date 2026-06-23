@@ -117,3 +117,16 @@ Focused UI parity remains blocked behind staging revenue validation. No broad UI
 | Profile routes | Blocked | High | Low | Yes | Requires authenticated staging account and data. |
 | `/make-your-trip` | Pending backend validation | Medium | Medium | Yes | Validate submit behavior/reCAPTCHA before visual-only fixes. |
 | `/rent-car` | Pending backend validation | Medium | Medium | Yes | Validate locations/destinations/rental append before visual-only fixes. |
+
+## Sprint 7 UI Parity Status
+
+Date: 2026-06-23
+
+UI parity fixes remain deferred. Sprint 7 did not receive staging access or revenue-flow test data, so authenticated/cart/checkout states cannot be approved and broad UI polish would risk masking functional blockers.
+
+| Page group | Sprint 7 status | Screenshot source | Required before cutover | Notes |
+|---|---|---|---|---|
+| Public routes (`/`, category, tour, contact, make-your-trip, rent-car) | Pending approval | `output/playwright/sprint2/` where present | Yes | Re-run screenshots after staging data is available; fix only confirmed small mismatches. |
+| Cart and checkout | Blocked | `output/playwright/sprint2/` unauthenticated/basic states | Yes | Needs populated cart and checkout data before meaningful parity approval. |
+| Auth routes | Blocked | `output/playwright/sprint2/` | Yes | Needs staging success/error states. |
+| Profile routes | Blocked | `output/playwright/sprint2/` unauthenticated/basic states | Yes | Needs authenticated profile/bookings/favourites/settings data. |
