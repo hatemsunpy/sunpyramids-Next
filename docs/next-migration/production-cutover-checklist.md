@@ -133,6 +133,40 @@ Date: 2026-06-22
 | Custom marketing sitemap decision | Blocked pending backend list endpoint, approved manual slugs, or explicit exclusion. |
 | Production cutover | Still blocked. |
 
+## Sprint 6 Status
+
+Date: 2026-06-23
+
+| Check | Result |
+|---|---|
+| Staging frontend URL | Blocked; not provided. |
+| Staging backend/API URL | Blocked; not provided. |
+| Test account | Blocked; not provided. |
+| Cart/coupon/test data | Blocked; no tour ID, rent-car data, populated cart item, valid coupon, invalid coupon confirmation, or checkout billing data provided. |
+| Sandbox invoice IDs | Blocked; no PayPal or Fawaterk sandbox invoice IDs provided. |
+| Auth staging validation | Blocked; cannot validate success/error/session/redirect behavior without staging account. |
+| Profile staging validation | Blocked; cannot validate protected profile/bookings/favourites/settings without staging account. |
+| Cart staging validation | Blocked; cannot validate append/edit/remove/coupon/totals/persistence without staging cart data. |
+| Checkout/booking validation | Blocked; cannot validate booking creation, `bookings/update/{id}`, payment URL, redirect, or profile booking appearance without staging cart/payment data. |
+| Payment callback sandbox validation | Blocked for valid/invalid/duplicate/refresh behavior; no-invoice code safety remains passed from prior browser checks. |
+| Backend reCAPTCHA acceptance | Blocked; staging/site key and backend acceptance settings not provided. |
+| Conversion/thank-you tracking | Blocked; GTM Preview, GA4 DebugView, ads test method, and tag owner access not provided. |
+| Third-party performance approval | Blocked; marketing/tag-owner decision still required before disabling, deferring, route-scoping, or accepting cost. |
+| Custom marketing sitemap decision | Blocked; no backend list endpoint, alternate slug source, approved manual slug list, or explicit exclusion provided. |
+| UI parity approval | Blocked; no approval yet. Broad UI polish remains deferred until revenue-flow validation is passed or formally blocked. |
+| SEO/domain validation | Partial local/code pass; staging raw HTML checks blocked without staging URL. |
+| `npm run lint` | Passed locally on 2026-06-23. |
+| `npm run build` | Passed locally on 2026-06-23. |
+| Route smoke tests | Passed HTTP 200 for all required Sprint 6 routes on local production server. |
+| Browser validation | Passed diagnostic Chrome checks for required customer/public/payment pages; no console errors, no page-load reCAPTCHA on form pages, and no no-invoice payment mutation request. |
+| Lighthouse mobile homepage normal | 44, LCP 9.3s, CLS 0.029, TBT 1,400ms. |
+| Lighthouse mobile homepage diagnostic | 89, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile representative tour normal | 66, LCP 2.9s, CLS 0.002, TBT 1,090ms. |
+| Lighthouse mobile representative tour diagnostic | 90, LCP 2.8s, CLS 0.002, TBT 80ms. |
+| Production cutover | Still blocked. |
+
+Sprint 6 required access/test-data checklist is documented in `docs/next-migration/sprint6-validation-report.md`.
+
 ## Rollback Triggers
 
 - SEO tags missing or wrong.

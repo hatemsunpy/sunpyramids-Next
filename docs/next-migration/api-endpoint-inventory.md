@@ -85,3 +85,11 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 - Confirmed customer-flow endpoints were wired without inventing backend routes or response fields.
 - `bookings/update/{id}`, cart remove/coupon/edit, rent-car append, and make-your-trip submission now have Next client-side entry points.
 - Runtime staging validation is still pending because credentials, cart data, coupon data, and sandbox invoice IDs were not available.
+
+## Sprint 6 Notes
+
+Date: 2026-06-23
+
+No endpoints were added or changed in Sprint 6. Staging validation remains blocked because no staging URL, test account, cart data, coupon data, checkout billing data, payment method configuration, reCAPTCHA settings, or sandbox invoice IDs were provided.
+
+Do not invent additional endpoints for custom marketing sitemap discovery, checkout, payment, auth, profile, rent-car, or coupons. Confirm any new contract from Nuxt source or backend behavior before implementation.

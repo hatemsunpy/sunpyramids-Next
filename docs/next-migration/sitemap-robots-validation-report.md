@@ -86,3 +86,16 @@ Date: 2026-06-22
 - No hardcoded custom marketing slugs were added because business/SEO approval was not provided.
 
 Decision remains blocked. Acceptable resolution paths are: backend provides a list endpoint, another confirmed API endpoint exposes the slugs, business/SEO explicitly approves temporary exclusion, or business/SEO explicitly approves a manually configured slug list.
+
+## Sprint 6 Custom Marketing Page Decision Status
+
+Date: 2026-06-23
+
+Decision remains blocked. Sprint 6 did not receive a backend list endpoint, alternate confirmed slug source, approved manual slug list, or explicit business/SEO exclusion.
+
+Rules still in force:
+
+- Do not hardcode custom marketing page slugs without approval.
+- Preserve frontend-domain URLs in sitemap output.
+- Do not leak backend/admin/API URLs into public SEO output.
+- Keep custom marketing sitemap coverage open until backend support or explicit business/SEO decision is available.

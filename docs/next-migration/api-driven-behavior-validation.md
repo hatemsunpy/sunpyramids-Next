@@ -100,6 +100,39 @@ Lighthouse produced valid JSON reports under `output/lighthouse/` but emitted Wi
 | reCAPTCHA Enterprise | Nuxt global script/token calls | Submit-time `generateRecaptchaToken()` | Contact and make-your-trip submit | No | No | Backend acceptance pending | Medium |
 | Thank-you conversion | Needs GTM/account confirmation | No explicit invented event added | `/thankful` | No | No | Must not fire purchase before confirmed success | Critical |
 
+## Sprint 6 Validation Status
+
+Date: 2026-06-23
+
+Sprint 6 could not perform real staging/backend validation because the required access and test data were not provided. No API contracts were changed and no endpoints were invented.
+
+| Area | Sprint 6 status | Required before pass |
+|---|---|---|
+| Auth API behavior | Blocked | Staging URL, test account, password, valid/invalid login evidence, session persistence, expired session, protected redirect, logout if present. |
+| Profile API behavior | Blocked | Authenticated profile load/update, bookings list, favourites list/add/remove, empty/error/unauthorized/session-expired evidence. |
+| Cart API behavior | Blocked | Staging tour/rental data, cart item IDs, valid/invalid coupons, totals, reload/login persistence, empty/error evidence. |
+| Checkout API behavior | Blocked | Booking creation, backend validation errors, `bookings/update/{id}`, payment URL, failed booking behavior, cart state after booking, profile booking appearance. |
+| Payment callbacks | Partial code pass; sandbox blocked | Approved PayPal/Fawaterk invoice IDs for valid/invalid/duplicate/refresh outcomes. |
+| reCAPTCHA backend acceptance | Blocked | Staging/site key and backend valid/missing/invalid response evidence. |
+| Conversion/tracking | Blocked | GTM Preview, GA4 DebugView, ads conversion test method, TikTok/Clarity owner approval. |
+| Public SEO/domain API behavior | Partial local/code pass | Staging raw HTML verification that public SEO URLs use `https://sunpyramidstours.com` and backend/API URLs do not leak. |
+
+### Sprint 6 Local Validation
+
+Target: local production build at `http://127.0.0.1:3106`.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for the full Sprint 6 route list, including auth/profile/cart/checkout, payment no-invoice callback, sitemap, and robots. |
+| Browser diagnostic console/network | Passed for home, tour, contact, make-your-trip, rent-car, cart, checkout, sign-in, profile, and payment no-invoice callback. No console errors, no page-load reCAPTCHA requests on form pages, and no payment API request without `invoice_id`. |
+| Raw SEO HTML | Public routes passed title/description/canonical/hreflang/OG/Twitter/robots/no-keywords checks where applicable; no backend SEO URL leak in canonical/OG. Cart/checkout remain basic private-flow metadata. |
+| Lighthouse mobile home normal | 44, LCP 9.3s, CLS 0.029, TBT 1,400ms. |
+| Lighthouse mobile home diagnostic | 89, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile tour normal | 66, LCP 2.9s, CLS 0.002, TBT 1,090ms. |
+| Lighthouse mobile tour diagnostic | 90, LCP 2.8s, CLS 0.002, TBT 80ms. |
+
 ## Sprint 3 Validation Result
 
 Date: 2026-06-22

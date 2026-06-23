@@ -67,6 +67,10 @@ function readUserCookie() {
   }
 }
 
+function couponIdFrom(value: any) {
+  return value?.id || value?.coupon_id || value?.coupon?.id || null;
+}
+
 export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -409,7 +413,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
   }
 
   async function removeCartItem(item: any) {
-    const cartId = item?.tour?.id || item?.id;
+    const cartId = item?.id || item?.tour?.id;
     if (!cartId) return;
     setState("loading");
     try {
@@ -463,6 +467,12 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     try {
       const res = await apiGet<ApiResponse>(`coupons/${encodeURIComponent(code)}/validate`, locale, true);
       setCoupon(res.data);
+      const couponId = couponIdFrom(res.data);
+      if (couponId) {
+        const nextCheckoutData = { ...(checkoutData || {}), discountID: couponId };
+        setCheckoutData(nextCheckoutData);
+        setCookie("sunpyramids-checkout-data", JSON.stringify(nextCheckoutData));
+      }
       setState("success");
       setMessage(res.message || "Coupon applied.");
     } catch (error) {
@@ -488,15 +498,15 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       pickup_location: String(form.get("pickupLocation") || ""),
       note: String(form.get("note") || ""),
       currency_id: Number(form.get("currencyId") || 1),
-      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : null,
+      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : coupon?.id ?? null,
     };
+    let bookingCreated = false;
 
     try {
       const paymentMethod = String(form.get("paymentMethod") || "");
       const res = await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } }; booking?: { id?: number } }>>("bookings", body, locale, true);
-      setState("success");
-      setMessage(res.message || "Booking created.");
       const bookingId = res.data?.booking?.id;
+      bookingCreated = !!bookingId;
       const paymentResponse = bookingId && paymentMethod
         ? await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } } }>>(`bookings/update/${bookingId}`, {
             payment_method: paymentMethod,
@@ -509,7 +519,14 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
         return;
       }
       if (redirect) throw new Error("Payment redirect URL was not approved.");
+      setState("success");
+      setMessage(res.message || "Booking created.");
     } catch (error) {
+      if (bookingCreated) {
+        setState("error");
+        setMessage("Booking was created, but payment method update failed. Please contact support or open your bookings before retrying checkout.");
+        return;
+      }
       setState("error");
       setMessage(messageFromError(error));
     }
@@ -639,6 +656,10 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
     try {
       if (isCar) {
         const returnDate = String(form.get("returnDate") || "");
+        const returnTime = String(form.get("returnTime") || "");
+        if (form.get("type") === "roundTrip" && (!returnDate || !returnTime)) {
+          throw new Error("Return date and time are required for round trips.");
+        }
         const body: Record<string, unknown> = {
           pickup_location_id: String(form.get("pickupLocationId") || ""),
           destination_id: String(form.get("destinationId") || ""),
@@ -656,7 +677,7 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         };
         if (returnDate) {
           body.return_date = returnDate;
-          body.return_time = String(form.get("returnTime") || "");
+          body.return_time = returnTime;
         }
         const res = await apiPost<ApiResponse>("cart/rentals/append", body, locale, !!getCookie("sunpyramids-token"));
         setState("success");
@@ -666,7 +687,6 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
       }
 
       const token = await generateRecaptchaToken("submit");
-      if (!token) throw new Error("reCAPTCHA token could not be generated.");
       const tripType = String(form.get("type") || "exact_time");
       const body: Record<string, unknown> = {
         destination: "egypt",
@@ -684,15 +704,28 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         max_person_budget: Number(form.get("maxBudget") || 3000),
         flight_offer: form.get("flightOffer") === "on",
         additional_notes: String(form.get("note") || ""),
-        recaptcha_token: token,
       };
+      if (token) body.recaptcha_token = token;
       if (tripType === "exact_time") {
-        body.start_date = String(form.get("startDate") || "");
-        body.end_date = String(form.get("endDate") || "");
+        const startDate = String(form.get("startDate") || "");
+        const endDate = String(form.get("endDate") || "");
+        if (!startDate || !endDate) {
+          throw new Error("Start and end dates are required for exact time trips.");
+        }
+        body.start_date = startDate;
+        body.end_date = endDate;
       } else if (tripType === "approx_time") {
-        body.month = String(form.get("month") || "");
+        const month = String(form.get("month") || "");
+        if (!month) {
+          throw new Error("Month is required for approximate time trips.");
+        }
+        body.month = month;
       } else {
-        body.days = Number(form.get("days") || 1);
+        const days = Number(form.get("days") || 0);
+        if (!days || days < 1) {
+          throw new Error("Days must be a valid number of days.");
+        }
+        body.days = days;
       }
       await apiPost<ApiResponse>("custom/trips", body, locale, !!getCookie("sunpyramids-token"));
       setState("success");

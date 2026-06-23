@@ -61,6 +61,16 @@ Static code inspection still confirms payment mutation-like endpoints are refere
 
 Sandbox invoice validation was blocked because no approved PayPal or Fawaterk sandbox invoice IDs were provided. Success, canceled, pending, duplicate refresh behavior, and backend response handling must be validated with approved invoice IDs before cutover.
 
+## Sprint 6 Revalidation
+
+Date: 2026-06-23
+
+No PayPal or Fawaterk sandbox invoice IDs were provided. The valid, invalid, duplicate request, refresh, success UI, canceled UI, pending UI, and backend response handling checks remain blocked.
+
+The code-level safety requirement remains unchanged: payment mutation-like endpoints must stay client-side only after hydration and only when the browser URL includes `invoice_id`. They must not be called from SSR, metadata generation, static generation, layouts, or route prefetch.
+
+Local browser diagnostic recheck passed on `http://127.0.0.1:3106/order/payment/callback/paypal/verify?no-third-party=1`: HTTP 200, no console errors, and no `payments/paypal/*` or `payments/fawaterk/*` request without `invoice_id`.
+
 ## Cutover Status
 
 Code-level SSR safety: passed.

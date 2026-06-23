@@ -44,6 +44,7 @@ Source of truth: `nuxt_sunpyramids/composables/useSeo.js`, `nuxt_sunpyramids/uti
 - Confirm JSON-LD uses dashboard schema only and never invented business values.
 - Sprint 4 raw HTML checks passed for the same priority route set after third-party diagnostic and tour hero changes.
 - Sprint 5 raw HTML checks passed for public routes `/`, `/egypt-tours/one-day-tours`, representative `/tour/[slug]`, and `/contact-us`; `/cart` and `/cart/checkout` render only basic metadata and need a business decision before adding public SEO metadata to private customer flows.
+- Sprint 6 did not receive staging URLs or dashboard access, so no dashboard-driven SEO fields were changed. SEO/domain validation remains a local/code partial pass and a staging blocker. Do not add hardcoded metadata or custom marketing slugs without backend/business approval.
 
 ## Sprint 2 Note
 

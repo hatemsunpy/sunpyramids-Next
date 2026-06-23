@@ -100,6 +100,24 @@ Blocked validation:
 - Backend reCAPTCHA acceptance is still blocked because no staging key/account validation context was available.
 - Conversion/thank-you tracking remains unapproved; no GTM preview or marketing owner approval was available.
 
+## Sprint 6 Staging Flow Validation
+
+Date: 2026-06-23
+
+No staging credentials, test account, approved cart data, coupon codes, checkout billing data, or sandbox invoice IDs were available in this run. The current statuses therefore remain evidence-based:
+
+| Flow | Sprint 6 status | Missing evidence |
+|---|---|---|
+| Sign in / sign up / password routes | Blocked | Staging URL, test account, success/error responses, redirect/session behavior, expired/invalid session evidence. |
+| Profile/settings/bookings/favourites | Blocked | Authenticated staging account, profile data, bookings/favourites data, update/remove/add favourite evidence. |
+| Cart tour append/edit/remove/clear | Blocked | Approved staging tour ID/slug, cart item ID, populated cart, auth/guest persistence evidence. |
+| Coupon validation | Blocked | Valid coupon code, invalid coupon test, backend response examples. |
+| Rent-car cart flow | Blocked | Approved pickup/dropoff data, rental payload evidence, cart display/removal behavior. |
+| Checkout/booking | Blocked | Staging cart, billing data, payment method config, booking creation response, payment URL/redirect evidence. |
+| Payment callbacks | Blocked for sandbox behavior | PayPal/Fawaterk sandbox invoice IDs for valid, invalid, duplicate, refresh, success, pending, and canceled states. |
+| Contact/make-your-trip reCAPTCHA | Blocked for backend acceptance | Staging key/settings and backend valid/missing/invalid token responses. |
+| Thank-you/conversion tracking | Blocked | GTM Preview, GA4 DebugView, Google Ads test method, TikTok/Clarity owner validation. |
+
 ## Sprint 2 Backend Validation Result
 
 Date: 2026-06-22

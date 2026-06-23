@@ -98,3 +98,22 @@ No broad visual polish was performed. Existing screenshots under `output/playwri
 | `/profile/bookings` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated data blocked without staging account | Yes |
 | `/profile/favourites` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated data blocked without staging account | Yes |
 | `/profile/settings` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated update blocked without staging account | Yes |
+
+## Sprint 6 UI Parity Status
+
+Date: 2026-06-23
+
+Focused UI parity remains blocked behind staging revenue validation. No broad UI polish was started because auth/profile/cart/checkout/payment flows are still blocked by missing staging credentials and sandbox/test data.
+
+| Page | Sprint 6 status | Business risk | SEO risk | Required before cutover | Recommended fix |
+|---|---|---|---|---|---|
+| `/` | Pending approval | Medium | High | Yes | Review existing Sprint 2 screenshots and rerun after staging data is available. |
+| `/egypt-tours/one-day-tours` | Pending approval | Medium | High | Yes | Compare category listing density/filter behavior against Nuxt. |
+| Representative `/tour/[slug]` | Pending approval | High | High | Yes | Validate booking panel, options/seasons, and crawlable content after staging tour data is confirmed. |
+| `/contact-us` | Pending approval | Medium | Medium | Yes | Validate form behavior/reCAPTCHA before visual-only fixes. |
+| `/cart` | Blocked | High | Low | Yes | Requires populated cart data before meaningful parity approval. |
+| `/cart/checkout` | Blocked | Critical | Low | Yes | Requires staging cart/payment data before meaningful parity approval. |
+| Auth routes | Blocked | High | Low | Yes | Requires staging account to approve success/error states. |
+| Profile routes | Blocked | High | Low | Yes | Requires authenticated staging account and data. |
+| `/make-your-trip` | Pending backend validation | Medium | Medium | Yes | Validate submit behavior/reCAPTCHA before visual-only fixes. |
+| `/rent-car` | Pending backend validation | Medium | Medium | Yes | Validate locations/destinations/rental append before visual-only fixes. |

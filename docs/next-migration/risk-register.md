@@ -22,6 +22,14 @@
 - Third-party normal-mode performance requires marketing/tag owner approval; engineering should not remove GTM/GA/TikTok/Clarity/TrustIndex unilaterally.
 - reCAPTCHA acceptance is blocked until staging backend verification confirms the current submit-time token is accepted.
 
+## Sprint 6 Risk Notes
+
+- Staging validation remains the top cutover blocker because no staging frontend URL, staging backend/API URL, test customer, coupon data, cart item data, checkout billing data, payment configuration, or sandbox invoice IDs were provided.
+- Auth/profile/cart/checkout/payment cannot be marked passed without real staging/backend evidence.
+- Custom marketing sitemap remains a high SEO risk until the backend provides a list endpoint, another confirmed API exposes slugs, business/SEO approves manual slugs, or business/SEO explicitly excludes those pages for cutover.
+- Conversion tracking remains a business risk because no GTM Preview, GA4 DebugView, Google Ads test method, or TikTok/Clarity owner approval was available.
+- Third-party normal-mode performance remains an approval risk; accepted performance cost must be marked yes/no by marketing/tag owners.
+
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.

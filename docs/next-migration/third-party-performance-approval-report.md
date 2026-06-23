@@ -41,3 +41,33 @@ Target: local production build at `http://127.0.0.1:3000`.
 | Tour diagnostic | 92 | 2.7s | 0.002 | 0ms | First-party route performs well. |
 
 Lighthouse reports were generated successfully, but Lighthouse emitted Windows temp-profile cleanup `EPERM` warnings after report generation.
+
+## Sprint 6 Approval Status
+
+Date: 2026-06-23
+
+No marketing/tag-owner approval, GTM Preview access, GA4 DebugView access, Google Ads conversion test method, or TikTok/Clarity owner contact was provided. Normal-mode third-party performance therefore remains blocked for business approval.
+
+| Third party | Sprint 6 recommendation | Approval needed | Accepted performance cost |
+|---|---|---|---|
+| GTM | Keep as-is until owner approves idle deferral, consent gate, or route scope. | Marketing/tag owner | Not approved. |
+| GA4 | Keep as-is until analytics owner approves idle deferral or consent gate. | Marketing/analytics | Not approved. |
+| TikTok | Route-scope, defer, consent-gate, or remove only inside GTM with marketing approval. | Paid/social owner | Not approved. |
+| Clarity | Sample, route-scope, defer, or consent-gate only with owner approval. | Product/analytics owner | Not approved. |
+| TrustIndex | Keep on review-critical surfaces; consider idle loading after approval. | Marketing/product | Not approved. |
+| reCAPTCHA Enterprise | Keep submit-time loading; validate backend acceptance before cutover. | Engineering/backend | Not applicable to normal page-load cost after submit-time change. |
+
+Cutover remains blocked until the owner decision is recorded as either accepted performance cost or approved optimization.
+
+### Sprint 6 Lighthouse Result
+
+Target: local production build at `http://127.0.0.1:3106`.
+
+| Page/mode | Score | LCP | CLS | TBT | Status |
+|---|---:|---|---|---|---|
+| Home normal | 44 | 9.3s | 0.029 | 1,400ms | Not approved; normal mode remains high-cost. |
+| Home diagnostic | 89 | 3.7s | 0.029 | 50ms | First-party blocking time remains low. |
+| Tour normal | 66 | 2.9s | 0.002 | 1,090ms | Not approved; normal mode remains high-cost. |
+| Tour diagnostic | 90 | 2.8s | 0.002 | 80ms | First-party route remains comparatively healthy. |
+
+Lighthouse emitted Windows temp-profile cleanup `EPERM` warnings after writing JSON reports.
