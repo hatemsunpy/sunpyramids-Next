@@ -5,6 +5,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { DestinationCard } from "@/components/DestinationCard";
 import { TourCard } from "@/components/TourCard";
 import { BlogCard } from "@/components/BlogCard";
+import { PlannerRequestFlow } from "@/components/CustomerFlows";
 import { withLocale } from "@/lib/locales";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 
@@ -222,17 +223,7 @@ function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | nu
           <h2>{isCar ? "Rent A Car" : "Make Your Trip"}</h2>
           <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description) }} />
         </div>
-        <div className="planner-form">
-          <div className="step-label">Quick Info</div>
-          <input placeholder={isCar ? "Pickup location" : "Destination"} />
-          <input placeholder={isCar ? "Drop-off location" : "Travel date"} />
-          <input placeholder={isCar ? "Pickup date" : "Number of travelers"} />
-          <div className="step-label">Personal Info</div>
-          <input placeholder="Full name" />
-          <input placeholder="Email address" />
-          <input placeholder="Phone number" />
-          <button className="btn-primary" type="button">{isCar ? "Request Car" : "Start Planning"}</button>
-        </div>
+        <PlannerRequestFlow route={route as "make-your-trip" | "rent-car"} locale={locale} />
       </section>
       <NeedHelp locale={locale} />
     </main>

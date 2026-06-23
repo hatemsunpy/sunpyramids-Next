@@ -79,3 +79,22 @@ Sprint 2 included substantial Next UI/component work, including Header, HomePage
 Date: 2026-06-22
 
 No broad visual polish was performed. The only UI-adjacent change was a targeted tour hero implementation change from CSS background image to optimized `next/image` to fix a confirmed LCP problem while preserving the existing hero appearance. UI parity approval remains pending.
+
+## Sprint 5 Approval Preparation
+
+No broad visual polish was performed. Existing screenshots under `output/playwright/sprint2/` remain the approval baseline.
+
+| Page | Desktop screenshot status | Mobile screenshot status | Sprint 5 status | Required before cutover |
+|---|---|---|---|---|
+| `/` | Captured in Sprint 2 | Captured in Sprint 2 | Minor/unknown mismatch; no new visual changes | Approval required |
+| `/egypt-tours/one-day-tours` | Captured in Sprint 2 | Captured in Sprint 2 | Category grid behavior preserved | Approval required |
+| `/tour/[slug]` | Captured in Sprint 2 | Captured in Sprint 2 | Major mismatch remains around rich tour/booking sections | Yes |
+| `/contact-us` | Captured in Sprint 2 | Captured in Sprint 2 | Functional form exists; richer Nuxt layout still pending | Approval required |
+| `/cart` | Captured in Sprint 2 | Captured in Sprint 2 | Functional actions added; UI parity still not approved | Yes |
+| `/cart/checkout` | Captured in Sprint 2 | Captured in Sprint 2 | Functional payment update added; UI parity still not approved | Yes |
+| `/auth/sign-in` | Captured in Sprint 2 | Captured in Sprint 2 | Backend form exists; Nuxt visual richness still differs | Approval required |
+| `/auth/sign-up` | Captured in Sprint 2 | Captured in Sprint 2 | Backend form exists; visual approval pending | Approval required |
+| `/profile` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated state blocked without staging account | Yes |
+| `/profile/bookings` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated data blocked without staging account | Yes |
+| `/profile/favourites` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated data blocked without staging account | Yes |
+| `/profile/settings` | Captured in Sprint 2 | Captured in Sprint 2 | Authenticated update blocked without staging account | Yes |

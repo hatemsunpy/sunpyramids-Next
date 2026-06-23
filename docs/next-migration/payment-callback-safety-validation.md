@@ -53,6 +53,14 @@ Result: passed for no-invoice safety. A fresh Chrome browser context loaded `/or
 
 Static code status remains unchanged: payment endpoints are only referenced by the client-only `PaymentCallbackStatus` component and are not called from layouts, metadata generation, static generation, or Server Components.
 
+## Sprint 5 Revalidation
+
+Date: 2026-06-22
+
+Static code inspection still confirms payment mutation-like endpoints are referenced only by the client-only `PaymentCallbackStatus` component. They are not called from layouts, metadata generation, static generation, or Server Components, and a missing `invoice_id` remains guarded before any API call.
+
+Sandbox invoice validation was blocked because no approved PayPal or Fawaterk sandbox invoice IDs were provided. Success, canceled, pending, duplicate refresh behavior, and backend response handling must be validated with approved invoice IDs before cutover.
+
 ## Cutover Status
 
 Code-level SSR safety: passed.

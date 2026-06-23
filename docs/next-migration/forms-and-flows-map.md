@@ -9,16 +9,16 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 | Contact form | `components/ContactUs/Form.vue` | `POST contact-requests` with recaptcha token | `components/ContactForm.tsx` posts `contact-requests` with `subject`, `type`, `country`, and `recaptcha_token` | Implemented; backend recaptcha/tracking parity pending. |
 | Landing/contact forms | `components/BookEgyptTrip/ContactUs.vue`, `EgyptTripLanding*`, `MarktingPages/ContactUs.vue`, `Home/NeedHelp.vue` | `POST contact-requests` | Generic cloned route/contact form surfaces | Needs route-specific field parity validation. |
 | Event booking/lead | `components/Event/RightPanal/Book.vue` | `POST contact-requests` | Event detail page exists | Needs form parity validation. |
-| Make Your Trip | `components/MakeYourTrip/Form/*` | `POST custom/trips` | Route/UI clone exists | Functional flow pending. |
-| Rent Car | `components/RentACar/Form/*` | `locations`, `car/rental/available/destinations`, `car/rental/search/for/route`, `cart/rentals/append` | Route/UI clone exists | Functional flow pending. |
+| Make Your Trip | `components/MakeYourTrip/Form/*` | `POST custom/trips` | `PlannerRequestFlow` posts confirmed payload with submit-time `recaptcha_token` | Implemented; staging/backend reCAPTCHA validation pending. |
+| Rent Car | `components/RentACar/Form/*` | `locations`, `car/rental/available/destinations`, `cart/rentals/append` | `PlannerRequestFlow` fetches locations/destinations and appends rental to cart | Implemented; staging cart validation pending. |
 
 ## Booking, Cart, and Checkout
 
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
 | Tour booking panel | `components/Tours/RightPanal/index.vue` | `cart/tours/append`, wishlist toggle, tour options/seasons | Tour detail route exists | Booking panel parity pending. |
-| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear | Partial implementation; edit/remove/coupon/staging validation pending. |
-| Checkout billing/payment | `components/Checkout/*` | `POST bookings`, `POST bookings/update/{id}` | `/cart/checkout` posts `bookings` from client and redirects to returned payment URL | Partial implementation; `bookings/update/{id}` and staging payment validation pending. |
+| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear/remove/coupon and tour edit via `cart/tours/append` | Implemented first pass; staging populated-cart validation pending. |
+| Checkout billing/payment | `components/Checkout/*` | `POST bookings`, `POST bookings/update/{id}` | `/cart/checkout` posts `bookings`; optional payment method selection posts `bookings/update/{id}` before redirect | Implemented first pass; staging payment validation pending. |
 | Thank-you / confirmation | `pages/thankful.vue` | Redirect/result display | `/thankful` exists | Copy/redirect/history validation pending. |
 
 ## Auth and Customer Account
@@ -77,6 +77,28 @@ Date: 2026-06-22
 - Conversion/thank-you tracking remains code-level parity only: Nuxt and Next both load GA4/GTM globally in normal mode, but no GTM preview or conversion account validation was available.
 
 No additional customer-flow endpoint parity was implemented in Sprint 4 because staging data and confirmed payment/cart state remain missing. `bookings/update/{id}`, cart edit/remove/coupon, rent-car, and make-your-trip remain Sprint 5 candidates after endpoint/payload confirmation.
+
+## Sprint 5 Customer/Revenue Flow Status
+
+Date: 2026-06-22
+
+Confirmed Nuxt sources inspected: `components/Checkout/index.vue`, `components/Cart/steps/Cart/index.vue`, `components/Cart/steps/Cart/Card.vue`, `components/Cart/steps/Cart/Edit.vue`, `components/RentACar/Form/*`, `components/MakeYourTrip/Form/*`, and payment callback pages.
+
+Implemented in Next:
+
+- Cart remove uses confirmed `DELETE cart/remove/{id}` from cart item actions.
+- Cart coupon uses confirmed `GET coupons/{code}/validate` and requires the auth token like Nuxt.
+- Cart tour edit posts confirmed `POST cart/tours/append` with `tour_id`, `start_date`, passenger counts, and option IDs.
+- Checkout supports confirmed `POST bookings/update/{id}` when a payment method is selected after booking creation.
+- Make Your Trip posts confirmed `POST custom/trips` with submit-time reCAPTCHA token and Nuxt-aligned field names.
+- Rent Car fetches `locations`, fetches dependent destinations through `car/rental/available/destinations`, and posts confirmed `cart/rentals/append`.
+
+Blocked validation:
+
+- No staging credentials, test customer account, populated cart state, coupon code, or sandbox invoice IDs were provided.
+- Auth/profile/cart/checkout/rent-car/make-your-trip behavior is code-wired but not marked passed.
+- Backend reCAPTCHA acceptance is still blocked because no staging key/account validation context was available.
+- Conversion/thank-you tracking remains unapproved; no GTM preview or marketing owner approval was available.
 
 ## Sprint 2 Backend Validation Result
 

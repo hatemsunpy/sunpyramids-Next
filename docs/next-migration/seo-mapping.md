@@ -43,6 +43,7 @@ Source of truth: `nuxt_sunpyramids/composables/useSeo.js`, `nuxt_sunpyramids/uti
 - Confirm dashboard canonical overrides with backend host are rewritten to frontend host.
 - Confirm JSON-LD uses dashboard schema only and never invented business values.
 - Sprint 4 raw HTML checks passed for the same priority route set after third-party diagnostic and tour hero changes.
+- Sprint 5 raw HTML checks passed for public routes `/`, `/egypt-tours/one-day-tours`, representative `/tour/[slug]`, and `/contact-us`; `/cart` and `/cart/checkout` render only basic metadata and need a business decision before adding public SEO metadata to private customer flows.
 
 ## Sprint 2 Note
 

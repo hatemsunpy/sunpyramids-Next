@@ -75,3 +75,14 @@ Date: 2026-06-22
 - `/robots.txt` returned HTTP 200 in the local production route smoke test.
 - Re-checking Nuxt source again found only `components/MarktingPages/index.vue` using `custom-pages/{slug}` detail reads. No custom marketing list/discovery endpoint was confirmed.
 - Custom marketing sitemap coverage remains blocked pending backend list endpoint support or explicit business exclusion approval.
+
+## Sprint 5 Custom Marketing Page Decision Status
+
+Date: 2026-06-22
+
+- Re-checked Nuxt source and current API inventory. Nuxt confirms custom marketing detail reads through `custom-pages/{slug}` only.
+- No confirmed list/discovery endpoint was found in the Next or Nuxt source.
+- The previously tested `custom-pages?page_limit=2` list endpoint returned 404 and remains unconfirmed.
+- No hardcoded custom marketing slugs were added because business/SEO approval was not provided.
+
+Decision remains blocked. Acceptable resolution paths are: backend provides a list endpoint, another confirmed API endpoint exposes the slugs, business/SEO explicitly approves temporary exclusion, or business/SEO explicitly approves a manually configured slug list.

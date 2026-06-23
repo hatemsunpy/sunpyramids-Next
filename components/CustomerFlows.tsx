@@ -15,6 +15,7 @@ import {
   setCookie,
 } from "@/lib/client-api";
 import { withLocale } from "@/lib/locales";
+import { generateRecaptchaToken } from "@/lib/recaptcha";
 
 type ApiResponse<T = any> = {
   status?: boolean;
@@ -363,6 +364,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
   const [cart, setCart] = useState<any[]>([]);
   const [checkoutData, setCheckoutData] = useState<any>(null);
   const [hasToken, setHasToken] = useState(false);
+  const [coupon, setCoupon] = useState<any>(null);
 
   async function loadCart(tokenExists = hasToken) {
     setState("loading");
@@ -406,6 +408,69 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     }
   }
 
+  async function removeCartItem(item: any) {
+    const cartId = item?.tour?.id || item?.id;
+    if (!cartId) return;
+    setState("loading");
+    try {
+      const res = await apiDelete<ApiResponse>(`cart/remove/${cartId}`, locale, true);
+      await loadCart(hasToken);
+      setMessage(res.message || "Cart item removed.");
+    } catch (error) {
+      setState("error");
+      setMessage(messageFromError(error));
+    }
+  }
+
+  async function editTourCartItem(event: FormEvent<HTMLFormElement>, item: any) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const tourId = item?.tour?.id;
+    if (!tourId) return;
+    setState("loading");
+    try {
+      const options = String(form.get("options") || "")
+        .split(",")
+        .map((value) => Number(value.trim()))
+        .filter(Boolean);
+      const res = await apiPost<ApiResponse>("cart/tours/append", {
+        tour_id: tourId,
+        start_date: String(form.get("startDate") || item.start_date || ""),
+        adults: Number(form.get("adults") || item.adults || 1),
+        children: Number(form.get("children") || item.children || 0),
+        infants: Number(form.get("infants") || item.infants || 0),
+        options,
+      }, locale, hasToken);
+      await loadCart(hasToken);
+      setMessage(res.message || "Cart item updated.");
+    } catch (error) {
+      setState("error");
+      setMessage(messageFromError(error));
+    }
+  }
+
+  async function applyCoupon(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!getCookie("sunpyramids-token")) {
+      setState("error");
+      setMessage("Please login to apply the coupon.");
+      return;
+    }
+    const form = new FormData(event.currentTarget);
+    const code = String(form.get("couponCode") || "").trim();
+    if (!code) return;
+    setState("loading");
+    try {
+      const res = await apiGet<ApiResponse>(`coupons/${encodeURIComponent(code)}/validate`, locale, true);
+      setCoupon(res.data);
+      setState("success");
+      setMessage(res.message || "Coupon applied.");
+    } catch (error) {
+      setState("error");
+      setMessage(messageFromError(error));
+    }
+  }
+
   async function checkoutSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setState("loading");
@@ -427,10 +492,18 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     };
 
     try {
+      const paymentMethod = String(form.get("paymentMethod") || "");
       const res = await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } }; booking?: { id?: number } }>>("bookings", body, locale, true);
       setState("success");
       setMessage(res.message || "Booking created.");
-      const redirect = res.data?.payment?.redirect?.location;
+      const bookingId = res.data?.booking?.id;
+      const paymentResponse = bookingId && paymentMethod
+        ? await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } } }>>(`bookings/update/${bookingId}`, {
+            payment_method: paymentMethod,
+            payment_method_id: paymentMethod === "card" ? 9 : null,
+          }, locale, true)
+        : null;
+      const redirect = paymentResponse?.data?.payment?.redirect?.location || res.data?.payment?.redirect?.location;
       if (redirect && isAllowedPaymentRedirect(redirect)) {
         window.location.href = redirect;
         return;
@@ -456,6 +529,11 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
           <input name="pickupLocation" placeholder="Pickup location" />
           <input name="currencyId" type="number" placeholder="Currency ID" defaultValue={1} />
           <input name="couponId" type="number" placeholder="Coupon ID" defaultValue={checkoutData?.discountID || ""} />
+          <select name="paymentMethod" defaultValue="">
+            <option value="">Use booking default payment redirect</option>
+            <option value="paypal">PayPal</option>
+            <option value="card">Card</option>
+          </select>
           <textarea name="note" placeholder="Note" rows={4} />
           <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Creating booking..." : "Create Booking"}</button>
         </form>
@@ -477,9 +555,27 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
             <article key={item.id || index}>
               <strong>{item.tour?.title || item.title || item.name || `Cart item ${index + 1}`}</strong>
               {item.total ? <span>Total: {item.total}</span> : null}
+              {item.type === "tour" || item.tour ? (
+                <form className="cart-inline-form" onSubmit={(event) => editTourCartItem(event, item)}>
+                  <input name="startDate" type="date" defaultValue={String(item.start_date || "").slice(0, 10)} />
+                  <input name="adults" type="number" min={1} defaultValue={item.adults || 1} aria-label="Adults" />
+                  <input name="children" type="number" min={0} defaultValue={item.children || 0} aria-label="Children" />
+                  <input name="infants" type="number" min={0} defaultValue={item.infants || 0} aria-label="Infants" />
+                  <input name="options" placeholder="Option IDs, comma separated" defaultValue={Array.isArray(item.options) ? item.options.map((option: any) => option.id).filter(Boolean).join(",") : ""} />
+                  <button className="btn-outline" type="submit" disabled={state === "loading"}>Save</button>
+                </form>
+              ) : null}
+              <button className="btn-outline" type="button" onClick={() => removeCartItem(item)} disabled={state === "loading"}>Remove</button>
             </article>
           ))}
         </div>
+      ) : null}
+      {cart.length ? (
+        <form className="cart-inline-form" onSubmit={applyCoupon}>
+          <input name="couponCode" placeholder="Coupon code" />
+          <button className="btn-outline" type="submit" disabled={state === "loading"}>Apply Coupon</button>
+          {coupon?.value ? <span>Discount: {coupon.value}%</span> : null}
+        </form>
       ) : null}
       <div className="status-actions">
         <Link className="btn-primary" href={withLocale("/trips", locale)}>Explore Trips</Link>
@@ -496,4 +592,166 @@ export async function toggleWishlist(tourId: number | string, locale: Locale = "
     throw new Error("Please login to like the tour");
   }
   return apiPut<ApiResponse>(`wishlist/${tourId}/toggle`, locale, true);
+}
+
+export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your-trip" | "rent-car"; locale?: Locale }) {
+  const router = useRouter();
+  const [state, setState] = useState<LoadState>("idle");
+  const [message, setMessage] = useState("");
+  const [locations, setLocations] = useState<any[]>([]);
+  const [destinations, setDestinations] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
+  const isCar = route === "rent-car";
+
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const [countryRes, locationRes] = await Promise.all([
+          apiGet<ApiResponse<any[]>>("countries", locale, false),
+          isCar ? apiGet<ApiResponse<{ data?: any[] }>>("locations?page_limit=200&order_by=id,asc", locale, false) : Promise.resolve(null),
+        ]);
+        setCountries(Array.isArray(countryRes.data) ? countryRes.data : []);
+        if (locationRes) setLocations(Array.isArray(locationRes.data?.data) ? locationRes.data.data : []);
+      } catch {
+        setCountries([]);
+        setLocations([]);
+      }
+    }
+    loadOptions();
+  }, [isCar, locale]);
+
+  async function loadRentalDestinations(pickupId: string) {
+    if (!pickupId) return;
+    try {
+      const res = await apiPost<ApiResponse<any[]>>(`car/rental/available/destinations?page_limit=200&pickup_location_id=${encodeURIComponent(pickupId)}`, {}, locale);
+      setDestinations(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setDestinations([]);
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setState("loading");
+    setMessage("");
+    const form = new FormData(event.currentTarget);
+
+    try {
+      if (isCar) {
+        const returnDate = String(form.get("returnDate") || "");
+        const body: Record<string, unknown> = {
+          pickup_location_id: String(form.get("pickupLocationId") || ""),
+          destination_id: String(form.get("destinationId") || ""),
+          pickup_date: String(form.get("pickupDate") || ""),
+          pickup_time: String(form.get("pickupTime") || ""),
+          oneway: form.get("type") !== "roundTrip",
+          adults: Number(form.get("adults") || 1),
+          children: Number(form.get("children") || 0),
+          name: String(form.get("fullName") || ""),
+          email: String(form.get("email") || ""),
+          phone: String(form.get("phone") || ""),
+          currency_id: 1,
+          nationality: String(form.get("nationality") || ""),
+          stops: [],
+        };
+        if (returnDate) {
+          body.return_date = returnDate;
+          body.return_time = String(form.get("returnTime") || "");
+        }
+        const res = await apiPost<ApiResponse>("cart/rentals/append", body, locale, !!getCookie("sunpyramids-token"));
+        setState("success");
+        setMessage(res.message || "Rental added to cart.");
+        router.push(withLocale("/cart", locale));
+        return;
+      }
+
+      const token = await generateRecaptchaToken("submit");
+      if (!token) throw new Error("reCAPTCHA token could not be generated.");
+      const tripType = String(form.get("type") || "exact_time");
+      const body: Record<string, unknown> = {
+        destination: "egypt",
+        type: tripType,
+        name: String(form.get("fullName") || ""),
+        first_name: String(form.get("fullName") || ""),
+        last_name: "",
+        phone_number: String(form.get("phone") || ""),
+        email: String(form.get("email") || ""),
+        adults: Number(form.get("adults") || 1),
+        children: Number(form.get("children") || 0),
+        infants: Number(form.get("infants") || 0),
+        nationality: String(form.get("nationality") || ""),
+        min_person_budget: Number(form.get("minBudget") || 1000),
+        max_person_budget: Number(form.get("maxBudget") || 3000),
+        flight_offer: form.get("flightOffer") === "on",
+        additional_notes: String(form.get("note") || ""),
+        recaptcha_token: token,
+      };
+      if (tripType === "exact_time") {
+        body.start_date = String(form.get("startDate") || "");
+        body.end_date = String(form.get("endDate") || "");
+      } else if (tripType === "approx_time") {
+        body.month = String(form.get("month") || "");
+      } else {
+        body.days = Number(form.get("days") || 1);
+      }
+      await apiPost<ApiResponse>("custom/trips", body, locale, !!getCookie("sunpyramids-token"));
+      setState("success");
+      router.push(`${withLocale("/thankful", locale)}?name=${encodeURIComponent(String(form.get("fullName") || ""))}`);
+    } catch (error) {
+      setState("error");
+      setMessage(messageFromError(error));
+    }
+  }
+
+  return (
+    <form className="planner-form" onSubmit={submit}>
+      <div className="step-label">Quick Info</div>
+      {isCar ? (
+        <>
+          <select name="type" defaultValue="oneWay"><option value="oneWay">One way</option><option value="roundTrip">Round trip</option></select>
+          <input name="pickupDate" type="date" required />
+          <input name="pickupTime" type="time" required />
+          <select name="pickupLocationId" required onChange={(event) => loadRentalDestinations(event.currentTarget.value)}>
+            <option value="">Pickup location</option>
+            {locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
+          </select>
+          <select name="destinationId" required>
+            <option value="">Drop-off location</option>
+            {destinations.map((destination) => <option key={destination.id} value={destination.id}>{destination.name}</option>)}
+          </select>
+          <input name="returnDate" type="date" />
+          <input name="returnTime" type="time" />
+        </>
+      ) : (
+        <>
+          <select name="type" defaultValue="exact_time"><option value="exact_time">Exact time</option><option value="approx_time">Approximate time</option><option value="not_sure">Not sure</option></select>
+          <input name="startDate" type="date" />
+          <input name="endDate" type="date" />
+          <input name="month" placeholder="Month" />
+          <input name="days" type="number" min={1} placeholder="Days" />
+        </>
+      )}
+      <div className="step-label">Personal Info</div>
+      <input name="fullName" placeholder="Full name" required />
+      <input name="email" type="email" placeholder="Email address" required />
+      <input name="phone" placeholder="Phone number" required />
+      <select name="nationality" required>
+        <option value="">Nationality</option>
+        {countries.map((country) => <option key={country.id || country.name} value={country.name}>{country.name}</option>)}
+      </select>
+      <input name="adults" type="number" min={1} defaultValue={1} />
+      <input name="children" type="number" min={0} defaultValue={0} />
+      <input name="infants" type="number" min={0} defaultValue={0} />
+      {!isCar ? (
+        <>
+          <input name="minBudget" type="number" min={0} defaultValue={1000} />
+          <input name="maxBudget" type="number" min={0} defaultValue={3000} />
+          <label className="inline-check"><input name="flightOffer" type="checkbox" /> Include flight offer</label>
+          <textarea name="note" placeholder="Additional notes" rows={4} />
+        </>
+      ) : null}
+      <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Submitting..." : isCar ? "Add Rental To Cart" : "Submit Trip Request"}</button>
+      {message ? <p className={statusClass(state)}>{message}</p> : null}
+    </form>
+  );
 }
