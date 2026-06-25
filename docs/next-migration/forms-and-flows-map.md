@@ -115,6 +115,44 @@ Date: 2026-06-25
 | Checkout | Page loads only; no submit run. |
 | Payment callbacks | No-invoice route smoke passed; no `invoice_id` callback mutation was run. |
 
+## Sprint 15 Secure Auth/Profile and Cart Readiness
+
+Date: 2026-06-25
+
+| Flow | Sprint 15 result |
+|---|---|
+| Auth | Sign-in route loads and invalid login fails safely; valid login blocked because no secure runtime password was available. |
+| Profile | `/profile`, `/profile/settings`, `/profile/bookings`, and `/profile/favourites` return 200 shells; authenticated API validation blocked without valid login. |
+| Cart | Readiness documented for approved future use of `tour_id` 664; no add/remove mutation run because approval text was not provided. |
+| Checkout | Page loads only; no submit run and no booking/payment/invoice mutation. |
+| Forms | Contact, make-your-trip, and rent-car pages load with form markup; no submit run. |
+| Payment callbacks | No-invoice route smoke passed; no `invoice_id` callback mutation was run. |
+
+## Sprint 16 Secure Auth/Profile and Approved Cart Validation
+
+Date: 2026-06-25
+
+| Flow | Sprint 16 result |
+|---|---|
+| Auth | Valid login blocked because runtime credentials were not visible to this shell. |
+| Profile | Blocked; requires valid login. |
+| Cart | Owner approval for reversible add/remove using `tour_id` 664 was provided, but mutation was not run because login was blocked. |
+| Checkout | Page-load safety check passed; no submit run. |
+| Payment callbacks | No-invoice route smoke passed; no `invoice_id` callback mutation was run. |
+
+## Sprint 16 Owner-Approved Checkout Booking Attempt
+
+Date: 2026-06-25
+
+| Flow | Result |
+|---|---|
+| Auth | Blocked because runtime credentials were not visible to this shell. |
+| Profile | Blocked; requires valid login. |
+| Cart setup | Blocked; requires valid login. |
+| Checkout submit | Blocked; requires valid login and cart setup. |
+| Booking creation | Not run; no booking created. |
+| Payment | Not reached; no provider URL opened and no callback with `invoice_id` called. |
+
 ## Cutover Blockers
 
 - Auth, profile, wishlist, cart, checkout, payment, and booking confirmation now have a first-pass client API layer where listed above, but still require staging backend validation.
@@ -229,3 +267,23 @@ Environment tested: local Next production build at `http://localhost:3000`, conn
 | `/cart/checkout` | `bookings`, `bookings/update/{id}` | POST | Requires cart/payment state; current Next page does not create bookings. | Not testable. | Not testable. | Static checkout UI. | No | Fail | Checkout is a critical production blocker. |
 | `/thankful` | Final thank-you display/tracking | GET/display | Public. | Route loads HTTP 200. | Not applicable. | No backend redirect tested. | Partial | Partial | Final conversion/booking redirect parity pending. |
 | Payment callbacks | `payments/paypal/capture`, `payments/paypal/cancel`, `payments/fawaterk/update/invoice` | GET | Client reads browser `invoice_id`; no server token required in current code unless cookie exists. | Route loads HTTP 200. Sandbox invoice not tested. | Missing `invoice_id` shows no backend payment call. | Links to bookings/contact. | Partial | Partial | Needs valid sandbox invoice validation. |
+
+## Sprint 17 Booking Evidence and Cleanup Flow Status
+
+Date: 2026-06-25
+
+| Flow | Sprint 17 status | Outstanding evidence |
+|---|---|---|
+| Auth | Passed in Sprint 16 retry (local untracked credentials). | None for login itself. |
+| Profile | Passed in Sprint 16 retry. | None for profile shell. |
+| Cart | Passed pre-booking in Sprint 16 retry. | Cart post-booking state (cleared? `Test_tour` still present?); read-only confirmation only, no new mutation. |
+| Checkout/booking | One booking created for `tour_id` 664; stopped before payment. | Booking ID/reference, payment redirect, duplicate-booking check, dashboard verifier cleanup decision. |
+| Payment | Not completed; no `invoice_id` callback; no-invoice route safety unchanged. | Sandbox invoice IDs or approved payment handoff test. |
+| Coupon | Not run. | Valid coupon code; invalid-coupon negative test. |
+| Rent-car | Not run. | Pickup/destination IDs; approved reversible rental test. |
+| Tracking | Not run. | GTM Preview, GA4 DebugView, Google Ads test method, TikTok/Clarity approval. |
+| Sitemap | Not changed. | `GET /api/pages` approval, backend list endpoint, manual slugs, or temporary exclusion. |
+| UI parity | Not approved. | Owner name, pages, desktop/mobile approval method. |
+| Credentials cleanup | Confirmed: ignored, not staged/tracked/committed; no value saved. | Owner deletes `.local-test-creds.json` and rotates test password after verifier cleanup. |
+
+Full detail in `docs/next-migration/sprint17-booking-evidence-cleanup-report.md`.
