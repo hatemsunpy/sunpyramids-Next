@@ -4,7 +4,7 @@ Date: 2026-06-25
 
 ## Summary
 
-The owner approved using the test account, adding `tour_id` 664 to cart, submitting checkout once, creating one controlled test booking, and stopping before payment. The test could not proceed to login/cart/checkout because the approved credentials were not visible to this Codex shell as runtime environment variables.
+The owner approved using the test account, adding `tour_id` 664 to cart, submitting checkout once, creating one controlled test booking, and stopping before payment. The test was approved but not executed: login/cart/checkout stayed blocked because the approved credentials were not visible to this Codex shell as runtime environment variables, so no controlled test booking was created.
 
 The password was not written to docs, code, committed env files, terminal commands, logs, reports, or screenshots.
 
