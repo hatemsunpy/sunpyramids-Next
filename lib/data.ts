@@ -80,14 +80,14 @@ export async function getFaqs(locale: Locale, limit = 200) {
 
 export async function getTour(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: Tour }>(
-    `tours/${encodeURIComponent(slug)}?includes=seo,gallery,category,destination,itinerary,includes,excludes,faqs,reviews`,
+    `tours/${encodeURIComponent(slug)}?includes=seo`,
     { locale, next: { revalidate: 180 } },
   );
 
   if (response?.data) return response.data;
 
   const fallback = await apiFetch<ApiList<Tour>>(
-    `tours?slug=${encodeURIComponent(slug)}&includes=seo,gallery,category,destination`,
+    `tours?slug=${encodeURIComponent(slug)}`,
     { locale, next: { revalidate: 180 } },
   );
   return listData(fallback)[0] ?? null;

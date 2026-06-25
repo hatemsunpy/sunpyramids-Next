@@ -58,6 +58,47 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 - Contact and make-your-trip forms no longer hard-fail when submit-time reCAPTCHA is intentionally unavailable; `recaptcha_token` is included only when generated.
 - Contact phone/country and custom-trip first/last name payloads were aligned to backend-required fields.
 
+## Sprint 10 Limited Production-API Validation
+
+Date: 2026-06-25
+
+| Flow | Sprint 10 result |
+|---|---|
+| Contact form page | Deployed staging `/contact-us` returns `500`; current local production build returns `200`. No contact submit was run against production API. |
+| Make Your Trip page | Deployed staging `/make-your-trip` returns `500`; current local production build returns `200`. No custom-trip submit was run against production API. |
+| Rent Car page | Deployed staging `/rent-car` returns `500`; current local production build returns `200`. Backend `pages/rent-car` returns `404`; no rental append/search mutation was run. |
+| Auth sign-in | Page loads on staging. Invalid login against `POST /api/auth/login` fails safely with controlled `400`; valid login blocked because password was not available as a secure runtime value. |
+| Tour detail | Test tour data is slug `Test_tour`, numeric ID `664`, code `Test`, title `Test Tour`; use `664` for backend APIs requiring numeric `tour_id`. Staging `/tour/Test_tour` returns `500` and the deep include API detail request returns `500`. |
+| Cart add/remove | Blocked. No production-API cart mutation was run without explicit approval. |
+| Checkout | UI/page load only; no booking creation or payment redirect was run. Active code remains aligned to `POST bookings` with `payment_method` and no active `bookings/update/{id}` call. |
+| Payment callbacks | No-invoice route smoke only; no `invoice_id` callback mutation was run. |
+
+## Sprint 11 Staging 500 Triage
+
+Date: 2026-06-25
+
+| Flow | Sprint 11 result |
+|---|---|
+| Tour detail | Frontend now avoids backend-crashing `gallery` and deeper includes for `Test_tour`; `getTour()` uses `includes=seo` and a no-include fallback. Deployed staging still needs redeploy/verification. |
+| Generic content pages | Frontend sanitizer path changed to be SSR-safe without `isomorphic-dompurify`, which is shared by contact, make-your-trip, rent-car, about, FAQ, and tour content rendering. |
+| Contact form page | Local production build returns 200. No contact submit was run. |
+| Make Your Trip page | Local production build returns 200. No custom-trip submit was run. |
+| Rent Car page | Local production build returns 200 using the `car-rental` page API slug. No rental/cart mutation was run. |
+| Auth | Valid login/profile remains blocked until the password is provided through a secure runtime-only mechanism. |
+
+## Sprint 12 Staging Redeploy Verification
+
+Date: 2026-06-25
+
+| Flow | Sprint 12 result |
+|---|---|
+| Tour detail | Deployed staging `/tour/Test_tour` still returns `500` and matches `/500`; redeploy with Sprint 11 fixes is not verified. |
+| Contact page | Deployed staging `/contact-us` still returns `500`; local current build passes. |
+| Make Your Trip page | Deployed staging `/make-your-trip` still returns `500`; local current build passes. No custom-trip submit was run. |
+| Rent Car page | Deployed staging `/rent-car` still returns `500`; local current build passes. No rent-car/cart mutation was run. |
+| Auth/profile | Sign-in route loads and invalid login fails safely; valid login/profile remains blocked without secure runtime password. |
+| Payment callbacks | No-invoice route smoke only; no `invoice_id` callback mutation was run. |
+
 ## Cutover Blockers
 
 - Auth, profile, wishlist, cart, checkout, payment, and booking confirmation now have a first-pass client API layer where listed above, but still require staging backend validation.

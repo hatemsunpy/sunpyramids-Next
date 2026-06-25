@@ -1,6 +1,6 @@
 # Third-Party Performance Approval Report
 
-Date: 2026-06-22
+Initial Snapshot Date: 2026-06-22 (Sprint 6/7/8/9 sections dated 2026-06-23)
 
 Normal-mode performance is not approved for production cutover. Diagnostic `?no-third-party=1` runs show the first-party app performs well, so the remaining decision is a marketing/tag-owner approval or optimization decision.
 
