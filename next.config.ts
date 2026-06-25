@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // Vercel's image optimization is disabled because the current plan
+    // returns 402 Payment Required for external media. Serve images directly
+    // from the configured remote hosts (sunpyramidtours.com, R2, etc.).
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
