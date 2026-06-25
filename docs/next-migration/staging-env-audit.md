@@ -34,3 +34,7 @@ Sprint 12 could not confirm Vercel deployment metadata or environment variables 
 - `NEXT_PUBLIC_API_URL=https://sunpyramidtours.com/api/`
 
 The deployed staging target routes still return `/500`, so redeploy/env verification remains required.
+
+## Sprint 14 Environment Follow-Up
+
+The previous staging `/500` target routes now return 200 after redeploy. Vercel environment values are still not directly inspectable from this workspace, but route behavior confirms the deployed frontend can reach required public page/tour data for the checked routes.

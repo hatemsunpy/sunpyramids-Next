@@ -99,6 +99,22 @@ Date: 2026-06-25
 | Auth/profile | Sign-in route loads and invalid login fails safely; valid login/profile remains blocked without secure runtime password. |
 | Payment callbacks | No-invoice route smoke only; no `invoice_id` callback mutation was run. |
 
+## Sprint 14 Secure Auth/Profile Validation
+
+Date: 2026-06-25
+
+| Flow | Sprint 14 result |
+|---|---|
+| Tour detail | Staging `/tour/Test_tour` returns 200. Numeric `tour_id` remains 664; code remains `Test`. |
+| Contact page | Staging `/contact-us` returns 200; form markup present; no submit run. |
+| Make Your Trip page | Staging `/make-your-trip` returns 200; form markup present; no submit run. |
+| Rent Car page | Staging `/rent-car` returns 200; form markup present; no rent-car/cart mutation run. |
+| Auth | Sign-in loads; invalid login fails safely; valid login blocked without secure runtime password. |
+| Profile | Profile shell loads; authenticated profile/settings/bookings/favourites API validation blocked without valid login. |
+| Cart readiness | Ready for approved test using `tour_id` 664, but add/remove mutation remains blocked without explicit owner approval. |
+| Checkout | Page loads only; no submit run. |
+| Payment callbacks | No-invoice route smoke passed; no `invoice_id` callback mutation was run. |
+
 ## Cutover Blockers
 
 - Auth, profile, wishlist, cart, checkout, payment, and booking confirmation now have a first-pass client API layer where listed above, but still require staging backend validation.

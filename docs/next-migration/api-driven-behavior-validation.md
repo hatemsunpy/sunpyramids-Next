@@ -97,6 +97,20 @@ Date: 2026-06-25
 | Payment no-invoice | Route smoke pass | Callback routes without `invoice_id` return 200. No invoice mutation was run. |
 | Mutation validation | Still blocked | No cart, checkout, payment, coupon, rent-car, or dashboard mutation was run. |
 
+## Sprint 14 Secure Auth/Profile Validation
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Staging target routes | Passed | `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` now return 200 on staging. |
+| Auth valid login | Blocked | No secure runtime password was available in checked env variables. Invalid login still fails safely with controlled `400`. |
+| Profile | Shell routes load | Full profile/bookings/favourites/settings API validation remains blocked without valid login. |
+| Token exposure | Passed raw checks | No bearer token or `sunpyramids-token` found in checked raw HTML. |
+| Cart readiness | Documented | Use numeric `tour_id` 664 for `cart/tours/append`; mutation test remains blocked without explicit approval. |
+| Payment no-invoice | Passed route smoke | Callback routes without `invoice_id` returned 200. |
+| Mutation validation | Still blocked | No cart, checkout, booking, payment, coupon, rent-car, or profile-update mutation was run. |
+
 ## Sprint 4 Performance and Behavior Validation
 
 Date: 2026-06-22

@@ -307,6 +307,26 @@ Date: 2026-06-25
 | `npm run build` | Passed locally on 2026-06-25. |
 | Production cutover | Still blocked. |
 
+## Sprint 14 Secure Auth/Profile Validation
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Staging route smoke | Passed for `/`, `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, `/rent-car`, `/cart`, `/cart/checkout`, `/auth/sign-in`, `/profile`, `/sitemap.xml`, and `/robots.txt`. |
+| Previous 500 routes | Fixed on staging; all four target routes returned 200. |
+| Auth invalid login | Passed safe negative check with controlled `400`. |
+| Auth valid login | Blocked; secure runtime password value unavailable. |
+| Profile validation | Blocked for authenticated behavior; shell routes load. |
+| Tour page | Passed staging 200 for `Test_tour`; numeric `tour_id` remains 664. |
+| Cart readiness | Documented for approved future use of `tour_id` 664; no cart mutation run. |
+| Checkout safety | Page load only; no booking/payment/invoice mutation run. |
+| Payment no-invoice callbacks | Passed route smoke without `invoice_id`. |
+| Forms safety | Contact/make-your-trip/rent-car page loads passed; no submit run; no global reCAPTCHA in checked raw HTML. |
+| `npm run lint` | Passed locally on 2026-06-25. |
+| `npm run build` | Passed locally on 2026-06-25. |
+| Production cutover | Still blocked. |
+
 ## Rollback Triggers
 
 - SEO tags missing or wrong.

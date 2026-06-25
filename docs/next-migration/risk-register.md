@@ -83,6 +83,13 @@
 - Current local production build still passes the target route set, so next action is redeploy/log inspection rather than additional production-API mutation testing.
 - Valid-login/profile validation remains blocked until the password is supplied through a secure runtime/manual method.
 
+## Sprint 14 Risk Notes
+
+- The previous staging 500 routes now return 200 after redeploy, reducing route-readiness risk for tour/contact/make-your-trip/rent-car.
+- Secure valid-login/profile validation remains blocked because the password was not available through a runtime-only secure method.
+- Cart readiness is documented for `tour_id` 664, but cart mutation remains blocked until owner approval confirms the production-risk API test is safe and reversible.
+- Checkout/payment/coupon/rent-car mutations remain blocked without explicit approval and safe data.
+
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.
