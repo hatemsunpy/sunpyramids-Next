@@ -128,3 +128,59 @@ Representative tour slug: `from-cairo-6-days-package-to-el-fayoum-oasis-white-de
 | `/cart/checkout` | Basic metadata only | Basic metadata only | Not present | Not present | Not present | Not present | Not present | Not present | Pass | Disallowed in robots; private checkout route. |
 
 No backend/API domain was found in canonical or `og:url` for public SEO routes. Backend media URLs remain allowed where dashboard media supplies image URLs. No hardcoded SEO values were added for cart/checkout.
+
+## Sprint 6 SEO/Domain Validation Status
+
+Date: 2026-06-23
+
+Staging raw HTML validation is blocked because no staging frontend URL was provided. Existing local/code rules remain:
+
+- Public SEO URLs must use `https://sunpyramidstours.com`.
+- Backend/API calls may use `https://sunpyramidtours.com`.
+- Backend/admin/API URLs must not leak into canonical, hreflang, Open Graph URL, Twitter URL, robots, or JSON-LD output.
+- Dashboard/API-driven SEO must not be replaced with hardcoded production content.
+- Private-flow pages such as cart/checkout may keep basic safe metadata unless business approves richer SEO behavior.
+
+Required Sprint 7 check: rerun raw HTML validation on `/`, `/egypt-tours/one-day-tours`, representative `/tour/[slug]`, `/contact-us`, `/blogs/all-blogs`, representative `/blog/[slug]`, `/fr`, `/de`, `/cart`, `/cart/checkout`, `/make-your-trip`, and `/rent-car` against staging and local production builds.
+
+### Sprint 6 Local Raw HTML Result
+
+Target: local production build at `http://127.0.0.1:3106`.
+
+| Route | Title | Description | Canonical/hreflang | OG/Twitter | Robots | JSON-LD | Meta keywords absent | Backend SEO URL leak |
+|---|---|---|---|---|---|---|---|---|
+| `/` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/egypt-tours/one-day-tours` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
+| Representative `/tour/[slug]` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
+| `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/cart` | Pass | Pass | Basic private metadata only | Basic private metadata only | Basic private metadata only | Not present | Pass | No |
+| `/cart/checkout` | Pass | Pass | Basic private metadata only | Basic private metadata only | Basic private metadata only | Not present | Pass | No |
+| `/make-your-trip` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/rent-car` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
+
+## Sprint 7 SEO/Domain Validation Status
+
+Date: 2026-06-23
+
+Code-level domain separation remains unchanged:
+
+- Public SEO origin: `NEXT_PUBLIC_APP_URL`, fallback `https://sunpyramidstours.com`.
+- Backend/API origin: `NEXT_PUBLIC_API_URL`, fallback `https://sunpyramidtours.com/api/`.
+- Sitemap and robots use frontend origin for public URLs.
+- API fetches may use the backend/API domain.
+- No staging URL was provided, so staging raw HTML validation is blocked.
+
+### Sprint 7 Local Raw HTML Result
+
+Target: local production build at `http://127.0.0.1:3107`.
+
+| Route | Title | Description | Canonical/hreflang | OG/Twitter | Robots | JSON-LD | Meta keywords absent | Backend SEO URL leak |
+|---|---|---|---|---|---|---|---|---|
+| `/` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/egypt-tours/one-day-tours` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
+| Representative `/tour/[slug]` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
+| `/contact-us` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/cart` | Pass | Pass | Basic private metadata only | Basic private metadata only | Basic private metadata only | Not present | Pass | No |
+| `/cart/checkout` | Pass | Pass | Basic private metadata only | Basic private metadata only | Basic private metadata only | Not present | Pass | No |
+| `/make-your-trip` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
+| `/rent-car` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |

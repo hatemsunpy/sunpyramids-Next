@@ -212,7 +212,7 @@ function EventsPage({ page, title, image, categories, locale }: { page: ApiPage 
   );
 }
 
-function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | null; title: string; image: string; route: string; locale: Locale }) {
+function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | null; title: string; image: string; route: "make-your-trip" | "rent-car"; locale: Locale }) {
   const isCar = route === "rent-car";
   return (
     <main>
@@ -223,7 +223,7 @@ function PlannerPage({ page, title, image, route, locale }: { page: ApiPage | nu
           <h2>{isCar ? "Rent A Car" : "Make Your Trip"}</h2>
           <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description) }} />
         </div>
-        <PlannerRequestFlow route={route as "make-your-trip" | "rent-car"} locale={locale} />
+        <PlannerRequestFlow route={route} locale={locale} />
       </section>
       <NeedHelp locale={locale} />
     </main>

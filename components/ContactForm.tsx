@@ -16,21 +16,17 @@ export function ContactForm({ locale = "en" }: { locale?: Locale }) {
     setStatus("loading");
     const form = new FormData(event.currentTarget);
     const token = await generateRecaptchaToken("submit");
-    if (!token) {
-      setStatus("error");
-      return;
-    }
     const name = String(form.get("name") || "");
-    const payload = {
+    const payload: Record<string, string> = {
       name,
       email: String(form.get("email") || ""),
       phone: String(form.get("phone") || ""),
       country: String(form.get("country") || ""),
       subject: "contact-us",
       message: String(form.get("message") || ""),
-      recaptcha_token: token,
       type: "form_contact",
     };
+    if (token) payload.recaptcha_token = token;
 
     try {
       await apiPost("contact-requests", payload, locale);
@@ -51,10 +47,10 @@ export function ContactForm({ locale = "en" }: { locale?: Locale }) {
         <input name="email" type="email" placeholder="Email address" required />
       </div>
       <div className="form-field">
-        <input name="phone" placeholder="Phone number" />
+        <input name="phone" placeholder="Phone number" required />
       </div>
       <div className="form-field">
-        <input name="country" placeholder="Country" />
+        <input name="country" placeholder="Country" required />
       </div>
       <div className="form-field">
         <textarea name="message" placeholder="How can we help?" rows={5} required />

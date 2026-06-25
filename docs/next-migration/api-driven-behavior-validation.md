@@ -9,8 +9,8 @@
 | Server fetch passes locale | `lib/api.ts` sends `X-Localize`. | Passed in code; backend response pending. |
 | Server fetch can pass auth token | `lib/api.ts` reads `sunpyramids-token` cookie. | Passed in code; auth flow pending. |
 | Public pages fetch API data | `lib/data.ts` uses pages/tours/blogs/categories/destinations/faqs endpoints. | Partial pass. |
-| Client contact form posts to backend | `components/ContactForm.tsx` posts `contact-requests`. | Partial pass; recaptcha/tracking pending. |
-| Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear/remove/coupon/edit, checkout booking creation/payment update, rent-car, and make-your-trip to confirmed endpoints. | Code pass; staging credentials/data pending. |
+| Client contact form posts to backend | `components/ContactForm.tsx` posts backend-required `contact-requests` fields and includes `recaptcha_token` only when generated. | Code pass; backend discovery found no Laravel reCAPTCHA validator, tracking pending. |
+| Client customer flow API layer | `components/CustomerFlows.tsx` wires auth, profile, bookings, favourites, cart list/clear/remove/coupon/edit, checkout booking creation, rent-car, and make-your-trip to confirmed endpoints. | Code pass; staging credentials/data pending. |
 | Payment callbacks call API client-side only | `components/PaymentCallbackStatus.tsx` is `"use client"` and calls in `useEffect`. | Passed in code; backend sandbox pending. |
 | Homepage hydration error fixed | `components/BlogCard.tsx` renders dashboard blog summaries as plain text after stripping HTML, avoiding browser/React HTML mismatch inside the card link. | Browser console pass; no React #418 observed. |
 | Third-party diagnostic mode | `components/ThirdPartyScripts.tsx`, `components/TrustIndexLoader.tsx`, and `lib/recaptcha.ts` skip third-party loads when the URL contains `no-third-party=1`. | Implemented for local diagnosis; normal tracking parity remains active. |
@@ -24,14 +24,36 @@
 | Auth | Next now posts login/register/password endpoints. | Validate with staging credentials and expired/invalid session cases. |
 | Profile | Next now patches profile and fetches bookings/favourites client-side after token check. | Validate with staging account data. |
 | Cart | Next now fetches cart list and supports clear/remove/coupon/tour edit via confirmed endpoints. | Validate with populated staging cart state. |
-| Checkout | Next now posts `bookings`, optionally posts `bookings/update/{id}`, and redirects to approved payment URLs. | Critical staging payment validation blocker. |
+| Checkout | Next now posts `bookings` with `payment_method` and redirects to approved payment URLs; no active `bookings/update/{id}` call remains. | Critical staging payment validation blocker. |
 | Make Your Trip | Next now posts `custom/trips` with submit-time reCAPTCHA token. | Validate backend acceptance in staging. |
 | Rent Car | Next now fetches locations/destinations and appends rentals to cart. | Validate with staging cart/rental data. |
 | Search/trips | Nuxt filters categories/destinations/tours with query params; Next representative route exists. | Validate filters, pagination, query behavior. |
 
 ## Cutover Status
 
+Sprint 8 backend discovery found no inspected Laravel route for `bookings/update/{id}`. Sprint 9 aligned active checkout to backend booking creation by sending `payment_method` in `POST /api/bookings` and removing the unconfirmed payment-update call.
+
 Not approved. Public content API behavior is partially implemented, customer/revenue flows have a first-pass client API layer, and local route smoke tests passed for the Sprint 3 route set. Customer/revenue flows still require staging backend validation.
+
+## Sprint 9 Backend Contract Alignment
+
+| Area | Sprint 9 result | Remaining evidence needed |
+|---|---|---|
+| Auth/session | Client API continues to use bearer token auth and does not rely on cross-site Laravel session cookies. | Valid staging account, expired-session behavior, and protected redirect evidence. |
+| Checkout | `POST bookings` now includes `payment_method`; the unconfirmed `bookings/update/{id}` call was removed. | Booking creation, payment redirect, backend validation error, and post-payment cart/profile evidence. |
+| Cart remove | Remove logic now follows Laravel semantics: tour rows use tour product ID, rental rows use rental row ID. | Populated staging cart with approved tour and rental rows. |
+| Rent-car destinations | Destination lookup posts `pickup_location_id` in the body. | Approved pickup/dropoff IDs and rental append response evidence. |
+| reCAPTCHA | Contact and make-your-trip include `recaptcha_token` only when generated; backend code discovery found no validator. | Owner confirmation whether backend requires reCAPTCHA and staging valid/missing/invalid token responses. |
+| Tracking/debug | No backend tracking config was found; public IDs remain code-level parity only. | GTM Preview, GA4 DebugView, Google Ads test method, TikTok/Clarity approval. |
+
+### Sprint 9 Local Validation
+
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for `/`, `/egypt-tours/one-day-tours`, representative tour slug, `/contact-us`, `/make-your-trip`, `/rent-car`, `/cart`, `/cart/checkout`, `/thankful`, auth/profile routes, no-invoice PayPal callback, `/sitemap.xml`, and `/robots.txt`. |
+| Browser diagnostic | Blocked by unavailable Playwright tooling in this workspace; no project dependency was added. |
 
 ## Sprint 4 Performance and Behavior Validation
 
@@ -66,7 +88,7 @@ Date: 2026-06-22
 | Sandbox invoice IDs | Not available. Payment callback success/failure/pending backend behavior remains blocked. |
 | reCAPTCHA backend acceptance | Not validated. Contact and make-your-trip generate tokens on submit, but staging acceptance is blocked. |
 | Conversion/thank-you tracking | Not approved. Nuxt/Next tag loading was inspected at code level; no GTM preview or conversion account validation was available. |
-| Customer-flow parity implementation | First-pass parity added for cart remove/coupon/edit, `bookings/update/{id}`, make-your-trip, and rent-car confirmed endpoints. |
+| Customer-flow parity implementation | First-pass parity added for cart remove/coupon/edit, checkout booking creation, make-your-trip, and rent-car confirmed endpoints. Sprint 9 removed the unconfirmed active `bookings/update/{id}` call. |
 | Third-party performance decision | Not approved. Diagnostic mode proves first-party performance; normal mode remains marketing/tag-owner decision. |
 
 ### Local Validation
@@ -99,6 +121,87 @@ Lighthouse produced valid JSON reports under `output/lighthouse/` but emitted Wi
 | TrustIndex | Nuxt widget/script surfaces | `TrustIndexLoader` client effect | Widget routes/components | No | No | Functional validation pending | Medium |
 | reCAPTCHA Enterprise | Nuxt global script/token calls | Submit-time `generateRecaptchaToken()` | Contact and make-your-trip submit | No | No | Backend acceptance pending | Medium |
 | Thank-you conversion | Needs GTM/account confirmation | No explicit invented event added | `/thankful` | No | No | Must not fire purchase before confirmed success | Critical |
+
+## Sprint 6 Validation Status
+
+Date: 2026-06-23
+
+Sprint 6 could not perform real staging/backend validation because the required access and test data were not provided. No API contracts were changed and no endpoints were invented.
+
+| Area | Sprint 6 status | Required before pass |
+|---|---|---|
+| Auth API behavior | Blocked | Staging URL, test account, password, valid/invalid login evidence, session persistence, expired session, protected redirect, logout if present. |
+| Profile API behavior | Blocked | Authenticated profile load/update, bookings list, favourites list/add/remove, empty/error/unauthorized/session-expired evidence. |
+| Cart API behavior | Blocked | Staging tour/rental data, cart item IDs, valid/invalid coupons, totals, reload/login persistence, empty/error evidence. |
+| Checkout API behavior | Blocked | Booking creation, backend validation errors, payment URL, failed booking behavior, cart state after booking, and profile booking appearance. |
+| Payment callbacks | Partial code pass; sandbox blocked | Approved PayPal/Fawaterk invoice IDs for valid/invalid/duplicate/refresh outcomes. |
+| reCAPTCHA backend acceptance | Blocked | Staging/site key and backend valid/missing/invalid response evidence. |
+| Conversion/tracking | Blocked | GTM Preview, GA4 DebugView, ads conversion test method, TikTok/Clarity owner approval. |
+| Public SEO/domain API behavior | Partial local/code pass | Staging raw HTML verification that public SEO URLs use `https://sunpyramidstours.com` and backend/API URLs do not leak. |
+
+### Sprint 6 Local Validation
+
+Target: local production build at `http://127.0.0.1:3106`.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for the full Sprint 6 route list, including auth/profile/cart/checkout, payment no-invoice callback, sitemap, and robots. |
+| Browser diagnostic console/network | Passed for home, tour, contact, make-your-trip, rent-car, cart, checkout, sign-in, profile, and payment no-invoice callback. No console errors, no page-load reCAPTCHA requests on form pages, and no payment API request without `invoice_id`. |
+| Raw SEO HTML | Public routes passed title/description/canonical/hreflang/OG/Twitter/robots/no-keywords checks where applicable; no backend SEO URL leak in canonical/OG. Cart/checkout remain basic private-flow metadata. |
+| Lighthouse mobile home normal | 44, LCP 9.3s, CLS 0.029, TBT 1,400ms. |
+| Lighthouse mobile home diagnostic | 89, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile tour normal | 66, LCP 2.9s, CLS 0.002, TBT 1,090ms. |
+| Lighthouse mobile tour diagnostic | 90, LCP 2.8s, CLS 0.002, TBT 80ms. |
+
+## Sprint 7 Validation Status
+
+Date: 2026-06-23
+
+Sprint 7 access discovery found no `.env*` file and no provided staging credentials/test data. No API contracts were changed.
+
+| Area | Sprint 7 status | Evidence / required data |
+|---|---|---|
+| Environment configuration | Code-level pass | `NEXT_PUBLIC_API_URL` controls backend API fallbacking to `https://sunpyramidtours.com/api/`; `NEXT_PUBLIC_APP_URL` controls public SEO fallbacking to `https://sunpyramidstours.com`. |
+| Auth API behavior | Blocked | Requires staging URLs and test account. |
+| Profile API behavior | Blocked | Requires authenticated staging account and data. |
+| Cart/coupon API behavior | Blocked | Requires cart items, tour ID/slug, valid/invalid coupons, and auth/guest evidence. |
+| Rent-car API behavior | Blocked | Requires staging pickup/dropoff data. |
+| Checkout API behavior | Blocked | Requires booking/payment staging data and enabled payment methods. |
+| Payment callbacks | Sandbox blocked | Requires PayPal/Fawaterk invoice IDs; no server-side mutation rules remain in force. |
+| reCAPTCHA backend acceptance | Blocked | Requires staging key/config and backend expected token field behavior. |
+| Conversion/tracking | Blocked | Requires GTM/GA/Ads/TikTok/Clarity debug or owner approval. |
+| Third-party performance | Blocked | Requires marketing/tag-owner decision. |
+
+### Sprint 7 Local Validation
+
+Target: local production build at `http://127.0.0.1:3107`.
+
+| Check | Result |
+|---|---|
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Route smoke | Passed HTTP 200 for the full Sprint 7 route list, including auth/profile/cart/checkout, payment no-invoice callback, sitemap, and robots. |
+| Browser diagnostic console/network | Passed for home, tour, contact, make-your-trip, rent-car, cart, checkout, sign-in, sign-up, profile, profile bookings, and payment no-invoice callback. No console errors, no page-load reCAPTCHA requests on form pages, and no payment API request without `invoice_id`. |
+| Raw SEO HTML | Public routes passed frontend-domain canonical/hreflang/OG/Twitter checks where applicable; no backend SEO URL leak. Cart/checkout remain basic private-flow metadata. |
+| Lighthouse mobile home normal | 69, LCP 3.3s, CLS 0.029, TBT 1,090ms. |
+| Lighthouse mobile home diagnostic | 91, LCP 3.4s, CLS 0.03, TBT 80ms. |
+| Lighthouse mobile tour normal | 66, LCP 2.8s, CLS 0.002, TBT 1,190ms. |
+| Lighthouse mobile tour diagnostic | 91, LCP 2.8s, CLS 0.002, TBT 80ms. |
+
+## Sprint 8 Nuxt-Derived Values Application Review
+
+Date: 2026-06-23
+
+| Area | Result |
+|---|---|
+| Frontend/API domains | Current Next configuration already matches Nuxt-derived public values: SEO uses `https://sunpyramidstours.com`, API uses `https://sunpyramidtours.com/api/`. |
+| reCAPTCHA | Current Next code already uses the Nuxt public Enterprise site key, action `submit`, and payload field `recaptcha_token`. Loading remains submit-time only. |
+| GTM/GA | Current Next code already uses `GTM-KDF33T7` and `G-NKZ6W32C4J`; no unconfirmed events were added. |
+| Tour/rental/checkout/payment endpoints | Current docs/code already preserve the confirmed endpoint shapes. Public slugs were not promoted to numeric tour IDs, and no rental IDs, coupon codes, payment methods, or sandbox invoices were invented. |
+| Custom marketing sitemap | Still blocked. No custom marketing slugs were hardcoded from the public static sitemap without owner approval or backend source-of-truth. |
+| Staging validation | Still blocked pending owner-provided access/data. |
 
 ## Sprint 3 Validation Result
 

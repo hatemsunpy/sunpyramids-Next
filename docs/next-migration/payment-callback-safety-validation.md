@@ -61,6 +61,42 @@ Static code inspection still confirms payment mutation-like endpoints are refere
 
 Sandbox invoice validation was blocked because no approved PayPal or Fawaterk sandbox invoice IDs were provided. Success, canceled, pending, duplicate refresh behavior, and backend response handling must be validated with approved invoice IDs before cutover.
 
+## Sprint 6 Revalidation
+
+Date: 2026-06-23
+
+No PayPal or Fawaterk sandbox invoice IDs were provided. The valid, invalid, duplicate request, refresh, success UI, canceled UI, pending UI, and backend response handling checks remain blocked.
+
+The code-level safety requirement remains unchanged: payment mutation-like endpoints must stay client-side only after hydration and only when the browser URL includes `invoice_id`. They must not be called from SSR, metadata generation, static generation, layouts, or route prefetch.
+
+Local browser diagnostic recheck passed on `http://127.0.0.1:3106/order/payment/callback/paypal/verify?no-third-party=1`: HTTP 200, no console errors, and no `payments/paypal/*` or `payments/fawaterk/*` request without `invoice_id`.
+
+## Sprint 7 Revalidation
+
+Date: 2026-06-23
+
+No PayPal or Fawaterk sandbox invoice IDs were provided. Sandbox validation remains blocked for valid, invalid, duplicate, refresh, success, pending, canceled, and backend response handling cases.
+
+The safety rule remains unchanged: mutation-like payment endpoints must run only in hydrated client code and only when the browser URL contains `invoice_id`; they must not run from SSR, metadata generation, static generation, layouts, or route prefetch.
+
+Local browser diagnostic recheck passed on `http://127.0.0.1:3107/order/payment/callback/paypal/verify?no-third-party=1`: HTTP 200, no console errors, and no `payments/paypal/*` or `payments/fawaterk/*` request without `invoice_id`.
+
+## Sprint 8 Backend Discovery
+
+Laravel payment callbacks query `payments.invoice_id` and return not found when no matching invoice exists. The inspected backend routes are:
+
+- `GET /api/payments/paypal/capture?invoice_id=...`
+- `GET /api/payments/paypal/cancel?invoice_id=...`
+- `GET /api/payments/fawaterk/update/invoice?invoice_id=...`
+
+PayPal and Fawaterk sandbox invoice IDs were not found. Backend payment redirect URLs are generated through `site_url()`, which reads `APP_FRONT_URL`; inspected `.env` has `APP_FRONTEND_URL`, so deployment config needs owner confirmation before sandbox callback validation.
+
+## Sprint 9 Backend Contract Alignment
+
+No payment callback behavior changed in Sprint 9. The client-only, invoice-guarded rule remains in force, and no backend payment mutation is triggered without a browser `invoice_id`.
+
+Checkout now relies on `POST /api/bookings` returning the gateway redirect, which makes sandbox invoice validation even more important before cutover. Approved PayPal/Fawaterk invoice IDs and owner confirmation of backend `APP_FRONT_URL` remain required.
+
 ## Cutover Status
 
 Code-level SSR safety: passed.

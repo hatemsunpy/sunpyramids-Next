@@ -2,9 +2,9 @@
 
 | Risk | Area | Severity | Evidence | Mitigation / owner |
 |---|---|---:|---|---|
-| Customer flows are API-wired but not fully validated | Auth/profile/cart/checkout | Critical | Sprint 5 wires additional confirmed gaps, but no staging credentials/cart/payment data were available. | Validate with staging backend before cutover; block production until passed. |
+| Customer flows are API-wired but not fully validated | Auth/profile/cart/checkout | Critical | Sprint 9 aligns confirmed backend contract gaps, but no staging credentials/cart/payment data were available. | Validate with staging backend before cutover; block production until passed. |
 | Payment callbacks could mutate state if moved server-side in future | Payment | Critical | Current implementation is client-only, but callbacks call mutation-like endpoints. | Keep `PaymentCallbackStatus` client-only; add safety validation report; review future changes. |
-| Checkout/payment parity incomplete | Revenue | Critical | Sprint 5 wires `bookings/update/{id}`, but payment sandbox flow remains unvalidated. | Validate exact flow with staging cart, payment method, and sandbox invoice IDs. |
+| Checkout/payment parity incomplete | Revenue | Critical | Sprint 9 removed the unconfirmed `bookings/update/{id}` call and sends `payment_method` in `POST /api/bookings`, but payment sandbox flow remains unvalidated. | Validate exact flow with staging cart, payment method, payment redirect response, and sandbox invoice IDs. |
 | Dynamic settings/menu/footer/currency may be static in Next | UI/API parity | High | Nuxt shared store fetches `settings`, `countries`, `currencies`; Next shell uses local config/static links. | Validate dashboard-driven requirements; wire API if required. |
 | Sitemap is not fully API/database complete | SEO | High | Current sitemap pulls static paths, tours, blogs, categories, destinations, and blog categories. Custom marketing pages remain undiscoverable. | Backend list endpoint or explicit exclusion/manual list approval required. |
 | UI parity gaps from consolidated React components | UX | High | Next uses fewer generic components than Nuxt. | Screenshot compare priority routes and fix confirmed mismatches. |
@@ -21,6 +21,44 @@
 - Cart remove/coupon/edit, rent-car append, make-your-trip, and checkout payment update are code-wired but must be treated as unvalidated until staging data is available.
 - Third-party normal-mode performance requires marketing/tag owner approval; engineering should not remove GTM/GA/TikTok/Clarity/TrustIndex unilaterally.
 - reCAPTCHA acceptance is blocked until staging backend verification confirms the current submit-time token is accepted.
+
+## Sprint 6 Risk Notes
+
+- Staging validation remains the top cutover blocker because no staging frontend URL, staging backend/API URL, test customer, coupon data, cart item data, checkout billing data, payment configuration, or sandbox invoice IDs were provided.
+- Auth/profile/cart/checkout/payment cannot be marked passed without real staging/backend evidence.
+- Custom marketing sitemap remains a high SEO risk until the backend provides a list endpoint, another confirmed API exposes slugs, business/SEO approves manual slugs, or business/SEO explicitly excludes those pages for cutover.
+- Conversion tracking remains a business risk because no GTM Preview, GA4 DebugView, Google Ads test method, or TikTok/Clarity owner approval was available.
+- Third-party normal-mode performance remains an approval risk; accepted performance cost must be marked yes/no by marketing/tag owners.
+
+## Sprint 7 Risk Notes
+
+- Access remains the primary blocker: no staging frontend URL, backend/API URL, test customer, cart data, coupon data, checkout billing data, payment configuration, sandbox invoice IDs, reCAPTCHA settings, or analytics debug access were provided.
+- Environment configuration is code-level safe for public/backend domain separation, but staging overrides are untested because no `.env*` file or staging deployment variables were available.
+- The public reCAPTCHA key is currently in `lib/recaptcha.ts`; backend acceptance and staging key ownership must be confirmed before cutover.
+- GTM/GA IDs are hardcoded client loaders; any defer, route-scope, consent-gate, or removal decision requires marketing/tag-owner approval.
+- UI parity fixes remain risky until revenue flows are validated or formally blocked, because authenticated and cart/checkout states cannot be meaningfully approved without test data.
+
+## Sprint 8 Risk Notes
+
+- Nuxt discovery reduced ambiguity but did not remove the access blocker: no Nuxt `.env*` files, private credentials, valid coupons, sandbox invoice IDs, or confirmed staging URLs were found.
+- `https://new-sunpyramids-demo.vercel.app` is only a Nuxt `APP_URL` fallback and must not be promoted to the official staging URL without owner confirmation.
+- The backend/API fallback remains `https://sunpyramidtours.com/api/`; no independent staging API base URL was discovered.
+- Public Nuxt values confirm reCAPTCHA Enterprise site key, GTM ID, GA4 ID, payment callback endpoints, checkout payload shape, rent-car endpoints, and representative tour slugs, but these are not substitutes for backend/staging validation evidence.
+- The Sprint 8 applied-values review found these public values already present in Next; no production code change was needed and no missing private data was invented.
+- Backend discovery found no `bookings/update/{id}` API route; the Laravel contract creates bookings and payment redirects from `POST /api/bookings` using `payment_method`, and Sprint 9 aligned the active Next checkout flow to that contract.
+- Backend discovery found `APP_FRONTEND_URL` in `.env` but `APP_FRONT_URL` in `config/app.php`; payment callback URLs and sitemap generation may fall back to localhost unless deployment config supplies `APP_FRONT_URL`.
+- PayPal credentials are hardcoded in `config/paypal.php`; values were redacted in docs, but this is a security/remediation risk before production ownership signoff.
+- No backend reCAPTCHA validation logic was found, so frontend token generation cannot be considered accepted until backend/security confirms expected behavior.
+- Custom marketing page sitemap risk remains high because Nuxt uses only `custom-pages/{slug}` detail fetches; the public static sitemap is evidence, not an approved source-of-truth.
+- Sprint 8 cannot pass end-to-end auth/profile/cart/rent-car/checkout/payment/reCAPTCHA/tracking validation until owners provide secure access and test data.
+
+## Sprint 9 Risk Notes
+
+- Active checkout is now aligned to the inspected Laravel `POST /api/bookings` contract, but it cannot be marked passed until a staging cart creates a booking and returns an approved payment redirect.
+- Cart remove semantics were aligned to backend behavior, but removal still needs real tour and rental cart rows to prove there is no row/product ID ambiguity in deployed data.
+- Contact and make-your-trip no longer block when reCAPTCHA is disabled or unavailable, matching the absence of discovered backend validation; security owners still need to confirm whether this is intended.
+- The `APP_FRONT_URL` vs `APP_FRONTEND_URL` mismatch remains a production ownership risk for backend-generated payment and sitemap URLs.
+- Tracking/debug access, valid coupon data, sandbox invoice IDs, real rental IDs, and UI approval owner remain unresolved cutover blockers.
 
 ## Production Cutover Rule
 

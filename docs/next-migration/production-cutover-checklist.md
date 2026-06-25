@@ -133,6 +133,121 @@ Date: 2026-06-22
 | Custom marketing sitemap decision | Blocked pending backend list endpoint, approved manual slugs, or explicit exclusion. |
 | Production cutover | Still blocked. |
 
+## Sprint 6 Status
+
+Date: 2026-06-23
+
+| Check | Result |
+|---|---|
+| Staging frontend URL | Blocked; not provided. |
+| Staging backend/API URL | Blocked; not provided. |
+| Test account | Blocked; not provided. |
+| Cart/coupon/test data | Blocked; no tour ID, rent-car data, populated cart item, valid coupon, invalid coupon confirmation, or checkout billing data provided. |
+| Sandbox invoice IDs | Blocked; no PayPal or Fawaterk sandbox invoice IDs provided. |
+| Auth staging validation | Blocked; cannot validate success/error/session/redirect behavior without staging account. |
+| Profile staging validation | Blocked; cannot validate protected profile/bookings/favourites/settings without staging account. |
+| Cart staging validation | Blocked; cannot validate append/edit/remove/coupon/totals/persistence without staging cart data. |
+| Checkout/booking validation | Blocked; cannot validate booking creation, payment URL, redirect, or profile booking appearance without staging cart/payment data. |
+| Payment callback sandbox validation | Blocked for valid/invalid/duplicate/refresh behavior; no-invoice code safety remains passed from prior browser checks. |
+| Backend reCAPTCHA acceptance | Blocked; staging/site key and backend acceptance settings not provided. |
+| Conversion/thank-you tracking | Blocked; GTM Preview, GA4 DebugView, ads test method, and tag owner access not provided. |
+| Third-party performance approval | Blocked; marketing/tag-owner decision still required before disabling, deferring, route-scoping, or accepting cost. |
+| Custom marketing sitemap decision | Blocked; no backend list endpoint, alternate slug source, approved manual slug list, or explicit exclusion provided. |
+| UI parity approval | Blocked; no approval yet. Broad UI polish remains deferred until revenue-flow validation is passed or formally blocked. |
+| SEO/domain validation | Partial local/code pass; staging raw HTML checks blocked without staging URL. |
+| `npm run lint` | Passed locally on 2026-06-23. |
+| `npm run build` | Passed locally on 2026-06-23. |
+| Route smoke tests | Passed HTTP 200 for all required Sprint 6 routes on local production server. |
+| Browser validation | Passed diagnostic Chrome checks for required customer/public/payment pages; no console errors, no page-load reCAPTCHA on form pages, and no no-invoice payment mutation request. |
+| Lighthouse mobile homepage normal | 44, LCP 9.3s, CLS 0.029, TBT 1,400ms. |
+| Lighthouse mobile homepage diagnostic | 89, LCP 3.7s, CLS 0.029, TBT 50ms. |
+| Lighthouse mobile representative tour normal | 66, LCP 2.9s, CLS 0.002, TBT 1,090ms. |
+| Lighthouse mobile representative tour diagnostic | 90, LCP 2.8s, CLS 0.002, TBT 80ms. |
+| Production cutover | Still blocked. |
+
+Sprint 6 required access/test-data checklist is documented in `docs/next-migration/sprint6-validation-report.md`.
+
+## Sprint 7 Status
+
+Date: 2026-06-23
+
+| Check | Result |
+|---|---|
+| Access requirements checklist | Created in `docs/next-migration/sprint7-access-requirements.md`. |
+| Staging frontend URL | Blocked; not provided. |
+| Staging backend/API URL | Blocked; not provided. |
+| Test account | Blocked; not provided. |
+| Cart/coupon/test data | Blocked; no approved tour ID, rent-car data, cart item, coupon codes, or checkout billing details provided. |
+| Sandbox invoice IDs | Blocked; no PayPal or Fawaterk sandbox invoice IDs provided. |
+| reCAPTCHA settings | Blocked; no approved staging key, Enterprise config, or backend acceptance settings provided. |
+| GTM/GA/Ads debug access | Blocked; no GTM Preview, GA4 DebugView, Google Ads test method, or TikTok/Clarity owner access provided. |
+| Environment configuration check | Completed at code level; `NEXT_PUBLIC_APP_URL` controls public URL, `NEXT_PUBLIC_API_URL` controls backend API, `?no-third-party=1` suppresses diagnostic third parties, and payment callbacks remain client-side. |
+| Auth staging validation | Blocked; cannot validate without staging URL and test account. |
+| Profile staging validation | Blocked; cannot validate without authenticated staging account and profile/bookings/favourites data. |
+| Cart/rent-car staging validation | Blocked; cannot validate without approved staging cart, tour, coupon, and rental data. |
+| Checkout/booking validation | Blocked; cannot validate without staging cart, billing data, payment methods, and backend booking responses. |
+| Payment callback sandbox validation | Blocked for sandbox behavior; no-invoice local safety remains covered by validation docs. |
+| Backend reCAPTCHA acceptance | Blocked; missing staging key/config/backend settings. |
+| Conversion/thank-you tracking | Blocked; missing debug/owner access. |
+| Third-party performance approval | Blocked; marketing/tag-owner decision still required. |
+| Custom marketing sitemap decision | Blocked; no backend endpoint, alternate slug source, approved manual slugs, or exclusion approval provided. |
+| UI parity approval/fixes | Blocked; broad UI polish deferred until revenue-flow validation passes or is formally blocked by missing access. |
+| SEO/domain validation | Local/code pass; staging blocked without staging URL. |
+| `npm run lint` | Passed locally on 2026-06-23. |
+| `npm run build` | Passed locally on 2026-06-23. |
+| Route smoke tests | Passed HTTP 200 for all required Sprint 7 routes on local production server. |
+| Browser validation | Passed diagnostic Chrome checks; no console errors, no page-load reCAPTCHA on form pages, and no no-invoice payment mutation request. |
+| Lighthouse mobile homepage normal | 69, LCP 3.3s, CLS 0.029, TBT 1,090ms. |
+| Lighthouse mobile homepage diagnostic | 91, LCP 3.4s, CLS 0.03, TBT 80ms. |
+| Lighthouse mobile representative tour normal | 66, LCP 2.8s, CLS 0.002, TBT 1,190ms. |
+| Lighthouse mobile representative tour diagnostic | 91, LCP 2.8s, CLS 0.002, TBT 80ms. |
+| Production cutover | Still blocked. |
+
+## Sprint 8 Status
+
+Date: 2026-06-23
+
+| Check | Result |
+|---|---|
+| Nuxt access/config discovery | Completed in `docs/next-migration/sprint8-nuxt-access-discovery.md`. |
+| Nuxt `.env*` files | None found under `nuxt_sunpyramids/`. |
+| Private credentials/secrets | None found in safe Nuxt docs/config/test/sample sources. |
+| Public frontend URL | Found: `https://sunpyramidstours.com`. |
+| Possible Nuxt demo/staging frontend | Partial: `https://new-sunpyramids-demo.vercel.app`; requires owner confirmation before staging use. |
+| Backend/API URL | Partial: Nuxt fallback is `https://sunpyramidtours.com/api/`; no separate staging API URL found. |
+| reCAPTCHA/GTM/GA public identifiers | Found; backend acceptance and debug access remain blocked. |
+| Nuxt-derived values applied review | Completed in `docs/next-migration/nuxt-derived-values-applied.md`; safe public values were already present, so no production code change was required. |
+| Backend access/config discovery | Completed in `docs/next-migration/sprint8-backend-access-discovery.md`; API contracts clarified, but staging/test data remains blocked. |
+| Backend payment contract | Laravel `POST /api/bookings` requires `payment_method`; no `bookings/update/{id}` API route was found. |
+| Backend frontend URL config | Blocked pending owner confirmation of `APP_FRONT_URL` vs `APP_FRONTEND_URL` for `site_url()` payment/sitemap output. |
+| Tour/rent-car/coupon/checkout/payment data | Payload shapes and public slugs partially found; numeric IDs, valid coupon, real rental IDs, enabled gateway config, and sandbox invoices remain blocked. |
+| Custom marketing sitemap source | Blocked; Nuxt confirms only `custom-pages/{slug}` detail usage and public static sitemap paths without an approved source-of-truth. |
+| `npm run lint` | Passed locally on 2026-06-23. |
+| `npm run build` | Passed locally on 2026-06-23. |
+| Production cutover | Still blocked. |
+
+## Sprint 9 Status
+
+Date: 2026-06-23
+
+| Check | Result |
+|---|---|
+| Backend contract alignment | Completed for confirmed active frontend mismatches. |
+| Checkout contract | Active Next checkout now sends `payment_method` in `POST /api/bookings`; no active `bookings/update/{id}` call remains. |
+| Cart remove contract | Active remove action now sends tour product ID for tour rows and rental row ID for rental rows, matching inspected Laravel behavior. |
+| Rent-car destination contract | Destination lookup now posts `pickup_location_id` in the request body. |
+| Contact/custom-trip fields | Contact phone/country and custom-trip first/last name payload fields were aligned to backend-required fields. |
+| reCAPTCHA backend status | Frontend treats token as optional because no Laravel validator was found; owner/security confirmation remains required. |
+| Payment callback safety | No payment callback mutation behavior was changed; sandbox invoice validation remains blocked. |
+| Custom marketing sitemap | No unapproved `/api/pages` or manual marketing sitemap integration was added. |
+| Tracking/debug access | Still blocked; no GTM/GA/Ads/TikTok/Clarity debug or owner approval was provided. |
+| `npm run lint` | Passed locally on 2026-06-23. |
+| `npm run build` | Passed locally on 2026-06-23. |
+| Route smoke tests | Passed HTTP 200 for the Sprint 9 route set on local production server. |
+| Browser diagnostic | Blocked by unavailable Playwright tooling; no repo dependency was installed. |
+| Staging validation | Blocked; no staging URL, test account, valid coupon, real tour/rental IDs, sandbox invoice IDs, backend reCAPTCHA settings, tracking debug access, or UI approval owner provided. |
+| Production cutover | Still blocked. |
+
 ## Rollback Triggers
 
 - SEO tags missing or wrong.

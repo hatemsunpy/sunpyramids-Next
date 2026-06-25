@@ -67,6 +67,17 @@ function readUserCookie() {
   }
 }
 
+function couponIdFrom(value: any) {
+  return value?.id || value?.coupon_id || value?.coupon?.id || null;
+}
+
+function cartRemoveIdentifier(item: any) {
+  if (item?.type === "tour") return item?.tour?.id || null;
+  if (item?.type === "rental") return item?.id || null;
+  if (item?.tour?.id) return item.tour.id;
+  return item?.id || null;
+}
+
 export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -409,11 +420,15 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
   }
 
   async function removeCartItem(item: any) {
-    const cartId = item?.tour?.id || item?.id;
-    if (!cartId) return;
+    const removeId = cartRemoveIdentifier(item);
+    if (!removeId) {
+      setState("error");
+      setMessage("This cart item cannot be safely removed because its backend identifier is missing.");
+      return;
+    }
     setState("loading");
     try {
-      const res = await apiDelete<ApiResponse>(`cart/remove/${cartId}`, locale, true);
+      const res = await apiDelete<ApiResponse>(`cart/remove/${removeId}`, locale, true);
       await loadCart(hasToken);
       setMessage(res.message || "Cart item removed.");
     } catch (error) {
@@ -463,6 +478,12 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     try {
       const res = await apiGet<ApiResponse>(`coupons/${encodeURIComponent(code)}/validate`, locale, true);
       setCoupon(res.data);
+      const couponId = couponIdFrom(res.data);
+      if (couponId) {
+        const nextCheckoutData = { ...(checkoutData || {}), discountID: couponId };
+        setCheckoutData(nextCheckoutData);
+        setCookie("sunpyramids-checkout-data", JSON.stringify(nextCheckoutData));
+      }
       setState("success");
       setMessage(res.message || "Coupon applied.");
     } catch (error) {
@@ -478,7 +499,8 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     const form = new FormData(event.currentTarget);
     const fullName = String(form.get("fullName") || "");
     const [firstName, ...lastParts] = fullName.split(" ");
-    const body = {
+    const paymentMethod = String(form.get("paymentMethod") || "card");
+    const body: Record<string, unknown> = {
       first_name: firstName,
       last_name: lastParts.join(" ") || "none",
       phone: String(form.get("phone") || ""),
@@ -486,30 +508,39 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       country: String(form.get("country") || ""),
       state: String(form.get("state") || ""),
       pickup_location: String(form.get("pickupLocation") || ""),
-      note: String(form.get("note") || ""),
+      notes: String(form.get("note") || ""),
+      payment_method: paymentMethod,
       currency_id: Number(form.get("currencyId") || 1),
-      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : null,
+      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : couponIdFrom(coupon),
     };
+    if (paymentMethod === "card") {
+      body.payment_method_id = Number(form.get("paymentMethodId") || 9);
+    }
+    let bookingCreated = false;
 
     try {
-      const paymentMethod = String(form.get("paymentMethod") || "");
       const res = await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } }; booking?: { id?: number } }>>("bookings", body, locale, true);
-      setState("success");
-      setMessage(res.message || "Booking created.");
       const bookingId = res.data?.booking?.id;
-      const paymentResponse = bookingId && paymentMethod
-        ? await apiPost<ApiResponse<{ payment?: { redirect?: { location?: string } } }>>(`bookings/update/${bookingId}`, {
-            payment_method: paymentMethod,
-            payment_method_id: paymentMethod === "card" ? 9 : null,
-          }, locale, true)
-        : null;
-      const redirect = paymentResponse?.data?.payment?.redirect?.location || res.data?.payment?.redirect?.location;
+      bookingCreated = !!bookingId;
+      const redirect = res.data?.payment?.redirect?.location;
       if (redirect && isAllowedPaymentRedirect(redirect)) {
         window.location.href = redirect;
         return;
       }
       if (redirect) throw new Error("Payment redirect URL was not approved.");
+      setState("success");
+      setMessage(res.message || "Booking created.");
     } catch (error) {
+      if (bookingCreated) {
+        const redirectRejected = /redirect URL was not approved/i.test(messageFromError(error));
+        setState("error");
+        setMessage(
+          redirectRejected
+            ? "Booking was created, but the payment redirect was not approved. Please contact support or open your bookings before retrying checkout."
+            : "Booking was created, but checkout could not finish. Please contact support or open your bookings before retrying checkout."
+        );
+        return;
+      }
       setState("error");
       setMessage(messageFromError(error));
     }
@@ -525,15 +556,15 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
           <input name="email" type="email" placeholder="Email" required />
           <input name="phone" placeholder="Phone" required />
           <input name="country" placeholder="Country" required />
-          <input name="state" placeholder="State" />
+          <input name="state" placeholder="State" required />
           <input name="pickupLocation" placeholder="Pickup location" />
           <input name="currencyId" type="number" placeholder="Currency ID" defaultValue={1} />
           <input name="couponId" type="number" placeholder="Coupon ID" defaultValue={checkoutData?.discountID || ""} />
-          <select name="paymentMethod" defaultValue="">
-            <option value="">Use booking default payment redirect</option>
+          <select name="paymentMethod" defaultValue="card" required>
             <option value="paypal">PayPal</option>
             <option value="card">Card</option>
           </select>
+          <input name="paymentMethodId" type="number" placeholder="Card payment method ID" defaultValue={9} />
           <textarea name="note" placeholder="Note" rows={4} />
           <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Creating booking..." : "Create Booking"}</button>
         </form>
@@ -623,7 +654,9 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
   async function loadRentalDestinations(pickupId: string) {
     if (!pickupId) return;
     try {
-      const res = await apiPost<ApiResponse<any[]>>(`car/rental/available/destinations?page_limit=200&pickup_location_id=${encodeURIComponent(pickupId)}`, {}, locale);
+      const res = await apiPost<ApiResponse<any[]>>("car/rental/available/destinations", {
+        pickup_location_id: Number(pickupId),
+      }, locale);
       setDestinations(Array.isArray(res.data) ? res.data : []);
     } catch {
       setDestinations([]);
@@ -639,6 +672,10 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
     try {
       if (isCar) {
         const returnDate = String(form.get("returnDate") || "");
+        const returnTime = String(form.get("returnTime") || "");
+        if (form.get("type") === "roundTrip" && (!returnDate || !returnTime)) {
+          throw new Error("Return date and time are required for round trips.");
+        }
         const body: Record<string, unknown> = {
           pickup_location_id: String(form.get("pickupLocationId") || ""),
           destination_id: String(form.get("destinationId") || ""),
@@ -656,7 +693,7 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         };
         if (returnDate) {
           body.return_date = returnDate;
-          body.return_time = String(form.get("returnTime") || "");
+          body.return_time = returnTime;
         }
         const res = await apiPost<ApiResponse>("cart/rentals/append", body, locale, !!getCookie("sunpyramids-token"));
         setState("success");
@@ -666,14 +703,15 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
       }
 
       const token = await generateRecaptchaToken("submit");
-      if (!token) throw new Error("reCAPTCHA token could not be generated.");
       const tripType = String(form.get("type") || "exact_time");
+      const fullName = String(form.get("fullName") || "").trim();
+      const [firstName = "", ...lastNameParts] = fullName.split(/\s+/).filter(Boolean);
       const body: Record<string, unknown> = {
         destination: "egypt",
         type: tripType,
-        name: String(form.get("fullName") || ""),
-        first_name: String(form.get("fullName") || ""),
-        last_name: "",
+        name: fullName,
+        first_name: firstName || fullName,
+        last_name: lastNameParts.join(" ") || "none",
         phone_number: String(form.get("phone") || ""),
         email: String(form.get("email") || ""),
         adults: Number(form.get("adults") || 1),
@@ -684,15 +722,33 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         max_person_budget: Number(form.get("maxBudget") || 3000),
         flight_offer: form.get("flightOffer") === "on",
         additional_notes: String(form.get("note") || ""),
-        recaptcha_token: token,
       };
+      if (token) body.recaptcha_token = token;
       if (tripType === "exact_time") {
-        body.start_date = String(form.get("startDate") || "");
-        body.end_date = String(form.get("endDate") || "");
+        const startDate = String(form.get("startDate") || "");
+        const endDate = String(form.get("endDate") || "");
+        if (!startDate || !endDate) {
+          throw new Error("Start and end dates are required for exact time trips.");
+        }
+        body.start_date = startDate;
+        body.end_date = endDate;
       } else if (tripType === "approx_time") {
-        body.month = String(form.get("month") || "");
+        const month = String(form.get("month") || "");
+        const days = Number(form.get("days") || 0);
+        if (!month) {
+          throw new Error("Month is required for approximate time trips.");
+        }
+        if (!days || days < 1) {
+          throw new Error("Days must be a valid number of days.");
+        }
+        body.month = month;
+        body.days = days;
       } else {
-        body.days = Number(form.get("days") || 1);
+        const days = Number(form.get("days") || 0);
+        if (!days || days < 1) {
+          throw new Error("Days must be a valid number of days.");
+        }
+        body.days = days;
       }
       await apiPost<ApiResponse>("custom/trips", body, locale, !!getCookie("sunpyramids-token"));
       setState("success");
