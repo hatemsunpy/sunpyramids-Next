@@ -97,6 +97,59 @@ Date: 2026-06-25
 | Payment no-invoice | Route smoke pass | Callback routes without `invoice_id` return 200. No invoice mutation was run. |
 | Mutation validation | Still blocked | No cart, checkout, payment, coupon, rent-car, or dashboard mutation was run. |
 
+## Sprint 14 Secure Auth/Profile Validation
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Staging target routes | Passed | `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` now return 200 on staging. |
+| Auth valid login | Blocked | No secure runtime password was available in checked env variables. Invalid login still fails safely with controlled `400`. |
+| Profile | Shell routes load | Full profile/bookings/favourites/settings API validation remains blocked without valid login. |
+| Token exposure | Passed raw checks | No bearer token or `sunpyramids-token` found in checked raw HTML. |
+| Cart readiness | Documented | Use numeric `tour_id` 664 for `cart/tours/append`; mutation test remains blocked without explicit approval. |
+| Payment no-invoice | Passed route smoke | Callback routes without `invoice_id` returned 200. |
+| Mutation validation | Still blocked | No cart, checkout, booking, payment, coupon, rent-car, or profile-update mutation was run. |
+
+## Sprint 15 Secure Auth/Profile and Cart Readiness
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Staging route smoke | Passed | Required public/auth/profile/cart/sitemap/robots routes returned 200 and did not map to `/500`. |
+| Valid login | Blocked | No secure runtime password env value was available. |
+| Invalid login | Passed | `POST /api/auth/login` with wrong password returned controlled 400. |
+| Profile | Shell routes pass | Authenticated API behavior remains blocked without valid login. |
+| Cart readiness | Ready but blocked | `tour_id` 664, `cart/tours/append`, and `cart/remove/{item}` contract documented; mutation approval sentence not provided. |
+| Checkout/payment/coupon/rent-car | Blocked | No production-risk mutation was run. |
+
+## Sprint 16 Secure Auth/Profile and Cart Attempt
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Runtime credentials | Blocked | Test email/password were not visible to this shell runtime, so valid login was not attempted. |
+| Cart approval | Present | Required owner approval for reversible cart add/remove using `tour_id` 664 was provided. |
+| Cart mutation | Blocked | Not run because valid login was blocked. |
+| Checkout safety | Passed | `/cart/checkout` returned 200; no submit run. |
+| Payment no-invoice | Passed | PayPal/Fawaterk callbacks without `invoice_id` returned 200. |
+
+## Sprint 16 Owner-Approved Booking Attempt
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Owner approval | Present | Approval covered one controlled booking creation and stop before payment. |
+| Runtime credentials | Blocked | Credentials were not visible to this shell, so valid login was not attempted. |
+| Cart setup | Blocked | Requires valid login. |
+| Checkout submit | Blocked | Requires valid login and cart setup. |
+| Booking creation | Not run | No booking was created. |
+| Payment handoff | Not reached | No payment URL was opened or followed. |
+| Safe checks | Passed | Staging route smoke, no-invoice callbacks, forms page-load, lint, build, and local route smoke passed. |
+
 ## Sprint 4 Performance and Behavior Validation
 
 Date: 2026-06-22
@@ -296,3 +349,17 @@ Date: 2026-06-22
 | reCAPTCHA | Nuxt loads enterprise reCAPTCHA globally in `nuxt.config.ts`; Next loads the same script globally in `app/layout.tsx` with `lazyOnload`. Parity preserved, but form token usage is incomplete in current Next forms. |
 | Tracking | Next layout includes GTM `GTM-KDF33T7` and GA4 `G-NKZ6W32C4J`; browser showed analytics requests. Full conversion/thank-you tracking parity still needs business validation. |
 | Console | Homepage produced React hydration error #418 in local production browser check. Payment callback no-invoice route had no console errors. |
+
+## Sprint 17 Booking Evidence and Cleanup Follow-Up
+
+Date: 2026-06-25
+
+| Area | Sprint 17 result | Remaining evidence needed |
+|---|---|---|
+| Auth/profile/cart (Sprint 16 retry) | Passed with local untracked credentials; login, profile, cart confirmed. | Booking ID/reference and cart post-booking state. |
+| Checkout/booking (Sprint 16 retry) | One controlled booking created for `tour_id` 664; stopped before payment; no `invoice_id` callback. | Dashboard verifier cleanup decision, duplicate-booking check, payment redirect capture. |
+| Payment callbacks | No-invoice route safety unchanged from Sprint 16; not re-run as a mutation. | Sandbox invoice IDs / approved payment handoff test. |
+| Credentials | `.local-test-creds.json` ignored (line 12), not staged/tracked/committed; no value printed/saved. | Owner file deletion + password rotation after verifier cleanup. |
+| Coupon/rent-car/tracking/sitemap/UI | Still blocked. | Next approval pack in `docs/next-migration/sprint17-booking-evidence-cleanup-report.md`. |
+
+`npm run lint` passed (exit 0). `npm run build` passed (exit 0). `git diff --check` passed (exit 0; only LF-to-CRLF working-copy warnings). Not approved.

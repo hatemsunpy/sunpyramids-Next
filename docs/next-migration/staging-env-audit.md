@@ -34,3 +34,15 @@ Sprint 12 could not confirm Vercel deployment metadata or environment variables 
 - `NEXT_PUBLIC_API_URL=https://sunpyramidtours.com/api/`
 
 The deployed staging target routes still return `/500`, so redeploy/env verification remains required.
+
+## Sprint 14 Environment Follow-Up
+
+The previous staging `/500` target routes now return 200 after redeploy. Vercel environment values are still not directly inspectable from this workspace, but route behavior confirms the deployed frontend can reach required public page/tour data for the checked routes.
+
+## Sprint 15 Environment Follow-Up
+
+No new environment facts changed. Secure valid-login validation remains blocked because no runtime-only password variable was available in the checked environment.
+
+## Sprint 17 Environment Follow-Up
+
+Sprint 16 retry used local untracked credentials from `.local-test-creds.json` (not a Vercel env var). Sprint 17 confirms cleanup: the file is in `.gitignore` (line 12), not staged, not tracked, not committed, and no value was printed or saved. Owner must delete the file and rotate the test account password after the dashboard verifier confirms booking cleanup. No Vercel environment variable change is required for this cleanup; the production-risk API base (`https://sunpyramidtours.com/api/`) and public SEO URL (`https://sunpyramidstours.com`) remain as previously documented.

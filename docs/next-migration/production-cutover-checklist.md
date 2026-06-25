@@ -307,6 +307,98 @@ Date: 2026-06-25
 | `npm run build` | Passed locally on 2026-06-25. |
 | Production cutover | Still blocked. |
 
+## Sprint 14 Secure Auth/Profile Validation
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Staging route smoke | Passed for `/`, `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, `/rent-car`, `/cart`, `/cart/checkout`, `/auth/sign-in`, `/profile`, `/sitemap.xml`, and `/robots.txt`. |
+| Previous 500 routes | Fixed on staging; all four target routes returned 200. |
+| Auth invalid login | Passed safe negative check with controlled `400`. |
+| Auth valid login | Blocked; secure runtime password value unavailable. |
+| Profile validation | Blocked for authenticated behavior; shell routes load. |
+| Tour page | Passed staging 200 for `Test_tour`; numeric `tour_id` remains 664. |
+| Cart readiness | Documented for approved future use of `tour_id` 664; no cart mutation run. |
+| Checkout safety | Page load only; no booking/payment/invoice mutation run. |
+| Payment no-invoice callbacks | Passed route smoke without `invoice_id`. |
+| Forms safety | Contact/make-your-trip/rent-car page loads passed; no submit run; no global reCAPTCHA in checked raw HTML. |
+| `npm run lint` | Passed locally on 2026-06-25. |
+| `npm run build` | Passed locally on 2026-06-25. |
+| Production cutover | Still blocked. |
+
+## Sprint 15 Secure Auth/Profile and Cart Readiness
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Staging route smoke | Passed for `/`, `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, `/rent-car`, `/cart`, `/cart/checkout`, auth/profile routes, sitemap, and robots. |
+| Auth valid login | Blocked; no secure runtime password value available. |
+| Auth invalid login | Passed with controlled 400. |
+| Profile validation | Shell routes load; authenticated API validation blocked without valid login. |
+| Cart readiness | Documented for `tour_id` 664; mutation not run because approval sentence was not provided. |
+| Checkout safety | Page load/code check only; no checkout submit or booking/payment/invoice mutation. |
+| Payment no-invoice callbacks | Passed route smoke without `invoice_id`. |
+| Forms safety | Contact/make-your-trip/rent-car pages load and no global reCAPTCHA/token exposure found in checked raw HTML. |
+| `npm run lint` | Passed locally on 2026-06-25. |
+| `npm run build` | Passed locally on 2026-06-25. |
+| Production cutover | Still blocked. |
+
+## Sprint 16 Secure Auth/Profile and Approved Cart Validation
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Runtime credentials | Blocked; not visible to this shell. |
+| Valid login | Blocked. |
+| Profile/settings/bookings/favourites | Blocked; require valid login. |
+| Cart approval | Present for reversible add/remove using `tour_id` 664. |
+| Cart add/remove | Blocked; not run because login was blocked. |
+| Checkout safety | Passed page-load/code check only; no submit run. |
+| Payment no-invoice callbacks | Passed route smoke without `invoice_id`. |
+| Production cutover | Still blocked. |
+
+## Sprint 16 Owner-Approved Checkout Booking Attempt
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Owner approval | Present for one controlled booking and stop before payment. |
+| Runtime credentials | Blocked; not visible to this shell. |
+| Valid login | Not attempted. |
+| Cart setup | Not run. |
+| Checkout submit | Not run. |
+| Booking creation | Not run; no booking ID/reference. |
+| Payment handoff | Not reached; no payment URL opened or followed. |
+| Dashboard verification | Not applicable because no booking was created. |
+| Production cutover | Still blocked. |
+
+## Sprint 17 Booking Evidence Cleanup and Next Approval Pack
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Credentials cleanup | Passed: `.local-test-creds.json` ignored (line 12), not staged, not tracked, not committed; no value printed/saved. |
+| Credential file deletion | Pending owner action after verifier confirms booking cleanup. |
+| Test account password rotation | Pending owner action after validation. |
+| Booking created | Yes (Sprint 16 retry, `tour_id` 664). |
+| Booking ID/reference | Unknown; pending dashboard verifier lookup. |
+| Payment completed | No. |
+| Payment callback with `invoice_id` | No. |
+| Duplicate booking check | Unknown; pending verifier. |
+| Cart post-booking state | Unknown; pending read-only confirmation; no new mutation run. |
+| Dashboard verifier cleanup decision | Pending (cancel/delete/mark as test/leave as evidence). |
+| Payment no-invoice callbacks | Safe per Sprint 16 evidence; not re-run as a mutation. |
+| Next approval pack | Prepared in `docs/next-migration/sprint17-booking-evidence-cleanup-report.md`: payment sandbox, coupon, rent-car, tracking, sitemap, UI parity. |
+| `npm run lint` | Passed (exit 0) on 2026-06-25. |
+| `npm run build` | Passed (exit 0) on 2026-06-25. |
+| `git diff --check` | Passed (exit 0) on 2026-06-25; only LF-to-CRLF working-copy warnings. |
+| Production cutover | Still blocked. |
+
 ## Rollback Triggers
 
 - SEO tags missing or wrong.

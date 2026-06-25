@@ -83,6 +83,45 @@
 - Current local production build still passes the target route set, so next action is redeploy/log inspection rather than additional production-API mutation testing.
 - Valid-login/profile validation remains blocked until the password is supplied through a secure runtime/manual method.
 
+## Sprint 14 Risk Notes
+
+- The previous staging 500 routes now return 200 after redeploy, reducing route-readiness risk for tour/contact/make-your-trip/rent-car.
+- Secure valid-login/profile validation remains blocked because the password was not available through a runtime-only secure method.
+- Cart readiness is documented for `tour_id` 664, but cart mutation remains blocked until owner approval confirms the production-risk API test is safe and reversible.
+- Checkout/payment/coupon/rent-car mutations remain blocked without explicit approval and safe data.
+
+## Sprint 15 Risk Notes
+
+- Staging route health remains green for the Sprint 15 route set.
+- Secure valid-login/profile validation remains blocked because no runtime-only password method was available.
+- Cart add/remove is technically ready for `tour_id` 664 but remains blocked because the required explicit approval sentence was not provided.
+- Production-risk checkout/payment/coupon/rent-car mutations remain blocked.
+
+## Sprint 16 Risk Notes
+
+- Cart add/remove approval is now present, but execution remains blocked because runtime credentials were not visible to this shell.
+- Valid auth/profile validation remains blocked until credentials are available through a secure runtime/manual method.
+- No production mutation was run in Sprint 16.
+
+## Sprint 16 Owner-Approved Booking Attempt Notes
+
+- Owner approval for one controlled booking was present, but execution remained blocked because credentials were not visible to this shell runtime.
+- No cart, checkout, booking, payment, coupon, rent-car, or invoice mutation was run.
+- The next run must provide credentials via a runtime visible to the executing shell or use manual browser login.
+
+## Sprint 16 Retry Notes
+
+- Sprint 16 retry succeeded with local untracked credentials from `.local-test-creds.json`: login, profile, and cart passed; one controlled booking was created for `tour_id` 664; the run stopped before payment.
+- Payment was not completed; no callback was called with `invoice_id`; no coupon/rent-car/invoice mutation was run.
+- Booking ID/reference was not captured in the workspace evidence; the dashboard verifier must locate it by test customer / `Test_tour` / `tour_id` 664 / 2026-06-25 creation time. Do not create another booking to recover it.
+
+## Sprint 17 Booking Evidence Cleanup Notes
+
+- Credentials cleanup confirmed: `.local-test-creds.json` is in `.gitignore` (line 12), not staged, not tracked, not committed; no credential value was printed or saved. Owner must delete the file and rotate the test account password after validation.
+- Booking evidence: booking created yes; payment completed no; stopped before payment yes; no `invoice_id` callback. Booking ID/reference, payment redirect, cart post-booking state, and duplicate-booking check remain unknown pending the dashboard verifier.
+- Dashboard verifier cleanup decision (cancel/delete/mark as test/leave as evidence) is pending; verifier must not expose unrelated customer data.
+- Payment, coupon, rent-car, tracking, sitemap, and UI parity approvals remain blocked; production cutover remains blocked.
+
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.

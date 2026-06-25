@@ -9,3 +9,9 @@ output/
 *.log
 .env*
 !.env.example
+.local-test-creds.json
+.agents/
+.claude/
+.codex/
+skills-lock.json
+*.tsbuildinfo
