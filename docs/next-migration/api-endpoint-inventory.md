@@ -24,7 +24,7 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 | `pages/blog?includes=seo` | Travel guide root | `getPage("blog")` | Public | Implemented. |
 | `pages/all-blogs?includes=seo` | Blogs list | `getPage("all-blogs")` | Public | Implemented. |
 | `pages/contact-us?includes=seo` | Contact page | `getPage("contact-us")` | Public | Implemented. |
-| `tours/{slug}?includes=seo,gallery,category,destination,itinerary,includes,excludes,faqs,reviews` | Tour detail used a broader Nuxt include set | `getTour()` | Public | Implemented with slightly different includes; validate tour detail parity. |
+| `tours/{slug}?includes=seo` | Tour detail | `getTour()` | Public | Sprint 11 removed unsupported deep includes because `gallery` and broader include combinations return backend `500` for `Test_tour`. |
 | `tours?...` | Listings, related tours, searches | `getTours()` | Public/auth optional in Nuxt for wishlist | Implemented for representative lists. Full filters/wishlist pending. |
 | `destinations?parent.slug=egypt&order_by=display_order,asc` | One-day/category/home destination lists | `getDestinations()` | Public | Implemented. |
 | `categories/{slug}?includes=seo,children` | Category pages/events | `getCategory()` | Public | Implemented. |
@@ -49,7 +49,7 @@ Source of truth: `nuxt_sunpyramids/composables/useApi.js`, Nuxt pages/components
 | `cart/remove/{item}` | Remove cart item | `/cart` remove action sends the tour product ID for tour rows and the rental row ID for rental rows, matching inspected Laravel behavior | Auth/context-dependent | Implemented; staging validation pending. |
 | `cart/clear` | Clear cart | `/cart` clear action calls endpoint from client | Auth/context-dependent | Implemented; staging validation pending. |
 | `coupons/{code}/validate` | Cart coupon | `/cart` coupon form calls endpoint with token | Auth/context-dependent | Implemented; staging validation pending. |
-| `bookings` | Checkout booking creation | `/cart/checkout` posts billing data plus `payment_method` from the client and redirects to the returned payment URL | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
+| `bookings` | Checkout booking creation | `/cart/checkout` posts billing data plus `payment_method` from the client; redirect to the returned payment URL is implemented at the code level but actual payment redirect behavior is unvalidated and pending staging validation | Auth/context-dependent | Implemented first pass; staging validation remains critical blocker. |
 | `bookings/update/{id}` | Nuxt-observed checkout/payment status update | No active Next call after Sprint 9 alignment | Auth/context-dependent | Backend discovery found no matching Laravel API route; keep removed unless deployed backend evidence proves this route exists. |
 | `wishlist/{id}/toggle` | Tour cards/profile favourites | Helper added in `CustomerFlows`; card wiring pending | Auth | Partial; staging validation pending. |
 | `wishlist?page=1&page_limit=200` | Profile favourites | `/profile/favourites` fetches from client after token check | Auth | Implemented; staging validation pending. |

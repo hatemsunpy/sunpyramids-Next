@@ -55,6 +55,48 @@ Not approved. Public content API behavior is partially implemented, customer/rev
 | Route smoke | Passed HTTP 200 for `/`, `/egypt-tours/one-day-tours`, representative tour slug, `/contact-us`, `/make-your-trip`, `/rent-car`, `/cart`, `/cart/checkout`, `/thankful`, auth/profile routes, no-invoice PayPal callback, `/sitemap.xml`, and `/robots.txt`. |
 | Browser diagnostic | Blocked by unavailable Playwright tooling in this workspace; no project dependency was added. |
 
+## Sprint 10 Limited Production-API Validation
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Frontend staging availability | Partial pass | `https://sunpyramids-next.vercel.app/` responds. Required routes mostly return `200`, but `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` return `500` on deployed staging. |
+| API availability | Pass with production risk | `https://sunpyramidtours.com/api/` responds. Treat all validation as production-API safe; no booking/payment/coupon/rental mutations were run. |
+| Public SEO/domain | Partial pass | Staging raw HTML for `/` and `/egypt-tours/one-day-tours` uses frontend-domain canonicals. Sitemap uses `https://sunpyramidstours.com` and does not include staging/backend domains. Some raw HTML includes backend-domain media/API asset references, which is acceptable outside canonical/OG sitemap URLs but should remain monitored. |
+| Auth | Partial | Sign-in route loads and invalid login fails safely with controlled `400`. Valid login/profile validation blocked because password was not available as a secure runtime value. |
+| Token exposure | Pass for checked pages | Raw HTML checks did not find `sunpyramids-token` or bearer token values on checked public/auth pages. |
+| Tour detail | Partial/blocking issue | Test tour data is slug `Test_tour`, numeric ID `664`, code `Test`, title `Test Tour`; use `664` for backend APIs requiring numeric `tour_id`. Deployed staging route `/tour/Test_tour` returns `500`, and deep include API request returns `500`. |
+| Cart | Blocked | No cart add/remove was run against production API. Requires owner approval and healthy tour route. |
+| Checkout | Safe UI only | `/cart/checkout` loads; no booking creation, payment redirect, invoice creation, or `bookings/update/{id}` call was run. Code inspection still shows no active `bookings/update/{id}` call. |
+| Payment callback | No-invoice only | Callback routes without `invoice_id` return `200`; no invoice mutation test was run. Browser network validation remains manual-required because browser tooling is unavailable without adding dependencies. |
+| reCAPTCHA | Code/raw HTML pass, backend blocked | Raw sign-in HTML does not include global reCAPTCHA script; frontend loads submit-time only. Backend acceptance remains blocked. |
+| Tracking | Blocked for business validation | Public GTM/GA IDs remain code-level only; no GTM Preview, GA4 DebugView, Ads, TikTok, or Clarity approval was provided. |
+
+## Sprint 11 Staging 500 Triage
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Shared route-family failure | Frontend fix applied | Staging `/500` affects generic content routes and tour detail. Current code removed the server-side `isomorphic-dompurify` sanitizer dependency path and uses an SSR-safe sanitizer helper. |
+| Tour API include failure | Frontend mitigation applied; backend issue remains | `GET /api/tours/Test_tour?includes=seo` returns 200, but adding `gallery` returns backend 500. `getTour()` now requests only `includes=seo` and falls back to slug list without includes. |
+| Contact/make-your-trip/rent-car | Current build local pass | Backend page APIs for `contact-us`, `make-your-trip`, and `car-rental` return 200; deployed staging still returns cached `/500` until redeployed/verified. |
+| Auth valid login | Blocked | Secure password runtime value was not available in checked env variables; invalid login remains safely validated from Sprint 10. |
+| Production API risk | Still active | No cart, booking, payment, coupon, rent-car, or invoice mutation was run. |
+
+## Sprint 12 Staging Redeploy Verification
+
+Date: 2026-06-25
+
+| Area | Result | Notes |
+|---|---|---|
+| Redeploy verification | Not verified | Deployed staging still maps `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` to `/500`. Vercel branch/commit/env metadata was unavailable from this workspace. |
+| Local current build | Pass | `npm run build` and local production route smoke pass for the target routes and safe callback routes. |
+| Auth/profile | Blocked for valid login | Password was not available through checked secure runtime env variables. Invalid login still fails safely with controlled `400`. |
+| Payment no-invoice | Route smoke pass | Callback routes without `invoice_id` return 200. No invoice mutation was run. |
+| Mutation validation | Still blocked | No cart, checkout, payment, coupon, rent-car, or dashboard mutation was run. |
+
 ## Sprint 4 Performance and Behavior Validation
 
 Date: 2026-06-22

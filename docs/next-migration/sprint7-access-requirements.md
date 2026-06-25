@@ -63,3 +63,23 @@ Laravel backend discovery added these access facts:
 ## Access Verdict
 
 Sprint 7 staging validation remains blocked after Sprint 8 Nuxt discovery. Public identifiers and payload shapes were recovered from `nuxt_sunpyramids/`, but no private credentials, confirmed staging URLs, valid coupon, sandbox invoice IDs, or analytics/debug access were found.
+
+## Sprint 10 Limited Production-API Access Update
+
+Date: 2026-06-25
+
+| Item | Sprint 10 status | Notes |
+|---|---|---|
+| Frontend staging URL | Available | `https://sunpyramids-next.vercel.app/` responds, but some required public routes return `500` on the deployed staging build. |
+| API URL | Available with production risk | Confirmed as `https://sunpyramidtours.com/api/`. Treat as production API; do not create bookings, invoices, or irreversible data without explicit owner approval. |
+| Test customer account email | Available | Email received. Password is provided separately by owner and must not be written to docs or committed. |
+| Test customer account password | Partially available outside repo | Not present in this thread or in checked local secure env variables. Valid-login automation remains blocked until supplied securely at runtime. |
+| Dashboard verifier | Available | Assigned verifier is available for dashboard-side confirmation if a safe operation needs review. |
+| Test tour slug | Available | `Test_tour`; public route target is `/tour/Test_tour`. |
+| Numeric tour ID | Available | Use `664` wherever the backend API requires numeric `tour_id`. Tour code is `Test`; do not use `Test` as `tour_id`. Deep include detail API currently returns `500`. |
+| Valid coupon | Blocked | Not provided; do not run coupon success validation. |
+| Rental IDs | Blocked | Not provided; do not run rent-car append validation against production API. |
+| Sandbox invoice IDs | Blocked | Not provided; do not run payment callback mutation APIs with `invoice_id`. |
+| Backend reCAPTCHA confirmation | Blocked | No backend validator was found previously; owner/security confirmation still required. |
+| Tracking debug access | Blocked | GTM/GA/Ads/TikTok/Clarity debug access not provided. |
+| UI approval owner | Blocked | Not provided separately. |

@@ -60,6 +60,29 @@
 - The `APP_FRONT_URL` vs `APP_FRONTEND_URL` mismatch remains a production ownership risk for backend-generated payment and sitemap URLs.
 - Tracking/debug access, valid coupon data, sandbox invoice IDs, real rental IDs, and UI approval owner remain unresolved cutover blockers.
 
+## Sprint 10 Risk Notes
+
+- The confirmed API URL is the production-domain API. Limited validation must avoid booking creation, checkout submission, payment redirects, invoice callback mutation APIs, coupon success tests, and rent-car append tests unless explicitly approved.
+- Frontend staging is available, but the deployed staging build returns `500` for `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car`. Current local production build returns `200` for the same routes, so deployment/runtime parity must be checked before broader validation.
+- `Test_tour` has confirmed numeric tour ID `664`, code `Test`, and title `Test Tour`; use `664` for backend APIs requiring numeric `tour_id`. The deep include tour detail endpoint returns `500`, and cart add/remove remains blocked until owners approve production-API cart testing and the deployed frontend route is healthy.
+- Valid login remains blocked in this run because the password was not available in the thread or checked local secure env variables. Invalid login failed safely with a controlled API error.
+- Full production cutover remains blocked.
+
+## Sprint 11 Risk Notes
+
+- Staging 500 root causes are narrowed to SSR/runtime rendering and backend API include behavior. A frontend fix removed the server-side `isomorphic-dompurify` sanitizer path and stopped using backend-crashing tour deep includes.
+- The deployed staging URL still returns `/500` for the previously failing routes until a redeploy is available and verified.
+- The backend still returns 500 for `GET /api/tours/Test_tour` when `gallery` is included; this is a backend/API issue to raise with the API owner if rich tour media is required.
+- Valid login/profile validation remains blocked until the test password is provided through a secure runtime-only mechanism.
+- No production API mutations were run; checkout/payment/coupon/rent-car validation remains blocked without explicit owner approval and safe data.
+
+## Sprint 12 Risk Notes
+
+- Staging redeploy is not verified: `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` still map to `/500` on `https://sunpyramids-next.vercel.app/`.
+- Vercel deployment branch/commit/date and env values could not be confirmed from this workspace because no Vercel project metadata or CLI linkage is available.
+- Current local production build still passes the target route set, so next action is redeploy/log inspection rather than additional production-API mutation testing.
+- Valid-login/profile validation remains blocked until the password is supplied through a secure runtime/manual method.
+
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.

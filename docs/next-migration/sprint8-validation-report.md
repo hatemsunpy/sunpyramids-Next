@@ -69,3 +69,20 @@ Backend discovery review: `docs/next-migration/sprint8-backend-access-discovery.
 ## Sprint 8 Verdict
 
 Sprint 8 cannot proceed to end-to-end staging validation. It can proceed only with limited preparation using public Nuxt-derived values until owners provide staging credentials, test data, sandbox IDs, and tracking/debug access.
+
+## Sprint 10 Limited Production-API Follow-Up
+
+Date: 2026-06-25
+
+Minimum access now allows limited safe validation, but the API URL is `https://sunpyramidtours.com/api/` and appears to be production. This changes the validation posture from fully blocked to production-API safe only.
+
+| Area | Sprint 10 update |
+|---|---|
+| Frontend staging URL | Available: `https://sunpyramids-next.vercel.app/`. |
+| API URL | Available: `https://sunpyramidtours.com/api/`; production-risk validation only. |
+| Test customer | Email available; password must stay out of docs and was not available to this run as a secure local variable. |
+| Test tour | Slug `Test_tour`, numeric tour ID `664`, code `Test`, title `Test Tour`. Use `664` wherever the backend API requires numeric `tour_id`; do not use `Test` as `tour_id`. |
+| Dashboard verifier | Available. |
+| Still blocked | Valid coupon, rental IDs, sandbox invoice IDs, backend reCAPTCHA confirmation, tracking debug access, and UI approval owner. |
+| Staging route smoke | Partial: core routes load, but deployed staging returns `500` for `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car`. |
+| Local route smoke | Passed for the same route set on the current production build. |

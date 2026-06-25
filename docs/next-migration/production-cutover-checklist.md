@@ -220,7 +220,7 @@ Date: 2026-06-23
 | Backend access/config discovery | Completed in `docs/next-migration/sprint8-backend-access-discovery.md`; API contracts clarified, but staging/test data remains blocked. |
 | Backend payment contract | Laravel `POST /api/bookings` requires `payment_method`; no `bookings/update/{id}` API route was found. |
 | Backend frontend URL config | Blocked pending owner confirmation of `APP_FRONT_URL` vs `APP_FRONTEND_URL` for `site_url()` payment/sitemap output. |
-| Tour/rent-car/coupon/checkout/payment data | Payload shapes and public slugs partially found; numeric IDs, valid coupon, real rental IDs, enabled gateway config, and sandbox invoices remain blocked. |
+| Tour/rent-car/coupon/checkout/payment data | Payload shapes and public slugs partially found; Sprint 10 confirms tour ID `664` for `Test_tour`, while valid coupon, real rental IDs, enabled gateway config, and sandbox invoices remain blocked. |
 | Custom marketing sitemap source | Blocked; Nuxt confirms only `custom-pages/{slug}` detail usage and public static sitemap paths without an approved source-of-truth. |
 | `npm run lint` | Passed locally on 2026-06-23. |
 | `npm run build` | Passed locally on 2026-06-23. |
@@ -246,6 +246,65 @@ Date: 2026-06-23
 | Route smoke tests | Passed HTTP 200 for the Sprint 9 route set on local production server. |
 | Browser diagnostic | Blocked by unavailable Playwright tooling; no repo dependency was installed. |
 | Staging validation | Blocked; no staging URL, test account, valid coupon, real tour/rental IDs, sandbox invoice IDs, backend reCAPTCHA settings, tracking debug access, or UI approval owner provided. |
+| Production cutover | Still blocked. |
+
+## Sprint 10 Limited Production-API Validation
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Frontend staging URL | Available: `https://sunpyramids-next.vercel.app/`. |
+| API URL | Available: `https://sunpyramidtours.com/api/`; production-risk API, not sandbox. |
+| Environment/config usage | Confirmed: `NEXT_PUBLIC_APP_URL` controls public frontend/SEO URL, `NEXT_PUBLIC_API_URL` controls API base URL, reCAPTCHA site key is in `lib/recaptcha.ts`, GTM/GA IDs are in `components/ThirdPartyScripts.tsx` and `app/layout.tsx`, and `?no-third-party=1` suppresses client third-party loaders. |
+| Staging route smoke | Partial: required routes mostly returned `200`, but `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` returned `500` on deployed staging. |
+| Local route smoke | Passed HTTP 200 for all required Sprint 10 routes on the current local production build. |
+| API safe reads | Passed for `countries`, `locations?page_limit=1`, `pages/contact-us`, `pages/make-your-trip`, and `tours/Test_tour`; blocked/failing for `pages/rent-car` (`404`) and `tours/Test_tour?includes=...reviews` (`500`). |
+| Test account | Email available; password redacted/not stored. Valid login blocked in this run because the password was not available as a secure runtime value. |
+| Invalid login | Passed safe negative check: `POST /api/auth/login` returned controlled `400` for wrong password. |
+| Numeric tour ID | Confirmed numeric tour ID `664`; tour code is `Test`, not a valid integer `tour_id`. Use `664` wherever the backend API requires numeric `tour_id`. |
+| Cart validation | Blocked pending owner approval for production-API cart mutation and healthy deployed tour route. No cart add/remove was run. |
+| Checkout validation | UI/page load only. No checkout submission, booking creation, payment redirect, or invoice creation was run. |
+| Payment callback no-invoice | HTTP route smoke passed without `invoice_id`; no invoice mutation paths were called. Browser/network validation remains manual because browser tooling is unavailable without adding dependencies. |
+| reCAPTCHA | Raw HTML check shows no global reCAPTCHA script on sign-in page; backend acceptance remains blocked. |
+| Tracking | Code-level/public-ID only; debug validation remains blocked. |
+| `npm run lint` | Passed locally on 2026-06-25. |
+| `npm run build` | Passed locally on 2026-06-25. |
+| `git diff --check` | Passed on 2026-06-25; only LF-to-CRLF working-copy warnings were emitted. |
+| Production cutover | Still blocked. |
+
+## Sprint 11 Staging 500 Triage
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Staging 500 investigation | Completed without Vercel logs. Response headers show the failing deployed routes match `/500`; local production build passes. |
+| Tour root cause | Backend deep include failure confirmed: `includes=seo` works, `includes=seo,gallery` and broader sets return 500 for `Test_tour`. |
+| Generic route root cause | Likely SSR runtime incompatibility on shared sanitized HTML rendering path; generic content routes and tour content share `sanitizeHtml`. |
+| Code fixes | `lib/data.ts` now avoids unsupported tour deep includes; `lib/sanitize-html.ts` now uses an SSR-safe sanitizer helper. |
+| Local route smoke | Passed HTTP 200 for home, tour, contact, make-your-trip, rent-car, generic pages, auth/profile shell, no-invoice callbacks, sitemap, and robots. |
+| Staging route smoke | Still failing on deployed staging for `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` until redeploy/verification. Other checked safe routes returned 200. |
+| Auth valid login | Blocked; secure runtime password value was not available. |
+| Browser validation | Blocked/manual-required; no browser tooling dependency was installed. |
+| Production cutover | Still blocked. |
+
+## Sprint 12 Staging Redeploy Verification
+
+Date: 2026-06-25
+
+| Check | Result |
+|---|---|
+| Staging redeploy verified | No. Target routes still return `/500`. |
+| Vercel deployment metadata | Unavailable from this workspace; no `.vercel/project.json` and no configured Vercel project metadata. |
+| Vercel env confirmation | Unknown; expected `NEXT_PUBLIC_APP_URL=https://sunpyramidstours.com` and `NEXT_PUBLIC_API_URL=https://sunpyramidtours.com/api/`. |
+| Staging target routes | `/tour/Test_tour`, `/contact-us`, `/make-your-trip`, and `/rent-car` still return 500. |
+| Other safe staging routes | `/`, `/cart`, `/cart/checkout`, `/auth/sign-in`, `/profile`, no-invoice callbacks, `/sitemap.xml`, and `/robots.txt` returned 200. |
+| Auth valid login | Blocked; secure runtime password value was unavailable. |
+| Invalid login | Passed safe negative check with controlled `400`. |
+| Local route smoke | Passed for the Sprint 12 route set. |
+| `npm run lint` | Passed locally on 2026-06-25. |
+| `npm run build` | Passed locally on 2026-06-25. |
 | Production cutover | Still blocked. |
 
 ## Rollback Triggers
