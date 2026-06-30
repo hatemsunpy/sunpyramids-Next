@@ -23,7 +23,7 @@ Priority pages from the migration instructions:
 |---|---|---|---|
 | `/` | Exists | Local Next screenshot captured | `output/playwright/home.png`. Needs Nuxt baseline and mobile screenshot comparison. |
 | `/egypt-tours/one-day-tours` | Exists | Local Next screenshot captured | `output/playwright/one-day-tours.png`. Confirmed route is intended to show categories/destinations, not tours. Needs Nuxt baseline and mobile screenshot comparison. |
-| `/tour/[slug]` | Exists | Pending | Need representative published slug and booking panel comparison. |
+| `/tour/[slug]` | Exists | Locally verified on `http://localhost:3003` | Nuxt-style layout restored and verified locally: gallery, info cards, overview, highlights, itinerary, included/excluded, add-ons, booking panel, season prices, social gallery, related tours. Staging and production approval remain pending. |
 | `/contact-us` | Exists | Local Next screenshot captured | `output/playwright/contact-us.png`. Contact form exists; recaptcha/tracking visual/functional parity pending. |
 | `/cart` | Exists | Local Next screenshot captured | `output/playwright/cart.png`. Route/UI clone exists; functional parity pending. |
 | `/cart/checkout` | Exists | Pending | Route/UI clone exists; checkout flow pending. |
@@ -130,3 +130,26 @@ UI parity fixes remain deferred. Sprint 7 did not receive staging access or reve
 | Cart and checkout | Blocked | `output/playwright/sprint2/` unauthenticated/basic states | Yes | Needs populated cart and checkout data before meaningful parity approval. |
 | Auth routes | Blocked | `output/playwright/sprint2/` | Yes | Needs staging success/error states. |
 | Profile routes | Blocked | `output/playwright/sprint2/` unauthenticated/basic states | Yes | Needs authenticated profile/bookings/favourites/settings data. |
+
+## Tour Detail Page Restoration
+
+Date: 2026-06-28
+
+The `/tour/[slug]` route was restored to match the Nuxt tour detail layout:
+
+- Image gallery with thumbnail strip
+- Tour info cards (duration, cities, type, category)
+- Overview with pick-up / availability
+- Highlights section with destination/attractions
+- Day-by-day itinerary with expand/contract all
+- What's Included / What's Excluded lists
+- Add-ons panel
+- Sticky booking panel with price, date, passenger counters, total, and Book now
+- Season pricing table
+- Social gallery
+- Related tours carousel
+
+**Validation target:** Local production preview on `http://localhost:3003`. The representative slug `from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis` was verified to render all sections correctly.
+
+**Validation note:** the live production domain still serves the legacy Nuxt app. The Next.js tour detail restoration was validated against the local Next.js preview on port 3003 and/or the Next.js staging deployment, not against the production Nuxt HTML. The production Nuxt site was used only as a visual/structural parity baseline. Do not use the production Nuxt URL or `localhost:3000` as evidence that Next.js changes are live. See `docs/next-migration/deployment-boundary.md`.
+

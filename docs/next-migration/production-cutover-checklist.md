@@ -420,3 +420,15 @@ Date: 2026-06-25
 5. Restore previous sitemap if needed.
 6. Investigate Next.js issue on staging.
 7. Retry cutover only after the failed gate passes.
+
+## Current Deployment Boundary
+
+Date: 2026-06-28
+
+- **Production site is still Nuxt.** `https://sunpyramidstours.com` continues to serve the legacy Nuxt build (`__nuxt` markers present in HTML).
+- **Next.js changes are repo/staging-preview only.** They will not appear on the public production domain until the Next.js app is deployed and DNS/routing is cut over.
+- **Production cutover has not happened.** No DNS, proxy, or domain change has been made.
+- **Local verified preview runs on port 3003.** Use `http://localhost:3003` for local validation.
+- **Port 3000 is stale and must be ignored.** An old Next.js dev process is still running on `http://localhost:3000`; do not use it for evidence.
+- **Staging checks:** use `https://sunpyramids-next.vercel.app`.
+- **Do not use the live production URL to validate Next.js implementation changes.** It is a Nuxt baseline, not a Next.js preview. Recent Next.js changes were validated against `localhost:3003` and/or the staging preview, not against the production Nuxt HTML. See `docs/next-migration/deployment-boundary.md`.

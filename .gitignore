@@ -16,3 +16,9 @@ output/
 skills-lock.json
 *.tsbuildinfo
 .opencode/
+.impeccable/
+.playwright-mcp/
+*.png
+*.jpeg
+*.jpg
+*.pid

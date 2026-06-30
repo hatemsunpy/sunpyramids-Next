@@ -25,7 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </noscript>
         {children}
         <ThirdPartyScripts />
-      </body>
+</body>
     </html>
   );
 }
