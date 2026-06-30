@@ -46,11 +46,55 @@ export type Tour = ApiPage & {
   price?: number | string;
   start_from?: number | string;
   adult_price?: number | string;
+  child_price?: number | string;
+  infant_price?: number | string;
+  offer?: number | string;
+  offer_end_date?: string;
   duration?: string;
+  duration_in_days?: number | string;
+  pickup_time?: string;
+  run?: string;
+  type?: string;
+  overview?: string;
+  highlights?: string;
+  included?: string;
+  excluded?: string;
   city?: string;
   destination?: string;
-  category?: { name?: string; slug?: string };
-  categories?: { name?: string; title?: string; slug?: string }[];
-  destinations?: { name?: string; title?: string; slug?: string }[];
+  category?: { name?: string; title?: string; slug?: string };
+  categories?: { id?: number; name?: string; title?: string; slug?: string }[];
+  destinations?: {
+    id?: number;
+    parent_id?: number;
+    name?: string;
+    title?: string;
+    slug?: string;
+    global?: boolean;
+    enabled?: boolean;
+    featured?: boolean;
+    latitude?: string;
+    longitude?: string;
+  }[];
   images?: string[];
+  gallery?: string[];
+  options?: { id?: number; name?: string; adult_price?: number | string; child_price?: number | string }[];
+  days?: {
+    id?: number;
+    tour_id?: number;
+    title?: string;
+    description?: string;
+    translations?: { id?: number; tour_day_id?: number; locale?: string; title?: string; description?: string }[];
+  }[];
+  seasons?: {
+    id?: number;
+    date?: string;
+    calender_availability?: {
+      day_numbers?: number[];
+      day_names?: string[];
+      month_names?: string[];
+      years_numbers?: number[];
+    };
+    pricing_groups?: { from?: number; to?: number; price?: number | string; child_price?: number | string }[];
+  }[];
+  social_links?: { type?: string; image?: string; icon?: string; url?: string }[];
 };

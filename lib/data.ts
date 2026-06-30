@@ -79,18 +79,31 @@ export async function getFaqs(locale: Locale, limit = 200) {
 }
 
 export async function getTour(slug: string, locale: Locale) {
+  const includes = "seo,destinations,categories,options,days,seasons";
   const response = await apiFetch<{ data?: Tour }>(
-    `tours/${encodeURIComponent(slug)}?includes=seo`,
+    `tours/${encodeURIComponent(slug)}?includes=${includes}`,
     { locale, next: { revalidate: 180 } },
   );
 
   if (response?.data) return response.data;
 
   const fallback = await apiFetch<ApiList<Tour>>(
-    `tours?slug=${encodeURIComponent(slug)}`,
+    `tours?slug=${encodeURIComponent(slug)}&includes=${includes}`,
     { locale, next: { revalidate: 180 } },
   );
   return listData(fallback)[0] ?? null;
+}
+
+export async function getRelatedTours(tour: Tour | null, locale: Locale, limit = 12) {
+  if (!tour?.id) return [];
+  const categoryIds = (tour.categories ?? []).map((c) => c.id).filter(Boolean);
+  if (!categoryIds.length) return [];
+  const params = new URLSearchParams();
+  params.set("page_limit", String(limit + 1));
+  params.set("order_by", "display_order,asc");
+  categoryIds.forEach((id) => params.append("categories.id[]", String(id)));
+  const response = await apiFetch<ApiList<Tour>>(`tours?${params.toString()}`, { locale });
+  return listData(response).filter((item) => item.id !== tour.id).slice(0, limit);
 }
 
 export async function getBlogs(locale: Locale, limit = 9) {
