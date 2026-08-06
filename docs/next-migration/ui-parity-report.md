@@ -23,6 +23,7 @@ Priority pages from the migration instructions:
 |---|---|---|---|
 | `/` | Exists | Local Next screenshot captured | `output/playwright/home.png`. Needs Nuxt baseline and mobile screenshot comparison. |
 | `/egypt-tours/one-day-tours` | Exists | Local Next screenshot captured | `output/playwright/one-day-tours.png`. Confirmed route is intended to show categories/destinations, not tours. Needs Nuxt baseline and mobile screenshot comparison. |
+| `/egypt-tours/one-day-tours/[destination]` | Exists | API + pagination + count parity fixed | Now fetches the same Nuxt-style query: `exists=wishlisted`, `destinations.slug={destination}`, and the four one-day category slugs (`night-tours`, `one-day-tours`, `half-day-tour`, `layover`) with `page_limit=24`. Renders the result count on every page (e.g., "From 1 To 24 out of 116 result") and Nuxt-style pagination when there is more than one page. Filter/sort buttons not yet implemented. |
 | `/tour/[slug]` | Exists | Locally verified on `http://localhost:3003` | Nuxt-style layout restored and verified locally: gallery, info cards, overview, highlights, itinerary, included/excluded, add-ons, booking panel, season prices, social gallery, related tours. Staging and production approval remain pending. |
 | `/contact-us` | Exists | Local Next screenshot captured | `output/playwright/contact-us.png`. Contact form exists; recaptcha/tracking visual/functional parity pending. |
 | `/cart` | Exists | Local Next screenshot captured | `output/playwright/cart.png`. Route/UI clone exists; functional parity pending. |

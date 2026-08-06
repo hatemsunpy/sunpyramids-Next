@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { DestinationCard } from "@/components/DestinationCard";
+import { Pagination } from "@/components/Pagination";
+import { ResultCount } from "@/components/ResultCount";
 import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
-import { getDestinations, getPage, getTours } from "@/lib/data";
+import { getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
 import { metadataFromPage } from "@/lib/seo";
+import type { ApiList, ApiPage, Tour } from "@/types/api";
 
 const pageSlugMap: Record<string, string> = {
   "one-day-tours": "one-day-tours",
@@ -12,7 +15,10 @@ const pageSlugMap: Record<string, string> = {
   "shore-excursions": "shore-excursions",
 };
 
-type Props = { params: Promise<{ slug: string[] }> };
+type Props = {
+  params: Promise<{ slug: string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 function routePath(slug: string[]) {
   return `/egypt-tours/${slug.join("/")}`;
@@ -25,19 +31,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return metadataFromPage(page, routePath(slug), "en");
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { slug } = await params;
+  const query = await searchParams;
+  const rawPage = query.page;
+  const currentPage = Math.max(
+    1,
+    parseInt(Array.isArray(rawPage) ? rawPage[0] : rawPage || "1", 10) || 1,
+  );
   const pageSlug = pageSlugMap[slug[0]] || "tours-search-results";
   const isOneDayRoute = slug[0] === "one-day-tours";
   const isOneDayIndex = isOneDayRoute && slug.length === 1;
-  const filterParam = isOneDayRoute ? "destinations.slug" : "categories.slug";
   const filterSlug = slug.at(-1) || slug[0];
-  const [page, items] = await Promise.all([
+  const limit = isOneDayRoute ? 24 : 12;
+  const [page, itemsResponse] = await Promise.all([
     getPage(pageSlug, "en"),
     isOneDayIndex
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", "en")
-      : getTours(`tours?${filterParam}=${encodeURIComponent(filterSlug)}&order_by=display_order,asc`, "en", 12),
+      : isOneDayRoute
+        ? getTours(
+            `tours?exists=wishlisted&destinations.slug=${encodeURIComponent(filterSlug)}&categories.slug[]=night-tours&categories.slug[]=one-day-tours&categories.slug[]=half-day-tour&categories.slug[]=layover&order_by=display_order,asc`,
+            "en",
+            limit,
+            currentPage,
+          )
+        : getTours(`tours?categories.slug=${encodeURIComponent(filterSlug)}&order_by=display_order,asc`, "en", limit, currentPage),
   ]);
+  const items = isOneDayIndex
+    ? (itemsResponse as ApiPage[])
+    : tourListData(itemsResponse as ApiList<Tour> | null);
+  const meta = isOneDayIndex ? null : tourMeta(itemsResponse as ApiList<Tour> | null);
 
   return (
     <SiteShell locale="en">
@@ -59,6 +82,19 @@ export default async function Page({ params }: Props) {
                 />
               ))
             : items.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale="en" />)}
+          {!isOneDayIndex && meta && (
+            <div className="col-span-full mt-8 flex flex-col items-center justify-between gap-4 lg:flex-row">
+              <ResultCount from={meta.from} to={meta.to} total={meta.total} />
+              {meta.lastPage > 1 && (
+                <Pagination
+                  page={currentPage}
+                  lastPage={meta.lastPage}
+                  basePath={routePath(slug)}
+                  query={new URLSearchParams()}
+                />
+              )}
+            </div>
+          )}
         </section>
       </main>
     </SiteShell>

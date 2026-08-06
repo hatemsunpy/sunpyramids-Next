@@ -20,7 +20,6 @@ export function TourPage({
   locale?: Locale;
 }) {
   const title = tour?.title || tour?.name || "Egypt Tour";
-  const gallery = tour?.gallery?.length ? tour.gallery : [tour?.featured_image || tour?.image || tour?.banner || "/images/mainBanner.png"];
 
   return (
     <main className="tour-page">
@@ -35,7 +34,7 @@ export function TourPage({
 
       {tour?.seasons?.length ? <TourSeasonPrices seasons={tour.seasons} /> : null}
 
-      {tour?.social_links?.length || true ? <TourSocialGallery socials={tour?.social_links} /> : null}
+      <TourSocialGallery socials={tour?.social_links} />
 
       {relatedTours.length ? (
         <section className="tour-related">
@@ -152,10 +151,6 @@ function TourInfo({ tour }: { tour: Tour | null }) {
 
 function TourHighlights({ tour }: { tour: Tour | null }) {
   const featuredDestinations = tour?.destinations?.filter((d) => !d.global && d.enabled && d.featured) ?? [];
-  const cities = tour?.destinations?.filter((d) => !d.global && d.enabled) ?? [];
-  const polygonCoords = cities
-    .filter((c) => !c.featured && c.latitude && c.longitude)
-    .map((c) => ({ lat: Number(c.latitude), lng: Number(c.longitude) }));
 
   return (
     <section className="tour-highlights">

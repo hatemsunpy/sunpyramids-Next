@@ -37,7 +37,12 @@ export type ApiPage = {
 };
 
 export type ApiList<T> = {
-  data?: T[] | { data?: T[] };
+  data?: T[] | { data?: T[]; current_page?: number; from?: number; to?: number; total?: number; last_page?: number };
+  current_page?: number;
+  from?: number;
+  to?: number;
+  total?: number;
+  last_page?: number;
   meta?: unknown;
   links?: unknown;
 };

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteShell } from "@/components/SiteShell";
 import { TripsListingPage } from "@/components/ClonedNuxtPages";
 import { JsonLd } from "@/components/JsonLd";
-import { getPage, getTours } from "@/lib/data";
+import { getPage, getTours, tourListData } from "@/lib/data";
 import { metadataFromPage } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,10 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [page, tours] = await Promise.all([
+  const [page, toursResponse] = await Promise.all([
     getPage("tours-search-results", "en"),
     getTours("tours?order_by=display_order,asc&page=1", "en", 24),
   ]);
+  const tours = tourListData(toursResponse);
   return (
     <SiteShell locale="en">
       <JsonLd schema={page?.seo?.structure_schema} />
