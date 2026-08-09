@@ -3,9 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Locale } from "@/types/api";
 import { withLocale } from "@/lib/locales";
+import { LanguageCurrencyModal, LanguageCurrencyTrigger } from "@/components/LanguageCurrencyModal";
 
 const tourLinks = [
   ["One Day Tours", "/egypt-tours/one-day-tours"],
@@ -14,7 +15,15 @@ const tourLinks = [
   ["Shore Excursions", "/egypt-tours/shore-excursions"],
 ];
 
-const navLinks = [
+const mainNavLinks = [
+  ["Home", "/"],
+  ["About Us", "/about-us"],
+  ["Contact Us", "/contact-us"],
+  ["Blogs", "/blogs/all-blogs"],
+  ["Events", "/events"],
+];
+
+const secondaryNavLinks = [
   ["Home", "/"],
   ["Rent Car", "/rent-car"],
   ["About Us", "/about-us"],
@@ -26,7 +35,31 @@ const navLinks = [
 export function Header({ locale = "en" }: { locale?: Locale }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [isTop, setIsTop] = useState(true);
+  const [scrolled, setScrolled] = useState(false);
+
   const isHome = pathname === "/" || pathname === `/${locale}`;
+  const firstStyle = isHome && isTop && !scrolled;
+
+  const handleScroll = useCallback(() => {
+    const mobile = window.innerWidth < 512;
+    const top = window.scrollY < (mobile ? window.innerHeight - 440 : window.innerHeight);
+    setIsTop(top);
+    setScrolled(window.scrollY > 0);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    const id = window.requestAnimationFrame(handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.cancelAnimationFrame(id);
+    };
+  }, [handleScroll]);
+
+  const openLangModal = useCallback(() => setLangOpen(true), []);
+  const closeLangModal = useCallback(() => setLangOpen(false), []);
 
   return (
     <header className={`site-header ${isHome ? "site-header-home" : ""}`}>
@@ -35,16 +68,41 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
           <Image src="/images/logo.png" alt="Sun Pyramids Tours" width={190} height={68} priority />
         </Link>
 
-        <form className="header-search" action={withLocale("/trips", locale)}>
-          <span aria-hidden="true">⌕</span>
-          <input name="title" placeholder="Find places and things to do" />
-        </form>
+        {firstStyle ? (
+          <nav className="header-inline-nav" aria-label="Main navigation">
+            {mainNavLinks.slice(0, 1).map(([label, href]) => (
+              <Link key={href} href={withLocale(href, locale)}>
+                {label}
+              </Link>
+            ))}
+            <div className="dropdown">
+              <button type="button">
+                Egypt Tours <span aria-hidden="true">⌄</span>
+              </button>
+              <div className="dropdown-panel">
+                {tourLinks.map(([label, href]) => (
+                  <Link key={href} href={withLocale(href, locale)}>
+                    {label}
+                    <span aria-hidden="true">›</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+            {mainNavLinks.slice(1).map(([label, href]) => (
+              <Link key={href} href={withLocale(href, locale)}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        ) : (
+          <form className="header-search" action={withLocale("/trips", locale)}>
+            <span aria-hidden="true">⌕</span>
+            <input name="title" placeholder="Find places and things to do" />
+          </form>
+        )}
 
         <div className="header-actions">
-          <button className="header-language" type="button" aria-label="Language and currency">
-            <span aria-hidden="true">◉</span>
-            <span>{locale.toUpperCase()} - USD</span>
-          </button>
+          <LanguageCurrencyTrigger locale={locale} onClick={openLangModal} />
           <Link className="circle-action" href={withLocale("/cart", locale)} aria-label="Cart">
             <span aria-hidden="true">▱</span>
           </Link>
@@ -57,7 +115,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
         </div>
       </div>
 
-      {isHome ? (
+      {isHome && firstStyle ? (
         <div className="promo-strip original-strip">
           <div className="strip-icons" aria-hidden="true">
             <Image src="/images/clover.png" alt="" width={24} height={24} />
@@ -70,41 +128,43 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
         </div>
       ) : null}
 
-      <div className="header-nav-row">
-        <nav className="desktop-nav" aria-label="Main navigation">
-          {navLinks.slice(0, 1).map(([label, href]) => (
-            <Link key={href} href={withLocale(href, locale)}>
-              {label}
-            </Link>
-          ))}
-          <div className="dropdown">
-            <button type="button">
-              Egypt Tours <span aria-hidden="true">⌄</span>
-            </button>
-            <div className="dropdown-panel">
-              {tourLinks.map(([label, href]) => (
-                <Link key={href} href={withLocale(href, locale)}>
-                  {label}
-                  <span aria-hidden="true">›</span>
-                </Link>
-              ))}
+      {!firstStyle ? (
+        <div className="header-nav-row">
+          <nav className="desktop-nav" aria-label="Main navigation">
+            {secondaryNavLinks.slice(0, 1).map(([label, href]) => (
+              <Link key={href} href={withLocale(href, locale)}>
+                {label}
+              </Link>
+            ))}
+            <div className="dropdown">
+              <button type="button">
+                Egypt Tours <span aria-hidden="true">⌄</span>
+              </button>
+              <div className="dropdown-panel">
+                {tourLinks.map(([label, href]) => (
+                  <Link key={href} href={withLocale(href, locale)}>
+                    {label}
+                    <span aria-hidden="true">›</span>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-          {navLinks.slice(1).map(([label, href]) => (
-            <Link key={href} href={withLocale(href, locale)}>
-              {label}
+            {secondaryNavLinks.slice(1).map(([label, href]) => (
+              <Link key={href} href={withLocale(href, locale)}>
+                {label}
+              </Link>
+            ))}
+            <Link className="special-offer-link" href={withLocale("/trips?main=special-offers", locale)}>
+              <span aria-hidden="true">✥</span>
+              Special Offer
             </Link>
-          ))}
-          <Link className="special-offer-link" href={withLocale("/trips?main=special-offers", locale)}>
-            <span aria-hidden="true">✥</span>
-            Special Offer
-          </Link>
-        </nav>
+          </nav>
 
-        <Link className="make-trip-action" href={withLocale("/make-your-trip", locale)}>
-          Make Your Trip
-        </Link>
-      </div>
+          <Link className="make-trip-action" href={withLocale("/make-your-trip", locale)}>
+            Make Your Trip
+          </Link>
+        </div>
+      ) : null}
 
       {menuOpen ? (
         <div className="mobile-drawer-backdrop" role="dialog" aria-modal="true" onClick={() => setMenuOpen(false)}>
@@ -116,7 +176,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
               </button>
             </div>
             <nav className="mobile-links" aria-label="Mobile navigation">
-              {[...navLinks, ...tourLinks, ["Make Your Trip", "/make-your-trip"], ["Special Offer", "/trips?main=special-offers"]].map(
+              {[...mainNavLinks, ["Rent Car", "/rent-car"], ...tourLinks, ["Make Your Trip", "/make-your-trip"], ["Special Offer", "/trips?main=special-offers"]].map(
                 ([label, href]) => (
                   <Link key={`${label}-${href}`} href={withLocale(href, locale)} onClick={() => setMenuOpen(false)}>
                     {label}
@@ -124,9 +184,20 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
                 ),
               )}
             </nav>
+            <div className="mobile-drawer-lang">
+              <LanguageCurrencyTrigger
+                locale={locale}
+                onClick={() => {
+                  setMenuOpen(false);
+                  openLangModal();
+                }}
+              />
+            </div>
           </div>
         </div>
       ) : null}
+
+      {langOpen ? <LanguageCurrencyModal locale={locale} pathname={pathname} onClose={closeLangModal} /> : null}
     </header>
   );
 }

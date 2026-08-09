@@ -9,6 +9,8 @@ import { sanitizeHtml } from "@/lib/sanitize-html";
 import { withLocale } from "@/lib/locales";
 import { apiPost } from "@/lib/client-api";
 import { useRouter } from "next/navigation";
+import { useCurrency } from "@/components/CurrencyProvider";
+import { PriceText } from "@/components/PriceText";
 
 export function TourPage({
   tour,
@@ -244,6 +246,7 @@ function TourIncludedExcluded({ title, items, icon }: { title: string; items: st
 }
 
 function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
+  const { format } = useCurrency();
   return (
     <section className="tour-addons">
       <Collapsible title="Add-ons" defaultOpen>
@@ -252,7 +255,7 @@ function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
             <label key={option.id} className="tour-addon">
               <input type="checkbox" value={option.id} name="tour_options" />
               <span className="tour-addon-name">{option.name}</span>
-              <span className="tour-addon-price">${Number(option.adult_price || 0).toFixed(2)}</span>
+              <span className="tour-addon-price">{format(option.adult_price || 0)}</span>
             </label>
           ))}
         </div>
@@ -263,6 +266,7 @@ function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
 
 function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale }) {
   const router = useRouter();
+  const { format } = useCurrency();
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
@@ -308,8 +312,8 @@ function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale })
         <div className="tour-booking-price">
           <div>
             <span className="tour-booking-label">Price</span>
-            <strong className="tour-price-current">${total.toFixed(2)}</strong>
-            {offer ? <span className="tour-price-original">${baseTotal.toFixed(2)}</span> : null}
+            <strong className="tour-price-current">{format(total)}</strong>
+            {offer ? <span className="tour-price-original">{format(baseTotal)}</span> : null}
           </div>
           <button type="button" className="btn-outline btn-sm">
             Share
@@ -331,7 +335,7 @@ function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale })
 
           <div className="tour-booking-total">
             <span>Total</span>
-            <strong>${total.toFixed(2)}</strong>
+            <strong>{format(total)}</strong>
           </div>
 
           <button type="submit" className="btn-primary" disabled={status === "loading"}>
@@ -395,7 +399,9 @@ function TourSeasonPrices({ seasons }: { seasons: NonNullable<Tour["seasons"]> }
                 {solo ? (
                   <div className="tour-season-row">
                     <span>Solo</span>
-                    <strong>${Number(solo.price).toFixed(2)}</strong>
+                    <strong>
+                      <PriceText amount={solo.price} />
+                    </strong>
                   </div>
                 ) : null}
                 {groups.map((g) => (
@@ -403,7 +409,9 @@ function TourSeasonPrices({ seasons }: { seasons: NonNullable<Tour["seasons"]> }
                     <span>
                       {g.from}-{g.to} PAX
                     </span>
-                    <strong>${Number(g.price).toFixed(2)}</strong>
+                    <strong>
+                      <PriceText amount={g.price} />
+                    </strong>
                   </div>
                 ))}
               </div>
