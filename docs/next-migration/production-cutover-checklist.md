@@ -399,6 +399,23 @@ Date: 2026-06-25
 | `git diff --check` | Passed (exit 0) on 2026-06-25; only LF-to-CRLF working-copy warnings. |
 | Production cutover | Still blocked. |
 
+## Guest Cart / Session Investigation
+
+Date: 2026-08-09
+
+| Check | Result |
+|---|---|
+| Guest cart append (`cart/tours/append`) | Passed; returns success with no `Set-Cookie`. |
+| Guest cart list (`cart/list`) | Passed with zero cookies and no `Authorization` header; identity keyed by client public IP server-side. |
+| Browser cookie dependency | None; `fetch` uses default `same-origin` credentials and never sends cookies cross-origin. Same as live Nuxt. |
+| Guest currency conversion | Passed; cart totals convert via `exchange_rate` (USD→EUR verified in browser). |
+| Checkout currency | Passed; `bookings` payload submits selected `currency_id` (verified EGP `3` / EUR `2`). |
+| Guest cart regression | None; earlier "guest cart empty" concern was a misread test artifact, not a defect. |
+| Known limitation | Guest cart is per public IP (shared across NAT, lost on IP change) — identical to the live Nuxt site; see `guest-cart-session-investigation.md`. |
+| `npm run lint` | Passed. |
+| `npm run build` | Passed. |
+| Cutover impact | Guest cart does **not** block cutover; it is parity with the live site. |
+
 ## Rollback Triggers
 
 - SEO tags missing or wrong.

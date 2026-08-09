@@ -17,7 +17,7 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 | Flow | Nuxt source | Endpoint(s) | Current Next | Status |
 |---|---|---|---|---|
 | Tour booking panel | `components/Tours/RightPanal/index.vue` | `cart/tours/append`, wishlist toggle, tour options/seasons | Tour detail route exists | Booking panel parity pending. |
-| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{item}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear/remove/coupon and tour edit via `cart/tours/append`; remove sends tour product ID for tour rows and rental row ID for rental rows | Implemented first pass; staging populated-cart validation pending. |
+| Cart list/edit/remove | `components/Cart/steps/Cart/*` | `cart/list`, `cart/remove/{item}`, `cart/clear`, `coupons/{code}/validate`, `cart/tours/append` | `/cart` uses `CartFlow` client API layer for list/clear/remove/coupon and tour edit via `cart/tours/append`; remove sends tour product ID for tour rows and rental row ID for rental rows | Implemented; guest cart works with zero cookies/auth (IP-keyed server-side, matching live Nuxt); see `guest-cart-session-investigation.md`. |
 | Checkout billing/payment | `components/Checkout/*` | `POST bookings` | `/cart/checkout` posts `bookings` with `payment_method`; no active `bookings/update/{id}` call remains | Implemented first pass; staging payment validation pending. |
 | Thank-you / confirmation | `pages/thankful.vue` | Redirect/result display | `/thankful` exists | Copy/redirect/history validation pending. |
 
@@ -287,3 +287,16 @@ Date: 2026-06-25
 | Credentials cleanup | Confirmed: ignored, not staged/tracked/committed; no value saved. | Owner deletes `.local-test-creds.json` and rotates test password after verifier cleanup. |
 
 Full detail in `docs/next-migration/sprint17-booking-evidence-cleanup-report.md`.
+
+## Guest Cart Session Notes
+
+Date: 2026-08-09
+
+| Flow | Result |
+|---|---|
+| Tour cart append/edit/remove | Guest cart confirmed working with zero cookies and no auth header. Identity is the client public IP, stored server-side by Laravel. No session cookie is involved. |
+| Cart list | Returns guest items with no credentials; `cart/list` is unauthenticated and IP-keyed. Same as live Nuxt. |
+| Checkout booking | Guest bookings submit `currency_id` of the selected currency; no session cookie required. |
+| Currency conversion | Cart/checkout totals convert client-side via `exchange_rate` (USD/EUR/EGP verified). |
+
+Root cause of the earlier "append succeeds but list empty" concern: a test-flow misread. In one automated run a headless browser appended items, the context closed, and the follow-up screenshot was taken before items had been added in that same flow. No session/cookie bug exists. Guest cart is shared per public IP and lost on IP change — business parity with the live site. Full analysis in `guest-cart-session-investigation.md`.
