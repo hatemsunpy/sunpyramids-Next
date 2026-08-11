@@ -81,16 +81,14 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [isTop, setIsTop] = useState(true);
-  const [scrolled, setScrolled] = useState(false);
 
   const isHome = pathname === "/" || pathname === `/${locale}`;
-  const firstStyle = isHome && isTop && !scrolled;
+  const firstStyle = isHome && isTop;
 
   const handleScroll = useCallback(() => {
     const mobile = window.innerWidth < 512;
     const top = window.scrollY < (mobile ? window.innerHeight - 440 : window.innerHeight);
     setIsTop(top);
-    setScrolled(window.scrollY > 0);
   }, []);
 
   useEffect(() => {

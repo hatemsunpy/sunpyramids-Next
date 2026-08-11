@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { DestinationCard } from "@/components/DestinationCard";
 import { Pagination } from "@/components/Pagination";
 import { ResultCount } from "@/components/ResultCount";
@@ -61,6 +62,12 @@ export default async function Page({ params, searchParams }: Props) {
     ? (itemsResponse as ApiPage[])
     : tourListData(itemsResponse as ApiList<Tour> | null);
   const meta = isOneDayIndex ? null : tourMeta(itemsResponse as ApiList<Tour> | null);
+
+  // Validate the requested page against the API-provided last page and redirect
+  // back to a valid page instead of rendering an empty out-of-range listing.
+  if (!isOneDayIndex && meta && currentPage > meta.lastPage) {
+    redirect(meta.lastPage > 1 ? `${routePath(slug)}?page=${meta.lastPage}` : routePath(slug));
+  }
 
   return (
     <SiteShell locale="en">

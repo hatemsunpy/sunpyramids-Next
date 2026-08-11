@@ -15,6 +15,7 @@ import {
   setCookie,
 } from "@/lib/client-api";
 import { withLocale } from "@/lib/locales";
+import { parseLocalCalendarDate } from "@/lib/local-date";
 import { generateRecaptchaToken } from "@/lib/recaptcha";
 import { useCurrency } from "@/components/CurrencyProvider";
 
@@ -80,23 +81,23 @@ function cartRemoveIdentifier(item: any) {
 }
 
 function matchingSeason(tour: any, dateString?: string) {
-  if (!dateString || !Array.isArray(tour?.seasons)) return null;
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return null;
+  if (!Array.isArray(tour?.seasons)) return null;
+  const parsed = parseLocalCalendarDate(dateString);
+  if (!parsed) return null;
 
   return tour.seasons.find((season: any) => {
     const availability = season?.calender_availability;
     if (!availability) return false;
     return (
-      availability.day_numbers?.includes(date.getDate()) &&
-      availability.day_names?.includes(date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()) &&
-      availability.month_names?.includes(date.toLocaleDateString("en-US", { month: "long" }).toLowerCase()) &&
-      availability.years_numbers?.includes(date.getFullYear())
+      availability.day_numbers?.includes(parsed.day) &&
+      availability.day_names?.includes(parsed.weekday) &&
+      availability.month_names?.includes(parsed.monthName) &&
+      availability.years_numbers?.includes(parsed.year)
     );
   }) ?? null;
 }
 
-function optionCost(option: any, adults: number, children: number): number {
+export function optionCost(option: any, adults: number, children: number): number {
   const baseAdultPrice = Number(option?.adult_price ?? 0);
   const baseChildPrice = Number(option?.child_price ?? 0);
   const groups = Array.isArray(option?.pricing_groups) ? option.pricing_groups : [];

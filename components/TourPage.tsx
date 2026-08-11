@@ -11,6 +11,8 @@ import { apiPost } from "@/lib/client-api";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/components/CurrencyProvider";
 import { PriceText } from "@/components/PriceText";
+import { optionCost } from "@/components/CustomerFlows";
+import { parseLocalCalendarDate } from "@/lib/local-date";
 
 export function TourPage({
   tour,
@@ -22,6 +24,7 @@ export function TourPage({
   locale?: Locale;
 }) {
   const title = tour?.title || tour?.name || "Egypt Tour";
+  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
 
   return (
     <main className="tour-page">
@@ -29,8 +32,8 @@ export function TourPage({
         <h1 className="tour-page-title">{title}</h1>
 
         <div className="tour-page-grid">
-          <TourLeftPanel tour={tour} locale={locale} />
-          <TourRightPanel tour={tour} locale={locale} />
+          <TourLeftPanel tour={tour} locale={locale} selectedOptions={selectedOptions} onSelectedOptionsChange={setSelectedOptions} />
+          <TourRightPanel tour={tour} locale={locale} selectedOptions={selectedOptions} onSelectedOptionsChange={setSelectedOptions} />
         </div>
       </section>
 
@@ -54,7 +57,7 @@ export function TourPage({
   );
 }
 
-function TourLeftPanel({ tour, locale }: { tour: Tour | null; locale: Locale }) {
+function TourLeftPanel({ tour, locale, selectedOptions, onSelectedOptionsChange }: { tour: Tour | null; locale: Locale; selectedOptions: number[]; onSelectedOptionsChange: (ids: number[]) => void }) {
   return (
     <div className="tour-left-panel">
       <TourGallery tour={tour} />
@@ -63,7 +66,7 @@ function TourLeftPanel({ tour, locale }: { tour: Tour | null; locale: Locale }) 
       {tour?.days?.length ? <TourItinerary days={tour.days} locale={locale} /> : null}
       {tour?.included ? <TourIncludedExcluded title="What's Included?" items={tour.included} icon="check" /> : null}
       {tour?.excluded ? <TourIncludedExcluded title="What's Excluded?" items={tour.excluded} icon="cross" /> : null}
-      {tour?.options?.length ? <TourAddOns options={tour.options} /> : null}
+      {tour?.options?.length ? <TourAddOns options={tour.options} selected={selectedOptions} onChange={onSelectedOptionsChange} /> : null}
     </div>
   );
 }
@@ -245,7 +248,7 @@ function TourIncludedExcluded({ title, items, icon }: { title: string; items: st
   );
 }
 
-function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
+function TourAddOns({ options, selected, onChange }: { options: NonNullable<Tour["options"]>; selected: number[]; onChange: (ids: number[]) => void }) {
   const { format } = useCurrency();
   return (
     <section className="tour-addons">
@@ -253,7 +256,16 @@ function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
         <div className="tour-addon-list">
           {options.map((option) => (
             <label key={option.id} className="tour-addon">
-              <input type="checkbox" value={option.id} name="tour_options" />
+              <input
+                type="checkbox"
+                value={option.id}
+                name="tour_options"
+                checked={selected.includes(Number(option.id))}
+                onChange={(event) => {
+                  const id = Number(option.id);
+                  onChange(event.target.checked ? [...selected, id] : selected.filter((v) => v !== id));
+                }}
+              />
               <span className="tour-addon-name">{option.name}</span>
               <span className="tour-addon-price">{format(option.adult_price || 0)}</span>
             </label>
@@ -265,23 +277,23 @@ function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
 }
 
 function matchingSeason(tour: Tour | null | undefined, dateString?: string) {
-  if (!dateString || !Array.isArray(tour?.seasons)) return null;
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return null;
+  if (!Array.isArray(tour?.seasons)) return null;
+  const parsed = parseLocalCalendarDate(dateString);
+  if (!parsed) return null;
 
   return tour!.seasons!.find((season) => {
     const availability = season?.calender_availability;
     if (!availability) return false;
     return (
-      availability.day_numbers?.includes(date.getDate()) &&
-      availability.day_names?.includes(date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()) &&
-      availability.month_names?.includes(date.toLocaleDateString("en-US", { month: "long" }).toLowerCase()) &&
-      availability.years_numbers?.includes(date.getFullYear())
+      availability.day_numbers?.includes(parsed.day) &&
+      availability.day_names?.includes(parsed.weekday) &&
+      availability.month_names?.includes(parsed.monthName) &&
+      availability.years_numbers?.includes(parsed.year)
     );
   }) ?? null;
 }
 
-function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale }) {
+function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; locale: Locale; selectedOptions: number[]; onSelectedOptionsChange?: (ids: number[]) => void }) {
   const router = useRouter();
   const { format } = useCurrency();
   const [adults, setAdults] = useState(1);
@@ -300,14 +312,16 @@ function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale })
   const price = adultRate;
   const offer = Number(tour?.offer || 0);
   const baseTotal = price * adults + childRate * children + infantRate * infants;
-  const total = offer ? baseTotal - baseTotal * (offer / 100) : baseTotal;
+  const passengerTotal = offer ? baseTotal - baseTotal * (offer / 100) : baseTotal;
+  const optionsTotal = (tour?.options ?? [])
+    .filter((option) => option?.id != null && selectedOptions.includes(Number(option.id)))
+    .reduce((sum, option) => sum + optionCost(option, adults, children), 0);
+  const total = passengerTotal + optionsTotal;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tour?.id) return;
     setStatus("loading");
-    const form = new FormData(event.currentTarget);
-    const options = Array.from(form.getAll("tour_options")).map(Number).filter(Boolean);
     try {
       await apiPost(
         "cart/tours/append",
@@ -317,7 +331,7 @@ function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale })
           adults,
           children,
           infants,
-          options,
+          options: selectedOptions,
         },
         locale,
         true,

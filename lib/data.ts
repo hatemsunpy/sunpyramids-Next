@@ -40,10 +40,12 @@ export function tourMeta(response: ApiList<Tour> | null | undefined) {
   if (Array.isArray(data)) {
     return { from: 1, to: data.length, total: data.length, lastPage: 1 };
   }
+  const total = data?.total ?? response?.total ?? data?.data?.length ?? 0;
+  const to = data?.to ?? response?.to ?? data?.data?.length ?? 0;
   return {
-    from: data?.from ?? response?.from ?? 1,
-    to: data?.to ?? response?.to ?? data?.data?.length ?? 0,
-    total: data?.total ?? response?.total ?? data?.data?.length ?? 0,
+    from: total === 0 ? 0 : (data?.from ?? response?.from ?? 1),
+    to: total === 0 ? 0 : to,
+    total,
     lastPage: data?.last_page ?? response?.last_page ?? 1,
   };
 }
