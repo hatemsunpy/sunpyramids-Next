@@ -264,6 +264,23 @@ function TourAddOns({ options }: { options: NonNullable<Tour["options"]> }) {
   );
 }
 
+function matchingSeason(tour: Tour | null | undefined, dateString?: string) {
+  if (!dateString || !Array.isArray(tour?.seasons)) return null;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return tour!.seasons!.find((season) => {
+    const availability = season?.calender_availability;
+    if (!availability) return false;
+    return (
+      availability.day_numbers?.includes(date.getDate()) &&
+      availability.day_names?.includes(date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()) &&
+      availability.month_names?.includes(date.toLocaleDateString("en-US", { month: "long" }).toLowerCase()) &&
+      availability.years_numbers?.includes(date.getFullYear())
+    );
+  }) ?? null;
+}
+
 function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale }) {
   const router = useRouter();
   const { format } = useCurrency();
@@ -273,11 +290,17 @@ function TourRightPanel({ tour, locale }: { tour: Tour | null; locale: Locale })
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const price = Number(tour?.adult_price || tour?.start_from || tour?.price || 0);
+  const season = matchingSeason(tour, date);
+  const source = (season ?? tour) as Tour | null | undefined;
+  const groups = Array.isArray(source?.pricing_groups) ? source.pricing_groups : [];
+  const group = groups.find((g) => adults >= Number(g?.from) && adults <= Number(g?.to));
+  const adultRate = group ? Number(group.price) : Number(source?.adult_price ?? tour?.adult_price ?? tour?.start_from ?? tour?.price ?? 0);
+  const childRate = group ? Number(group.child_price) : Number(source?.child_price ?? tour?.child_price ?? 0);
+  const infantRate = Number(source?.infant_price ?? tour?.infant_price ?? 0);
+  const price = adultRate;
   const offer = Number(tour?.offer || 0);
-  const baseTotal = price * adults;
-  const discount = offer ? baseTotal * (offer / 100) : 0;
-  const total = baseTotal - discount;
+  const baseTotal = price * adults + childRate * children + infantRate * infants;
+  const total = offer ? baseTotal - baseTotal * (offer / 100) : baseTotal;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

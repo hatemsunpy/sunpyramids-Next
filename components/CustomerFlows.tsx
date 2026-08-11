@@ -79,20 +79,53 @@ function cartRemoveIdentifier(item: any) {
   return item?.id || null;
 }
 
+function matchingSeason(tour: any, dateString?: string) {
+  if (!dateString || !Array.isArray(tour?.seasons)) return null;
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return tour.seasons.find((season: any) => {
+    const availability = season?.calender_availability;
+    if (!availability) return false;
+    return (
+      availability.day_numbers?.includes(date.getDate()) &&
+      availability.day_names?.includes(date.toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()) &&
+      availability.month_names?.includes(date.toLocaleDateString("en-US", { month: "long" }).toLowerCase()) &&
+      availability.years_numbers?.includes(date.getFullYear())
+    );
+  }) ?? null;
+}
+
+function optionCost(option: any, adults: number, children: number): number {
+  const baseAdultPrice = Number(option?.adult_price ?? 0);
+  const baseChildPrice = Number(option?.child_price ?? 0);
+  const groups = Array.isArray(option?.pricing_groups) ? option.pricing_groups : [];
+  if (groups.length) {
+    const totalPeople = adults + children;
+    const group = groups.find((g: any) => totalPeople >= Number(g?.from) && totalPeople <= Number(g?.to));
+    if (group) {
+      return Number(group.price ?? baseAdultPrice) * adults + Number(group.child_price ?? baseChildPrice) * children;
+    }
+  }
+  return baseAdultPrice * adults + baseChildPrice * children;
+}
+
 function cartItemTotal(item: any): number | null {
   const tour = item?.tour;
   if (tour) {
     const adults = Number(item?.adults) || 1;
     const children = Number(item?.children) || 0;
     const infants = Number(item?.infants) || 0;
-    const groups = Array.isArray(tour.pricing_groups) ? tour.pricing_groups : [];
+    const season = matchingSeason(tour, item?.start_date);
+    const source = season ?? tour;
+    const groups = Array.isArray(source.pricing_groups) ? source.pricing_groups : [];
     const group = groups.find((g: any) => adults >= Number(g?.from) && adults <= Number(g?.to));
-    const adultRate = group ? Number(group.price) : Number(tour.adult_price ?? tour.start_from ?? tour.price ?? 0);
-    const childRate = group ? Number(group.child_price) : Number(tour.child_price ?? 0);
-    const infantRate = Number(tour.infant_price ?? 0);
+    const adultRate = group ? Number(group.price) : Number(source.adult_price ?? tour.adult_price ?? tour.start_from ?? tour.price ?? 0);
+    const childRate = group ? Number(group.child_price) : Number(source.child_price ?? tour.child_price ?? 0);
+    const infantRate = Number(source.infant_price ?? tour.infant_price ?? 0);
     let total = adultRate * adults + childRate * children + infantRate * infants;
     if (Array.isArray(item.options)) {
-      total += item.options.reduce((sum: number, option: any) => sum + Number(option?.adult_price ?? 0) * adults + Number(option?.child_price ?? 0) * children, 0);
+      total += item.options.reduce((sum: number, option: any) => sum + optionCost(option, adults, children), 0);
     }
     const offer = Number(tour.offer) || 0;
     if (offer) total -= total * (offer / 100);
