@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/types/api";
 import { withLocale } from "@/lib/locales";
 import { LanguageCurrencyModal, LanguageCurrencyTrigger } from "@/components/LanguageCurrencyModal";
@@ -31,6 +31,50 @@ const secondaryNavLinks = [
   ["Blogs", "/blogs/all-blogs"],
   ["Events", "/events"],
 ];
+
+function NavDropdown({ locale }: { locale: Locale }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close when focus leaves the dropdown (button or panel) entirely.
+  const handleBlur = () => {
+    if (!containerRef.current) return;
+    requestAnimationFrame(() => {
+      if (containerRef.current && !containerRef.current.contains(document.activeElement)) {
+        setOpen(false);
+      }
+    });
+  };
+
+  return (
+    <div
+      className={`dropdown ${open ? "dropdown-open" : ""}`}
+      ref={containerRef}
+      onBlur={handleBlur}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="true"
+        onClick={() => setOpen((v) => !v)}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setOpen(false);
+        }}
+      >
+        Egypt Tours <span aria-hidden="true">⌄</span>
+      </button>
+      <div className="dropdown-panel">
+        {tourLinks.map(([label, href]) => (
+          <Link key={href} href={withLocale(href, locale)}>
+            {label}
+            <span aria-hidden="true">›</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Header({ locale = "en" }: { locale?: Locale }) {
   const pathname = usePathname();
@@ -75,19 +119,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
                 {label}
               </Link>
             ))}
-            <div className="dropdown">
-              <button type="button">
-                Egypt Tours <span aria-hidden="true">⌄</span>
-              </button>
-              <div className="dropdown-panel">
-                {tourLinks.map(([label, href]) => (
-                  <Link key={href} href={withLocale(href, locale)}>
-                    {label}
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <NavDropdown locale={locale} />
             {mainNavLinks.slice(1).map(([label, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
                 {label}
@@ -136,19 +168,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
                 {label}
               </Link>
             ))}
-            <div className="dropdown">
-              <button type="button">
-                Egypt Tours <span aria-hidden="true">⌄</span>
-              </button>
-              <div className="dropdown-panel">
-                {tourLinks.map(([label, href]) => (
-                  <Link key={href} href={withLocale(href, locale)}>
-                    {label}
-                    <span aria-hidden="true">›</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <NavDropdown locale={locale} />
             {secondaryNavLinks.slice(1).map(([label, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
                 {label}

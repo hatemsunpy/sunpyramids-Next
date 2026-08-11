@@ -11,6 +11,7 @@ Guest cart **works** in the Next.js frontend with the current backend and CORS s
 - Append succeeds and returns no `Set-Cookie`.
 - `cart/list` returns guest items with **zero** cookies and **no** `Authorization` header.
 - Browser `fetch` in the Next.js app uses default `credentials: "same-origin"`; no cookies are ever sent to the cross-origin API, matching the live Nuxt frontend.
+- The client API layer (`lib/client-api.ts`) calls helpers such as `apiGet(endpoint, locale, withToken)` / `apiPost(endpoint, body, locale, withToken)`. Setting `withToken: true` (e.g. `apiPost(..., true)`) only enables reading the `sunpyramids-token` cookie and attaching an `Authorization: Bearer …` header when that cookie exists; guest visitors have no such cookie, so no token and no `Authorization` header are sent. This matches the recorded request evidence.
 
 ## Current Behavior (verified 2026-08-09)
 
@@ -110,22 +111,22 @@ This is the same behavior as the live Nuxt site, so it is a business decision, n
 
 ### Option E — Keep current behavior (IP-keyed guest cart)
 - **Change required**: none.
-- **Security impact**: matches live site; shared-IP collision is a known, existing behavior.
+- **Security impact**: matches live site, but is a **cross-user privacy and cart-integrity risk**: guests sharing a public IP can view and mutate one another's cart contents.
 - **SEO impact**: none.
 - **Checkout impact**: guest cart works as today; not per-user.
 - **Production risk**: none (status quo).
-- **Owner required**: none for code; product owner to confirm the limitation is acceptable.
-- **Recommended priority**: acceptable default if business confirms guest cart parity with the live site is sufficient.
+- **Owner required**: named product/security owner acceptance recorded in `risk-register.md` before this option is adopted for cutover.
+- **Recommended priority**: conditional default — acceptable only if the risk is explicitly accepted by the product/security owner; otherwise choose Option C.
 
 ## Selected Recommendation
 
-**Option E (keep current behavior) for cutover**, because it is identical to the live Nuxt site and requires no code change. **Option C** is the recommended follow-up **if and only if** the business requires reliable per-user guest carts; Option C is backend-owner-required and must not be implemented by the frontend alone.
+**Option C** is the recommended fix (backend-issued `guest_cart_token`) because it resolves the cross-user cart-integrity risk without requiring credentialed session cookies; it is backend-owner-required and must not be implemented by the frontend alone. **Option E** (keep current IP-keyed behavior) is acceptable as the cutover default **only if** a named product/security owner explicitly records acceptance of the cross-user cart risk in `risk-register.md`.
 
 ## Production Cutover Impact
 
-- **Does not block cutover**: guest cart works today exactly as on the live site.
+- **Conditional on acceptance**: "guest cart does not block cutover" applies only after the named product/security owner accepts the shared-IP cart risk in `risk-register.md`.
 - The IP-keyed limitation is pre-existing and identical between Nuxt and Next; it is not a migration regression.
-- If the business later requires per-user guest carts, schedule Option C with the backend owner.
+- If the business requires per-user guest carts, schedule Option C with the backend owner.
 
 ## Remaining Blockers
 
@@ -136,5 +137,5 @@ This is the same behavior as the live Nuxt site, so it is a business decision, n
 
 - `npm run lint`: passed.
 - `npm run build`: passed.
-- Browser: fresh guest context rendered cart items appended from the same IP; guest cart ESP EUR conversion verified (`$128.25` → `€109.01`).
+- Browser: fresh guest context rendered cart items appended from the same IP; guest cart USD-to-EUR conversion verified (`$128.25` → `€109.01`).
 - API: append response headers contain no `Set-Cookie`; list returns data without cookies/auth.

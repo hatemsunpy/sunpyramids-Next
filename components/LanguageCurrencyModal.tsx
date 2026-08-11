@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Locale } from "@/types/api";
 import { languageOptions } from "@/lib/locales";
 import { useCurrency } from "@/components/CurrencyProvider";
@@ -30,17 +30,51 @@ export function LanguageCurrencyModal({
 }) {
   const router = useRouter();
   const { currencies, selected, setCurrency } = useCurrency();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  // Capture the element that opened the modal so focus can be restored on close.
+  const triggerRef = useRef<Element | null>(null);
 
   useEffect(() => {
+    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (closeBtnRef.current) closeBtnRef.current.focus();
+
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      // Tab / Shift+Tab cycle only among dialog controls (focus trap)
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement;
+
+        if (event.shiftKey) {
+          if (active === first || active === document.body) {
+            event.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (active === last || active === document.body) {
+            event.preventDefault();
+            first.focus();
+          }
+        }
+      }
     };
+
     document.addEventListener("keydown", onKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
+      if (triggerRef.current instanceof HTMLElement) triggerRef.current.focus();
     };
   }, [onClose]);
 
@@ -55,10 +89,10 @@ export function LanguageCurrencyModal({
 
   return (
     <div className="lc-modal-backdrop" role="dialog" aria-modal="true" aria-label="Language and Currency" onClick={onClose}>
-      <div className="lc-modal" onClick={(event) => event.stopPropagation()}>
+      <div className="lc-modal" ref={dialogRef} onClick={(event) => event.stopPropagation()}>
         <div className="lc-modal-head">
           <h2>Language and Currency</h2>
-          <button type="button" className="lc-modal-close" onClick={onClose} aria-label="Close">
+          <button type="button" className="lc-modal-close" ref={closeBtnRef} onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
