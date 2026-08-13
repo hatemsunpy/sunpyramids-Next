@@ -16,7 +16,7 @@ export const localeLabels: Record<Locale, string> = {
 export const languageOptions: { code: Locale; name: string; country: string; language: string }[] = [
   { code: "en", name: "EN", country: "United States", language: "English" },
   { code: "fr", name: "FR", country: "France", language: "Français" },
-  { code: "de", name: "DE", country: "German", language: "Deutsch" },
+  { code: "de", name: "DE", country: "Germany", language: "Deutsch" },
   { code: "it", name: "IT", country: "Italia", language: "Italiano" },
   { code: "pt", name: "PT", country: "Portugal", language: "Português" },
   { code: "es", name: "ES", country: "Spain", language: "Español" },

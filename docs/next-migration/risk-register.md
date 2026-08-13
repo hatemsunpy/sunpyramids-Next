@@ -15,6 +15,7 @@
 | Third-party scripts affect CWV | Performance/tracking | High | Sprint 4 normal Lighthouse remained low while `?no-third-party=1` scored home 100 and tour 94; GTM loads TikTok/Clarity and TrustIndex adds work. | Optimize/approve tag behavior with marketing before cutover. |
 | Homepage hydration error regression risk | Rendering | Medium | Sprint 3 fixed the confirmed BlogCard HTML mismatch and browser validation showed no React #418. | Keep console check in pre-cutover validation. |
 | Custom marketing pages missing from sitemap discovery | SEO | High | `custom-pages?page_limit=2` returned 404; Nuxt confirms only `custom-pages/{slug}` detail usage. | Backend list endpoint or explicit business approval required. |
+| Guest cart is keyed by client public IP, not a per-user cookie/token | Cart/checkout UX | **High** | `cart/tours/append` returns no `Set-Cookie`; `cart/list` serves items with zero cookies/auth; identity is the caller's public IP server-side. Same behavior on live Nuxt. Sharing a public IP (office/hotel NAT) lets any guest on that IP **see and mutate** the same cart — a cross-user privacy and cart-integrity risk, and an IP change loses the cart. | Requires named product/security owner sign-off before cutover. If accepted, document owner name/date here; if not, backend owner adds an explicit guest cart token (see `guest-cart-session-investigation.md`). |
 
 ## Sprint 5 Risk Notes
 

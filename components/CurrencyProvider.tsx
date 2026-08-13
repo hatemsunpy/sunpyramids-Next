@@ -25,8 +25,13 @@ const CurrencyContext = createContext<CurrencyContextValue>({
 });
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
+  const readInitialCurrency = () => {
+    const saved = readCurrencyCookie();
+    return FALLBACK_CURRENCIES.find((c) => c.name === saved) ?? FALLBACK_CURRENCIES.find((c) => c.name === "USD") ?? DEFAULT_CURRENCY;
+  };
+
   const [currencies, setCurrencies] = useState<Currency[]>(FALLBACK_CURRENCIES);
-  const [selected, setSelected] = useState<Currency>(DEFAULT_CURRENCY);
+  const [selected, setSelected] = useState<Currency>(readInitialCurrency);
 
   useEffect(() => {
     let active = true;

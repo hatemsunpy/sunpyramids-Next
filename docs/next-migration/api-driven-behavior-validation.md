@@ -363,3 +363,18 @@ Date: 2026-06-25
 | Coupon/rent-car/tracking/sitemap/UI | Still blocked. | Next approval pack in `docs/next-migration/sprint17-booking-evidence-cleanup-report.md`. |
 
 `npm run lint` passed (exit 0). `npm run build` passed (exit 0). `git diff --check` passed (exit 0; only LF-to-CRLF working-copy warnings). Not approved.
+
+## Guest Cart Session Validation
+
+Date: 2026-08-09
+
+| Area | Result |
+|---|---|
+| Guest cart append | `cart/tours/append` returns success with **no** `Set-Cookie` header. |
+| Guest cart list | `cart/list` returns guest items with zero cookies and no `Authorization` header. |
+| Identity mechanism | Server-side, keyed by client **public IP** (not a session cookie). |
+| CORS | `Access-Control-Allow-Origin: *`, `supports_credentials = false`; no cookie needed. |
+| Currency conversion | Guest cart totals convert via `exchange_rate` (verified USD → EUR). |
+| Checkout | Guest `bookings` payload includes selected `currency_id`; no auth required by API. |
+| Nuxt parity | Live Nuxt frontend behaves identically (no `credentials`, no proxy, same API). |
+| Conclusion | Guest cart works in Next.js, but the IP-keyed shared state is a **cross-user privacy and cart-integrity risk** (guests on the same public IP can view and mutate one another's cart) and requires explicit acceptance by the product/security owner before cutover. Earlier "HTTP-only session cookie" assumption was incorrect. See `guest-cart-session-investigation.md`. |
