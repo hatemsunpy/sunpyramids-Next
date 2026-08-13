@@ -5,10 +5,10 @@ import { Pagination } from "@/components/Pagination";
 import { ResultCount } from "@/components/ResultCount";
 import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
-import { getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
+import { getCategory, getDestination, getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { metadataFromPage } from "@/lib/seo";
-import type { ApiList, ApiPage, Tour } from "@/types/api";
+import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
 
 const pageSlugMap: Record<string, string> = {
   "one-day-tours": "one-day-tours",
@@ -26,11 +26,26 @@ function routePath(slug: string[]) {
   return `/egypt-tours/${slug.join("/")}`;
 }
 
+async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<ApiPage | null> {
+  const root = slug[0];
+  const childSlug = slug.length > 1 ? slug[slug.length - 1] : null;
+  if (childSlug) {
+    if (root === "one-day-tours") {
+      return getDestination(childSlug, locale);
+    }
+    return getCategory(childSlug, locale);
+  }
+  if (root === "multi-days-tours" || root === "shore-excursions") {
+    return getCategory(root, locale);
+  }
+  const pageSlug = pageSlugMap[root] || "tours-search-results";
+  return getPage(pageSlug, locale);
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolved = await params;
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const pageSlug = pageSlugMap[resolved.slug[0]] || "tours-search-results";
-  const page = await getPage(pageSlug, locale);
+  const page = await resolveEgyptToursPage(resolved.slug, locale);
   return metadataFromPage(page, `/${locale}${routePath(resolved.slug)}`, locale);
 }
 
@@ -43,13 +58,12 @@ export default async function Page({ params, searchParams }: Props) {
     parseInt(Array.isArray(rawPage) ? rawPage[0] : rawPage || "1", 10) || 1,
   );
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const pageSlug = pageSlugMap[resolved.slug[0]] || "tours-search-results";
   const isOneDayRoute = resolved.slug?.[0] === "one-day-tours";
   const isOneDayIndex = isOneDayRoute && resolved.slug.length === 1;
   const filterSlug = resolved.slug.at(-1) || resolved.slug[0];
   const limit = isOneDayRoute ? 24 : 12;
   const [page, itemsResponse] = await Promise.all([
-    getPage(pageSlug, locale),
+    resolveEgyptToursPage(resolved.slug, locale),
     isOneDayIndex
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", locale)
       : isOneDayRoute

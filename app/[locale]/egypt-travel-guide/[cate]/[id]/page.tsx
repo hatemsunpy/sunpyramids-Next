@@ -8,10 +8,11 @@ import {
   getCategoryBlogsReliable,
 } from "@/lib/data";
 import { formatApiError } from "@/lib/api";
+import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { metadataFromPage } from "@/lib/seo";
 import type { ApiPage, Locale } from "@/types/api";
 
-type Props = { params: Promise<{ cate: string; id: string }> };
+type Props = { params: Promise<{ locale: string; cate: string; id: string }> };
 
 async function resolveTravelGuideDetail(
   cate: string,
@@ -43,16 +44,22 @@ async function resolveTravelGuideDetail(
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolved = await params;
-  const { category } = await resolveTravelGuideDetail(resolved.cate, resolved.id, "en");
-  return metadataFromPage(category, `/egypt-travel-guide/${resolved.cate}/${resolved.id}`, "en");
+  const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
+  const { category } = await resolveTravelGuideDetail(resolved.cate, resolved.id, locale);
+  return metadataFromPage(
+    category,
+    `/${locale}/egypt-travel-guide/${resolved.cate}/${resolved.id}`,
+    locale,
+  );
 }
 
 export default async function Page({ params }: Props) {
-  const { cate, id } = await params;
-  const { category, blogs } = await resolveTravelGuideDetail(cate, id, "en");
+  const resolved = await params;
+  const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
+  const { category, blogs } = await resolveTravelGuideDetail(resolved.cate, resolved.id, locale);
   return (
-    <SiteShell locale="en">
-      <TravelGuidePage page={category} categories={[]} blogs={blogs} />
+    <SiteShell locale={locale}>
+      <TravelGuidePage page={category} categories={[]} blogs={blogs} locale={locale} />
     </SiteShell>
   );
 }
