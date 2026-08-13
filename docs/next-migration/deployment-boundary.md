@@ -25,6 +25,7 @@ Date: 2026-06-28
 - Command used to verify recent tour page work: `npx next build` then `npx next start -p 3003`.
 - Verified URL example: `http://localhost:3003/tour/from-cairo-6-days-package-to-el-fayoum-oasis-white-desert-and-bahariya-oasis`.
 - Confirmed sections: gallery, tour info cards, overview, highlights, itinerary, included/excluded, add-ons, booking panel, season prices, social gallery, related tours.
+- If port 3003 is occupied by the stale prior process, use the next free port (e.g., `3004`) and note it in the verification evidence. The one-day-tours category fix was verified on `http://localhost:3004/egypt-tours/one-day-tours/cairo` because 3003 was in use.
 
 ## Staging Preview
 
@@ -36,7 +37,7 @@ Date: 2026-06-28
 
 The live production domain still serves the legacy Nuxt app. Next.js changes were validated against the local Next.js preview on port 3003 and/or the Next.js staging deployment (`https://sunpyramids-next.vercel.app`), not against the production Nuxt HTML.
 
-This applies to the recent `/tour/[slug]` layout restoration and the `BlogCard` description removal: the production Nuxt site was only used as a visual/structural parity baseline, while functional correctness and rendered output were confirmed on the local Next.js build (`localhost:3003`) and/or the staging preview.
+This applies to the recent `/tour/[slug]` layout restoration, the `BlogCard` description removal, and the `/egypt-tours/one-day-tours/[destination]` category query fix: the production Nuxt site was only used as a visual/structural/contract parity baseline, while functional correctness and rendered output were confirmed on the local Next.js build (`localhost:3003`, or the next free port if 3003 is occupied) and/or the staging preview.
 
 ## Related Files
 

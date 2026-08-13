@@ -235,6 +235,10 @@ select {
   color: #fff;
 }
 
+.header-language:hover img {
+  filter: brightness(0) invert(1);
+}
+
 .header-nav-row {
   justify-content: space-between;
   gap: 1rem;
@@ -277,6 +281,48 @@ select {
 .make-trip-action:hover {
   background: var(--primary);
   color: #fff;
+}
+
+.header-inline-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-inline-nav a,
+.header-inline-nav button {
+  border: 0;
+  background: transparent;
+  color: var(--text-dark);
+  cursor: pointer;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.header-inline-nav a:hover,
+.header-inline-nav button:hover {
+  background: var(--text-dark);
+  color: #fff;
+}
+
+.header-language {
+  gap: 0.5rem;
+  border-color: transparent;
+  background: var(--third);
+  font-weight: 500;
+}
+
+.mobile-drawer-lang {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
 }
 
 .menu-action {
@@ -360,7 +406,9 @@ select {
 .mobile-drawer {
   width: min(82vw, 25rem);
   background: #fff;
-  padding: 2rem 1rem;
+  padding: 2rem 1rem calc(2rem + 4.5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .mobile-drawer-head {
@@ -384,6 +432,110 @@ select {
 
 .mobile-links a:hover {
   background: #f7f7f7;
+}
+
+.lc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+}
+
+.lc-modal {
+  background: #fff;
+  border-radius: 1.5rem;
+  padding: 1.5rem 2rem 2rem;
+  width: min(100%, 34rem);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lc-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.lc-modal-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.lc-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(29, 31, 31, 0.3);
+  background: transparent;
+  color: var(--text-dark);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.lc-modal-close:hover {
+  background: var(--text-dark);
+  color: #fff;
+}
+
+.lc-label {
+  margin: 0 0 1rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+
+.lc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.lc-tile {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.6rem;
+  background: transparent;
+  color: var(--text-dark);
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.lc-tile:hover {
+  color: var(--primary);
+  background: #f9fafb;
+}
+
+.lc-tile-active,
+.lc-tile-active:hover {
+  background: var(--text-dark);
+  color: #fff;
+}
+
+.lc-tile-title {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.lc-tile-value {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .hero {
@@ -416,7 +568,7 @@ select {
   z-index: 1;
   width: min(100% - 2rem, 1100px);
   text-align: center;
-  padding-top: 14rem;
+  padding-top: 11rem;
 }
 
 .hero-kicker {
@@ -1469,9 +1621,11 @@ select {
 
 @media (max-width: 1100px) {
   .desktop-nav,
+  .header-inline-nav,
+  .header-nav-row,
   .make-trip-action,
   .signin-action,
-  .header-language {
+  .header-actions .header-language {
     display: none;
   }
 
@@ -1546,6 +1700,15 @@ select {
   .header-search,
   .header-nav-row {
     display: none;
+  }
+
+  .lc-modal {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+
+  .lc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   .promo-strip {

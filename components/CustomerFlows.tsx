@@ -16,6 +16,7 @@ import {
 } from "@/lib/client-api";
 import { withLocale } from "@/lib/locales";
 import { generateRecaptchaToken } from "@/lib/recaptcha";
+import { useCurrency } from "@/components/CurrencyProvider";
 
 type ApiResponse<T = any> = {
   status?: boolean;
@@ -76,6 +77,29 @@ function cartRemoveIdentifier(item: any) {
   if (item?.type === "rental") return item?.id || null;
   if (item?.tour?.id) return item.tour.id;
   return item?.id || null;
+}
+
+function cartItemTotal(item: any): number | null {
+  const tour = item?.tour;
+  if (tour) {
+    const adults = Number(item?.adults) || 1;
+    const children = Number(item?.children) || 0;
+    const infants = Number(item?.infants) || 0;
+    const groups = Array.isArray(tour.pricing_groups) ? tour.pricing_groups : [];
+    const group = groups.find((g: any) => adults >= Number(g?.from) && adults <= Number(g?.to));
+    const adultRate = group ? Number(group.price) : Number(tour.adult_price ?? tour.start_from ?? tour.price ?? 0);
+    const childRate = group ? Number(group.child_price) : Number(tour.child_price ?? 0);
+    const infantRate = Number(tour.infant_price ?? 0);
+    let total = adultRate * adults + childRate * children + infantRate * infants;
+    if (Array.isArray(item.options)) {
+      total += item.options.reduce((sum: number, option: any) => sum + Number(option?.adult_price ?? 0) * adults + Number(option?.child_price ?? 0) * children, 0);
+    }
+    const offer = Number(tour.offer) || 0;
+    if (offer) total -= total * (offer / 100);
+    return Number.isFinite(total) ? total : null;
+  }
+  const fallback = Number(item?.total ?? item?.price ?? item?.car_route_price);
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
 }
 
 export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
@@ -370,6 +394,7 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
 
 export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boolean; locale?: Locale }) {
   const router = useRouter();
+  const { selected, format } = useCurrency();
   const [state, setState] = useState<LoadState>("loading");
   const [message, setMessage] = useState("");
   const [cart, setCart] = useState<any[]>([]);
@@ -510,7 +535,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       pickup_location: String(form.get("pickupLocation") || ""),
       notes: String(form.get("note") || ""),
       payment_method: paymentMethod,
-      currency_id: Number(form.get("currencyId") || 1),
+      currency_id: selected.id || Number(form.get("currencyId") || 1),
       coupon_id: form.get("couponId") ? Number(form.get("couponId")) : couponIdFrom(coupon),
     };
     if (paymentMethod === "card") {
@@ -558,7 +583,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
           <input name="country" placeholder="Country" required />
           <input name="state" placeholder="State" required />
           <input name="pickupLocation" placeholder="Pickup location" />
-          <input name="currencyId" type="number" placeholder="Currency ID" defaultValue={1} />
+          <input name="currencyId" type="hidden" value={selected.id} />
           <input name="couponId" type="number" placeholder="Coupon ID" defaultValue={checkoutData?.discountID || ""} />
           <select name="paymentMethod" defaultValue="card" required>
             <option value="paypal">PayPal</option>
@@ -582,10 +607,12 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       {state !== "loading" && cart.length === 0 ? <p className="muted">Add tours or car rentals to continue.</p> : null}
       {cart.length ? (
         <div className="account-list">
-          {cart.map((item, index) => (
+          {cart.map((item, index) => {
+            const itemTotal = cartItemTotal(item);
+            return (
             <article key={item.id || index}>
               <strong>{item.tour?.title || item.title || item.name || `Cart item ${index + 1}`}</strong>
-              {item.total ? <span>Total: {item.total}</span> : null}
+              {itemTotal !== null ? <span>Total: {format(itemTotal)}</span> : null}
               {item.type === "tour" || item.tour ? (
                 <form className="cart-inline-form" onSubmit={(event) => editTourCartItem(event, item)}>
                   <input name="startDate" type="date" defaultValue={String(item.start_date || "").slice(0, 10)} />
@@ -598,7 +625,8 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
               ) : null}
               <button className="btn-outline" type="button" onClick={() => removeCartItem(item)} disabled={state === "loading"}>Remove</button>
             </article>
-          ))}
+            );
+          })}
         </div>
       ) : null}
       {cart.length ? (

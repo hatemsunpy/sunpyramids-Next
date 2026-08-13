@@ -22,12 +22,30 @@ export async function getHome(locale: Locale) {
   return response?.data ?? null;
 }
 
-export async function getTours(endpoint: string, locale: Locale, limit = 8) {
+export async function getTours(endpoint: string, locale: Locale, limit = 8, page = 1) {
+  const sep = endpoint.includes("?") ? "&" : "?";
   const response = await apiFetch<ApiList<Tour>>(
-    `${endpoint}${endpoint.includes("?") ? "&" : "?"}page_limit=${limit}`,
+    `${endpoint}${sep}page_limit=${limit}&page=${page}`,
     { locale },
   );
+  return response ?? null;
+}
+
+export function tourListData(response: ApiList<Tour> | null | undefined): Tour[] {
   return listData(response);
+}
+
+export function tourMeta(response: ApiList<Tour> | null | undefined) {
+  const data = response?.data;
+  if (Array.isArray(data)) {
+    return { from: 1, to: data.length, total: data.length, lastPage: 1 };
+  }
+  return {
+    from: data?.from ?? response?.from ?? 1,
+    to: data?.to ?? response?.to ?? data?.data?.length ?? 0,
+    total: data?.total ?? response?.total ?? data?.data?.length ?? 0,
+    lastPage: data?.last_page ?? response?.last_page ?? 1,
+  };
 }
 
 export async function getDestinations(endpoint: string, locale: Locale, limit = 200) {

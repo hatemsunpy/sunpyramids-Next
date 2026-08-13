@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/SiteShell";
 import { HomePage } from "@/components/HomePage";
 import { JsonLd } from "@/components/JsonLd";
-import { getBlogs, getHome, getTours } from "@/lib/data";
+import { getBlogs, getHome, getTours, tourListData } from "@/lib/data";
 import { isLocale } from "@/lib/locales";
 import { metadataFromPage } from "@/lib/seo";
 import type { Locale } from "@/types/api";
@@ -24,11 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const locale = await resolveLocale(params);
-  const [page, tours, blogs] = await Promise.all([
+  const [page, toursResponse, blogs] = await Promise.all([
     getHome(locale),
     getTours("tours?exists=wishlisted&categories.id=59&order_by=display_order,asc&page=1", locale, 8),
     getBlogs(locale, 4),
   ]);
+  const tours = tourListData(toursResponse);
 
   return (
     <SiteShell locale={locale}>
