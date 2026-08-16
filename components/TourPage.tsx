@@ -37,7 +37,7 @@ export function TourPage({
         </div>
       </section>
 
-      {tour?.seasons?.length ? <TourSeasonPrices seasons={tour.seasons} /> : null}
+      {tour?.is_inquiry ? null : tour?.seasons?.length ? <TourSeasonPrices seasons={tour.seasons} /> : null}
 
       <TourSocialGallery socials={tour?.social_links} />
 
@@ -308,7 +308,7 @@ function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; 
       <aside className="tour-right-panel">
         <div className="tour-booking-card tour-inquiry-card">
           <h3 className="tour-inquiry-title">Contact Us For Checking Availability</h3>
-          <ContactForm locale={locale} />
+          <ContactForm locale={locale} tourId={tour?.id} tourTitle={tour?.title} />
         </div>
       </aside>
     );

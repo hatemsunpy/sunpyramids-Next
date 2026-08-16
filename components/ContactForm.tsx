@@ -7,7 +7,7 @@ import { generateRecaptchaToken } from "@/lib/recaptcha";
 import { withLocale } from "@/lib/locales";
 import type { Locale } from "@/types/api";
 
-export function ContactForm({ locale = "en" }: { locale?: Locale }) {
+export function ContactForm({ locale = "en", tourId, tourTitle }: { locale?: Locale; tourId?: number; tourTitle?: string }) {
   const router = useRouter();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -27,6 +27,8 @@ export function ContactForm({ locale = "en" }: { locale?: Locale }) {
       type: "form_contact",
     };
     if (token) payload.recaptcha_token = token;
+    if (tourId != null) payload.tour_id = String(tourId);
+    if (tourTitle) payload.tour_title = tourTitle;
 
     try {
       await apiPost("contact-requests", payload, locale);

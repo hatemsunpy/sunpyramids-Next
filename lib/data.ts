@@ -23,6 +23,18 @@ export async function getDestination(slug: string, locale: Locale) {
   return response?.data ?? null;
 }
 
+export async function getDestinationReliable(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<ApiPage | null>> {
+  const result = await apiFetchReliable<{ data?: ApiPage }>(
+    `destinations/${encodeURIComponent(slug)}?includes=seo`,
+    { locale },
+  );
+  if (!result.ok) return result;
+  return { ok: true, value: result.value?.data ?? null };
+}
+
 export async function getHome(locale: Locale) {
   const response = await apiFetch<{ data?: ApiPage }>("pages/home?includes=seo", {
     locale,
@@ -80,6 +92,18 @@ export async function getCategory(slug: string, locale: Locale) {
     { locale },
   );
   return response?.data ?? null;
+}
+
+export async function getCategoryReliable(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<ApiPage | null>> {
+  const result = await apiFetchReliable<{ data?: ApiPage }>(
+    `categories/${encodeURIComponent(slug)}?includes=seo,children`,
+    { locale },
+  );
+  if (!result.ok) return result;
+  return { ok: true, value: result.value?.data ?? null };
 }
 
 export async function getBlogCategories(locale: Locale, parentId: number | null = null) {
@@ -189,14 +213,14 @@ export async function getBlogCategoryReliable(
 export async function blogCategoryExists(
   slug: string,
   locale: Locale,
-): Promise<ApiResult<boolean>> {
+): Promise<ApiResult<ApiPage | null>> {
   const result = await apiFetchReliable<ApiList<ApiPage>>(
     `blog-categories?slug%5B%5D=${encodeURIComponent(slug)}&exists=children&page_limit=1`,
     { locale },
   );
 
   if (!result.ok) return result;
-  return { ok: true, value: listData(result.value).length > 0 };
+  return { ok: true, value: listData(result.value)[0] ?? null };
 }
 
 export async function getCategoryBlogsReliable(

@@ -118,7 +118,7 @@ export async function apiFetchReliable<T>(
       if (!response.ok) {
         lastStatus = response.status;
         if (TRANSIENT_STATUS.has(response.status) && attempt < maxAttempts) {
-          await sleep(baseDelayMs * attempt);
+          await sleep(baseDelayMs * 2 ** (attempt - 1));
           continue;
         }
         return { ok: false, reason: "error", status: response.status };
@@ -129,7 +129,7 @@ export async function apiFetchReliable<T>(
     } catch (err) {
       lastMessage = err instanceof Error ? err.message : String(err);
       if (attempt < maxAttempts) {
-        await sleep(baseDelayMs * attempt);
+        await sleep(baseDelayMs * 2 ** (attempt - 1));
         continue;
       }
       return { ok: false, reason: "error", message: lastMessage };
