@@ -2219,6 +2219,25 @@ select {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.095);
 }
 
+.tour-inquiry-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tour-inquiry-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.tour-inquiry-card .form-card {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .tour-booking-price {
   display: flex;
   align-items: flex-end;

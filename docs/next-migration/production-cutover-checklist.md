@@ -449,3 +449,22 @@ Date: 2026-06-28
 - **Port 3000 is stale and must be ignored.** An old Next.js dev process is still running on `http://localhost:3000`; do not use it for evidence.
 - **Staging checks:** use `https://sunpyramids-next.vercel.app`.
 - **Do not use the live production URL to validate Next.js implementation changes.** It is a Nuxt baseline, not a Next.js preview. Recent Next.js changes were validated against `localhost:3003` and/or the staging preview, not against the production Nuxt HTML. See `docs/next-migration/deployment-boundary.md`.
+
+## Sprint 18 — Travel-Guide Parent Validation + API Failure Handling
+
+Date: 2026-08-13
+
+| Check | Result |
+|---|---|
+| Parent category validation (root) | Passed — `/egypt-travel-guide/nonexistent-cate/valid-article` returns 404. |
+| Parent category validation (locale) | Passed — `/de/egypt-travel-guide/nonexistent-cate/valid-article` returns 404. |
+| Invalid article 404 (root + locale) | Passed — valid-cate/nonexistent-article returns 404 for both. |
+| Valid route renders (root + locale) | Passed — 200 with correct localized content. |
+| API failure not fake 404 | Passed — `apiFetchReliable` returns `error` for transient failures (timeout/500/network), only `not_found` for HTTP 404. Errors are thrown, not converted to `notFound()`. |
+| Retry behavior | 3 attempts, 400ms linear backoff, only transient statuses retried (408/425/429/500/502/503/504). |
+| Locale route gap closed | `[locale]/egypt-travel-guide/*` (index, [cate], [id]), `[locale]/event/[slug]`, `[locale]/trips` added — all 6 prefixed locales. |
+| Hreflang (locale detail page) | Passed — x-default → English root, all 6 locale variants present, no `/en` route. |
+| Canonical (locale detail page) | Passed — `https://sunpyramidstours.com/de/...` (HTTPS, frontend domain). |
+| `npm run build` | Passed. |
+| `npm run lint` | ESLint hangs in this environment (known); TypeScript build pass used as validation. |
+| `git diff --check` | Clean. |

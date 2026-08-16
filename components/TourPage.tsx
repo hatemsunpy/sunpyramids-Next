@@ -174,7 +174,7 @@ function TourHighlights({ tour }: { tour: Tour | null }) {
             <div className="tour-attractions">
               {featuredDestinations.map((parent) => {
                 const children = tour?.destinations?.filter((d) => d.parent_id === parent.id && !d.global) ?? [];
-                if (!children.length) return null;
+if (!children.length) return null;
                 return (
                   <details key={parent.id} className="tour-attraction" open>
                     <summary>{parent.title} Attractions</summary>
@@ -301,6 +301,18 @@ function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; 
   const [infants, setInfants] = useState(0);
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  // Inquiry tours bypass all booking/pricing logic and render a contact form instead.
+  if (tour?.is_inquiry) {
+    return (
+      <aside className="tour-right-panel">
+        <div className="tour-booking-card tour-inquiry-card">
+          <h3 className="tour-inquiry-title">Contact Us For Checking Availability</h3>
+          <ContactForm locale={locale} />
+        </div>
+      </aside>
+    );
+  }
 
   const season = matchingSeason(tour, date);
   const source = (season ?? tour) as Tour | null | undefined;

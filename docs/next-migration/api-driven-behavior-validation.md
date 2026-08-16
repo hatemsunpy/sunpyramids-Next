@@ -378,3 +378,44 @@ Date: 2026-08-09
 | Checkout | Guest `bookings` payload includes selected `currency_id`; no auth required by API. |
 | Nuxt parity | Live Nuxt frontend behaves identically (no `credentials`, no proxy, same API). |
 | Conclusion | Guest cart works in Next.js, but the IP-keyed shared state is a **cross-user privacy and cart-integrity risk** (guests on the same public IP can view and mutate one another's cart) and requires explicit acceptance by the product/security owner before cutover. Earlier "HTTP-only session cookie" assumption was incorrect. See `guest-cart-session-investigation.md`. |
+
+---
+
+## Travel-Guide Detail Route — Parent Category Validation Parity (Sprint 18)
+
+### Root cause
+The original Nuxt route `egypt-travel-guide/[cate]/[id].vue` validates that the parent category (`cate`) exists before rendering the article (`id`). The initial Next migration ported only the article fetch, skipping the parent-category existence check. This allowed URLs like `/egypt-travel-guide/nonexistent-category/valid-article` to render successfully — an SEO/routing parity gap.
+
+### Fix applied
+Both root and locale Next routes now mirror the Nuxt two-step validation:
+1. `blogCategoryExists(cate, locale)` — confirms the parent category slug resolves to a real blog-category record.
+2. `getBlogCategoryReliable(id, locale)` — fetches the article; returns `not_found` on HTTP 404, `error` on transient failure.
+3. `getCategoryBlogsReliable(id, locale)` — fetches the blog list for the article.
+
+If the parent category is confirmed not found → `notFound()`.
+If the article is confirmed not found → `notFound()`.
+If either fetch returns an API error (timeout, 500, etc.) → the error is thrown (not converted to a fake 404).
+
+### Routes covered
+- `app/egypt-travel-guide/[cate]/[id]/page.tsx` (root, en)
+- `app/[locale]/egypt-travel-guide/[cate]/[id]/page.tsx` (locale: fr, de, it, pt, es, zh)
+
+### Confirmed 404 vs API failure distinction
+A new `apiFetchReliable` helper (`lib/api.ts`) returns a typed `ApiResult<T>`:
+- `{ ok: false, reason: "not_found" }` — only HTTP 404 triggers `notFound()`.
+- `{ ok: false, reason: "error", status?, message? }` — transient failures (timeout, 408, 425, 429, 500, 502, 503, 504, network error) are thrown as errors so Next.js error handling responds appropriately.
+
+### Retry behavior
+`apiFetchReliable` retries transient failures up to 3 attempts with linear backoff (400ms × attempt). Confirmed 404s are never retried.
+
+### Verification (Aug 13, 2026)
+| Case | Root | Locale |
+|---|---|---|
+| Valid cate + valid article | 200 ✓ | 200 ✓ |
+| Invalid cate + valid article | 404 ✓ | 404 ✓ |
+| Valid cate + invalid article | 404 ✓ | 404 ✓ |
+| Invalid cate + invalid article | 404 ✓ | 404 ✓ |
+
+### Remaining limitations
+- The `[cate]` index route (`page.tsx`) does not validate the parent cate on the `[id]` page's behalf — this is intentional because the `[id]` page now performs its own parent validation independently.
+- The `generateMetadata` function calls the same `resolveTravelGuideDetail` helper, so metadata fetch failures are handled identically to page-body failures.

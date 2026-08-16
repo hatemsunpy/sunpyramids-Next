@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchReliable, type ApiResult } from "@/lib/api";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
 
 function listData<T>(response: ApiList<T> | null | undefined): T[] {
@@ -10,6 +10,14 @@ function listData<T>(response: ApiList<T> | null | undefined): T[] {
 export async function getPage(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: ApiPage }>(
     `pages/${slug}?includes=seo,metas`,
+    { locale },
+  );
+  return response?.data ?? null;
+}
+
+export async function getDestination(slug: string, locale: Locale) {
+  const response = await apiFetch<{ data?: ApiPage }>(
+    `destinations/${encodeURIComponent(slug)}?includes=seo`,
     { locale },
   );
   return response?.data ?? null;
@@ -84,11 +92,18 @@ export async function getBlogCategories(locale: Locale, parentId: number | null 
 }
 
 export async function getBlogCategory(slugOrId: string | number, locale: Locale) {
-  const response = await apiFetch<{ data?: ApiPage }>(
-    `blog-categories/${encodeURIComponent(String(slugOrId))}?page=1`,
+  if (typeof slugOrId === "number" || /^\d+$/.test(String(slugOrId))) {
+    const response = await apiFetch<{ data?: ApiPage }>(
+      `blog-categories/${encodeURIComponent(String(slugOrId))}?page=1`,
+      { locale },
+    );
+    return response?.data ?? null;
+  }
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `blog-categories?slug%5B%5D=${encodeURIComponent(String(slugOrId))}&includes=seo&exists=children&page_limit=100`,
     { locale },
   );
-  return response?.data ?? null;
+  return listData(response)[0] ?? null;
 }
 
 export async function getFaqs(locale: Locale, limit = 200) {
@@ -124,6 +139,77 @@ export async function getRelatedTours(tour: Tour | null, locale: Locale, limit =
   categoryIds.forEach((id) => params.append("categories.id[]", String(id)));
   const response = await apiFetch<ApiList<Tour>>(`tours?${params.toString()}`, { locale });
   return listData(response).filter((item) => item.id !== tour.id).slice(0, limit);
+}
+
+export async function getBlogCategoryChildren(parentId: number, locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `blog-categories?page=1&parent_id=${parentId}&page_limit=100`,
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getCategoryBlogs(categorySlug: string, locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `blogs?page=1&order_by=display_order,asc&includes=%26categories.slug=${encodeURIComponent(categorySlug)}`,
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getBlogCategoryReliable(
+  slugOrId: string | number,
+  locale: Locale,
+): Promise<ApiResult<ApiPage | null>> {
+  const endpoint =
+    typeof slugOrId === "number" || /^\d+$/.test(String(slugOrId))
+      ? `blog-categories/${encodeURIComponent(String(slugOrId))}?page=1`
+      : `blog-categories?slug%5B%5D=${encodeURIComponent(String(slugOrId))}&includes=seo&exists=children&page_limit=100`;
+
+  const result = await apiFetchReliable<{ data?: ApiPage } | ApiList<ApiPage>>(
+    endpoint,
+    { locale },
+  );
+
+  if (!result.ok) return result;
+
+  const value = result.value;
+  if (!value) return { ok: true, value: null };
+
+  const dataField = (value as { data?: unknown }).data;
+  if (Array.isArray(dataField)) {
+    return { ok: true, value: (dataField as ApiPage[])[0] ?? null };
+  }
+  if (dataField && typeof dataField === "object" && "data" in (dataField as Record<string, unknown>)) {
+    return { ok: true, value: listData(value as ApiList<ApiPage>)[0] ?? null };
+  }
+  return { ok: true, value: (dataField as ApiPage) ?? null };
+}
+
+export async function blogCategoryExists(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<boolean>> {
+  const result = await apiFetchReliable<ApiList<ApiPage>>(
+    `blog-categories?slug%5B%5D=${encodeURIComponent(slug)}&exists=children&page_limit=1`,
+    { locale },
+  );
+
+  if (!result.ok) return result;
+  return { ok: true, value: listData(result.value).length > 0 };
+}
+
+export async function getCategoryBlogsReliable(
+  categorySlug: string,
+  locale: Locale,
+): Promise<ApiResult<ApiPage[]>> {
+  const result = await apiFetchReliable<ApiList<ApiPage>>(
+    `blogs?page=1&order_by=display_order,asc&includes=%26categories.slug=${encodeURIComponent(categorySlug)}`,
+    { locale },
+  );
+
+  if (!result.ok) return result;
+  return { ok: true, value: listData(result.value) };
 }
 
 export async function getBlogs(locale: Locale, limit = 9) {

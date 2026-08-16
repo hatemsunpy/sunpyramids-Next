@@ -55,6 +55,7 @@ export type Tour = ApiPage & {
   infant_price?: number | string;
   offer?: number | string;
   offer_end_date?: string;
+  is_inquiry?: boolean;
   duration?: string;
   duration_in_days?: number | string;
   pickup_time?: string;

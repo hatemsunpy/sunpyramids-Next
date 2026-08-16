@@ -123,6 +123,14 @@
 - Dashboard verifier cleanup decision (cancel/delete/mark as test/leave as evidence) is pending; verifier must not expose unrelated customer data.
 - Payment, coupon, rent-car, tracking, sitemap, and UI parity approvals remain blocked; production cutover remains blocked.
 
+## Sprint 18 Travel-Guide Validation + API Failure Handling Notes
+
+- Parent category validation parity restored for both root and locale travel-guide detail routes (`/egypt-travel-guide/[cate]/[id]` and `/[locale]/egypt-travel-guide/[cate]/[id]`). Invalid category or article now returns 404 instead of rendering duplicate content.
+- API failure (timeout, 500, network error) is no longer converted to a fake 404. The new `apiFetchReliable` helper returns a typed `ApiResult` that distinguishes confirmed-not-found (HTTP 404 → `notFound()`) from upstream failure (→ thrown error, Next.js error handling).
+- Retry behavior: `apiFetchReliable` retries transient failures (408/425/429/500/502/503/504/network error) up to 3 attempts with 400ms × attempt backoff. Confirmed 404 is never retried.
+- Locale route gap closed: `[locale]/egypt-travel-guide/*` (index, [cate], [cate]/[id]), `[locale]/event/[slug]`, and `[locale]/trips` routes added — all 6 prefixed locales (fr/de/it/pt/es/zh) now have full route parity with the live Nuxt sitemap.
+- Remaining limitation: the `[cate]` index route does not validate parent cate on behalf of the `[id]` page — the `[id]` page performs its own independent parent validation, so this is intentional.
+
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.
