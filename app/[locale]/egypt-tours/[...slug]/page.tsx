@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DestinationCard } from "@/components/DestinationCard";
 import { Pagination } from "@/components/Pagination";
 import { ResultCount } from "@/components/ResultCount";
 import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
-import { getCategory, getDestination, getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
+import { getCategory, getCategoryReliable, getDestination, getDestinationReliable, getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
+import { formatApiError } from "@/lib/api";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { metadataFromPage } from "@/lib/seo";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
@@ -26,27 +27,32 @@ function routePath(slug: string[]) {
   return `/egypt-tours/${slug.join("/")}`;
 }
 
-async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<ApiPage | null> {
+async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<{ ok: true; value: ApiPage | null } | { ok: false; reason: "not_found" } | { ok: false; reason: "error"; status?: number; message?: string }> {
   const root = slug[0];
   const childSlug = slug.length > 1 ? slug[slug.length - 1] : null;
   if (childSlug) {
     if (root === "one-day-tours") {
-      return getDestination(childSlug, locale);
+      return getDestinationReliable(childSlug, locale);
     }
-    return getCategory(childSlug, locale);
+    return getCategoryReliable(childSlug, locale);
   }
   if (root === "multi-days-tours" || root === "shore-excursions") {
-    return getCategory(root, locale);
+    return getCategoryReliable(root, locale);
   }
   const pageSlug = pageSlugMap[root] || "tours-search-results";
-  return getPage(pageSlug, locale);
+  const page = await getPage(pageSlug, locale);
+  return { ok: true, value: page };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolved = await params;
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const page = await resolveEgyptToursPage(resolved.slug, locale);
-  return metadataFromPage(page, `/${locale}${routePath(resolved.slug)}`, locale);
+  const result = await resolveEgyptToursPage(resolved.slug, locale);
+  if (!result.ok) {
+    if (result.reason === "not_found") notFound();
+    throw new Error(`Failed to fetch egypt-tours page "${resolved.slug.join("/")}": ${formatApiError(result)}`);
+  }
+  return metadataFromPage(result.value, `/${locale}${routePath(resolved.slug)}`, locale);
 }
 
 export default async function Page({ params, searchParams }: Props) {
@@ -62,7 +68,7 @@ export default async function Page({ params, searchParams }: Props) {
   const isOneDayIndex = isOneDayRoute && resolved.slug.length === 1;
   const filterSlug = resolved.slug.at(-1) || resolved.slug[0];
   const limit = isOneDayRoute ? 24 : 12;
-  const [page, itemsResponse] = await Promise.all([
+  const [pageResult, itemsResponse] = await Promise.all([
     resolveEgyptToursPage(resolved.slug, locale),
     isOneDayIndex
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", locale)
@@ -75,6 +81,12 @@ export default async function Page({ params, searchParams }: Props) {
           )
         : getTours(`tours?categories.slug=${encodeURIComponent(filterSlug)}&order_by=display_order,asc`, locale, limit, currentPage),
   ]);
+  if (!pageResult.ok) {
+    if (pageResult.reason === "not_found") notFound();
+    throw new Error(`Failed to fetch egypt-tours page "${resolved.slug.join("/")}": ${formatApiError(pageResult)}`);
+  }
+  const page = pageResult.value;
+  if (!page) notFound();
   const items = isOneDayIndex
     ? (itemsResponse as ApiPage[])
     : tourListData(itemsResponse as ApiList<Tour> | null);

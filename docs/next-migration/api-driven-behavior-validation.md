@@ -406,9 +406,10 @@ A new `apiFetchReliable` helper (`lib/api.ts`) returns a typed `ApiResult<T>`:
 - `{ ok: false, reason: "error", status?, message? }` — transient failures (timeout, 408, 425, 429, 500, 502, 503, 504, network error) are thrown as errors so Next.js error handling responds appropriately.
 
 ### Retry behavior
-`apiFetchReliable` retries transient failures up to 3 attempts with linear backoff (400ms × attempt). Confirmed 404s are never retried.
+`apiFetchReliable` retries transient failures up to 3 attempts with exponential backoff (400ms × 2^(attempt-1)). Confirmed 404s are never retried.
 
 ### Verification (Aug 13, 2026)
+
 | Case | Root | Locale |
 |---|---|---|
 | Valid cate + valid article | 200 ✓ | 200 ✓ |

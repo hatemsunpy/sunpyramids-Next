@@ -25,20 +25,35 @@ async function resolveTravelGuideDetail(
   ]);
 
   if (!parentResult.ok) {
+    if (parentResult.reason === "not_found") notFound();
     throw new Error(`Failed to validate parent category "${cate}": ${formatApiError(parentResult)}`);
   }
-  if (!parentResult.value) notFound();
+  const parent = parentResult.value;
+  if (!parent) notFound();
 
   if (!articleResult.ok) {
+    if (articleResult.reason === "not_found") notFound();
     throw new Error(`Failed to fetch article "${id}": ${formatApiError(articleResult)}`);
   }
-  if (!articleResult.value) notFound();
+  const article = articleResult.value;
+  if (!article) notFound();
+
+  const articleParentId =
+    typeof article.parent_id === "number"
+      ? article.parent_id
+      : article.parent_id != null
+        ? Number(article.parent_id)
+        : null;
+  if (articleParentId != null && parent.id != null && articleParentId !== Number(parent.id)) {
+    notFound();
+  }
 
   if (!blogsResult.ok) {
+    if (blogsResult.reason === "not_found") notFound();
     throw new Error(`Failed to fetch blogs for "${id}": ${formatApiError(blogsResult)}`);
   }
 
-  return { category: articleResult.value, blogs: blogsResult.value ?? [] };
+  return { category: article, blogs: blogsResult.value ?? [] };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
