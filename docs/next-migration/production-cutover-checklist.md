@@ -411,10 +411,10 @@ Date: 2026-08-09
 | Guest currency conversion | Passed; cart totals convert via `exchange_rate` (USD→EUR verified in browser). |
 | Checkout currency | Passed; `bookings` payload submits selected `currency_id` (verified EGP `3` / EUR `2`). |
 | Guest cart regression | None; earlier "guest cart empty" concern was a misread test artifact, not a defect. |
-| Known limitation | Guest cart is per public IP (shared across NAT; cross-user visibility and mutation risk; lost on IP change). Identical to the live Nuxt site; requires explicit product/security owner acceptance before cutover. See `guest-cart-session-investigation.md`. |
+| Known limitation | Guest cart is per public IP (shared across NAT; cross-user visibility and mutation risk; lost on IP change). Identical to the live Nuxt site; requires explicit product/security owner acceptance **with name and date recorded in `risk-register.md`** before cutover. See `guest-cart-session-investigation.md`. |
 | `npm run lint` | Passed. |
 | `npm run build` | Passed. |
-| Cutover impact | Guest cart does **not** block cutover, **conditional on** the product/security owner recording acceptance of the shared-IP guest-cart risk in `risk-register.md`.
+| Cutover impact | Guest cart does **not** block cutover, **conditional on** the product/security owner recording acceptance of the shared-IP guest-cart risk in `risk-register.md` (name and date).
 
 ## Rollback Triggers
 

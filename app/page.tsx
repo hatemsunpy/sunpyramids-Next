@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteShell } from "@/components/SiteShell";
 import { HomePage } from "@/components/HomePage";
 import { JsonLd } from "@/components/JsonLd";
-import { getBlogs, getHome, getTours, tourListData } from "@/lib/data";
+import { getHome, getHomeBlogs, getHomeDestinations, getHomeFaqs, getHomeTours } from "@/lib/data";
 import { metadataFromPage } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,17 +11,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [page, toursResponse, blogs] = await Promise.all([
+  const [page, tours, popularTours, specialOffers, highlights, blogs, faqs] = await Promise.all([
     getHome("en"),
-    getTours("tours?exists=wishlisted&categories.id=59&order_by=display_order,asc&page=1", "en", 8),
-    getBlogs("en", 4),
+    getHomeTours("tours?exists=wishlisted&categories.id=59&order_by=display_order,asc&page=1&page_limit=4", "en"),
+    getHomeTours("tours/home?featured=1&page=1&order_by=display_order,asc&page_limit=8", "en"),
+    getHomeTours("tours/home?page=1&page_limit=4&order_by=display_order,asc&categories.id=53", "en"),
+    getHomeDestinations("en"),
+    getHomeBlogs("en"),
+    getHomeFaqs("en"),
   ]);
-  const tours = tourListData(toursResponse);
 
   return (
     <SiteShell locale="en">
       <JsonLd schema={page?.seo?.structure_schema} />
-      <HomePage page={page} tours={tours} blogs={blogs} locale="en" />
+      <HomePage page={page} tours={tours} popularTours={popularTours} specialOffers={specialOffers} highlights={highlights} blogs={blogs} faqs={faqs} locale="en" />
     </SiteShell>
   );
 }

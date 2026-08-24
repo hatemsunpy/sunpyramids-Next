@@ -42,6 +42,32 @@ export async function getHome(locale: Locale) {
   return response?.data ?? null;
 }
 
+export async function getHomeTours(endpoint: string, locale: Locale) {
+  const response = await apiFetch<ApiList<Tour>>(endpoint, { locale });
+  return listData(response);
+}
+
+export async function getHomeDestinations(locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    "destinations/home?page_limit=200&parent.slug=egypt&order_by=display_order,asc",
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getHomeFaqs(locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>("faqs/home?page_limit=5", { locale });
+  return listData(response);
+}
+
+export async function getHomeBlogs(locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    "blogs/home?page_limit=8&order_by=id,desc",
+    { locale },
+  );
+  return listData(response);
+}
+
 export async function getTours(endpoint: string, locale: Locale, limit = 8, page = 1) {
   const sep = endpoint.includes("?") ? "&" : "?";
   const response = await apiFetch<ApiList<Tour>>(
