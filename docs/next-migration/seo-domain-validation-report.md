@@ -158,21 +158,6 @@ Target: local production build at `http://127.0.0.1:3106`.
 | `/make-your-trip` | Pass | Pass | Pass | Pass | Pass | Pass | Pass | No |
 | `/rent-car` | Pass | Pass | Pass | Pass | Pass | No dashboard schema rendered | Pass | No |
 
-### Sprint 18 Travel-Guide Locale Route SEO Validation (Aug 13, 2026)
-
-**Routes verified:** `/de/egypt-travel-guide/egypt-tourist-attractions/the-ancient-egyptian-pyramids`
-
-| Check | Evidence | Status |
-|---|---|---|
-| Title (localized) | German title rendered from API X-Localize header | Passed. |
-| Canonical | HTTPS frontend domain, locale-prefixed path | Passed. |
-| Hreflang x-default | Points to English root (no /en prefix) | Passed. |
-| Hreflang all 6 locales | fr/de/it/pt/es/zh all present with frontend domain | Passed. |
-| Invalid cate 404 | nonexistent-category/valid-article returns 404 | Passed. |
-| Invalid article 404 | valid-category/nonexistent-article returns 404 | Passed. |
-| API failure not fake 404 | apiFetchReliable throws on transient errors, only HTTP 404 triggers notFound | Passed. |
-| No /en route | resolvePrefixedLocale throws notFound for en | Passed. |
-
 ## Sprint 7 SEO/Domain Validation Status
 
 Date: 2026-06-23

@@ -377,7 +377,7 @@ Date: 2026-08-09
 | Currency conversion | Guest cart totals convert via `exchange_rate` (verified USD → EUR). |
 | Checkout | Guest `bookings` payload includes selected `currency_id`; no auth required by API. |
 | Nuxt parity | Live Nuxt frontend behaves identically (no `credentials`, no proxy, same API). |
-| Conclusion | Guest cart works in Next.js, but the IP-keyed shared state is a **cross-user privacy and cart-integrity risk** (guests on the same public IP can view and mutate one another's cart) and requires explicit acceptance by the product/security owner before cutover. Earlier "HTTP-only session cookie" assumption was incorrect. See `guest-cart-session-investigation.md`. |
+| Conclusion | Guest cart works in Next.js, but the IP-keyed shared state is a **cross-user privacy and cart-integrity risk** (guests on the same public IP can view and mutate one another's cart). Cutover acceptance requires the product/security owner to **record their name and date in `risk-register.md`**. Earlier "HTTP-only session cookie" assumption was incorrect. See `guest-cart-session-investigation.md`. |
 
 ---
 
