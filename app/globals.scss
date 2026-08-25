@@ -552,7 +552,6 @@ select {
   position: relative;
   display: grid;
   place-items: center;
-  overflow: hidden;
   color: #fff;
 }
 
@@ -2092,6 +2091,11 @@ select {
     flex-direction: column;
   }
 
+  .promo-strip .btn-primary {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
   .shortcut-panel,
   .grid-cards {
     grid-template-columns: 1fr;
@@ -2604,6 +2608,196 @@ select {
   background: #c57007;
 }
 
+.tour-destinations-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  background: rgba(10, 10, 10, 0.82);
+}
+
+.tour-destinations-modal {
+  width: min(79rem, calc(100vw - 1rem));
+  height: min(50.5rem, calc(100vh - 1rem));
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.tour-destinations-head {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+}
+
+.tour-destinations-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.tour-destinations-head button {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid #d8dadd;
+  border-radius: 50%;
+  background: #fff;
+  color: #4b4e54;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tour-destinations-layout {
+  display: grid;
+  height: calc(100% - 4.5rem);
+  grid-template-columns: minmax(0, 1fr) minmax(26rem, 1fr);
+  gap: 1.5rem;
+  padding: 0 1.5rem 1.5rem;
+}
+
+.tour-destinations-map {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #e9eef2;
+}
+
+.tour-destinations-map iframe,
+.tour-destinations-map img {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: cover;
+}
+
+.tour-destinations-summary {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0.75rem 0 0;
+  overflow: hidden;
+}
+
+.tour-destinations-summary h3 {
+  margin: 0 0 1.5rem;
+  font-size: clamp(1.6rem, 2.2vw, 2rem);
+  font-weight: 600;
+  line-height: 1.18;
+}
+
+.tour-destinations-price-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tour-destinations-price-row > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.tour-destinations-price-row span {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.tour-destinations-price-row strong {
+  color: var(--text-dark);
+  font-size: 2rem;
+}
+
+.tour-destinations-price-row .btn-outline {
+  min-width: 8.75rem;
+  min-height: 3.6rem;
+  border-radius: 999px;
+}
+
+.tour-destinations-book {
+  width: 100%;
+  min-height: 3.6rem;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.tour-destinations-book:hover {
+  background: #173788;
+}
+
+.tour-destinations-summary h4 {
+  margin: 1.35rem 0 0.65rem;
+  color: #a7a7a7;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.tour-destinations-list {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-color: var(--secondary) transparent;
+  scrollbar-width: thin;
+}
+
+.tour-destinations-list::before {
+  content: "";
+  position: absolute;
+  top: 1.4rem;
+  bottom: 1.4rem;
+  left: 0.5rem;
+  width: 2px;
+  background: #d6d6d6;
+}
+
+.tour-destinations-list button {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 2.65rem;
+  grid-template-columns: 1rem 1fr;
+  align-items: center;
+  gap: 1rem;
+  border: 0;
+  padding: 0.3rem 0.4rem 0.3rem 0;
+  background: transparent;
+  color: var(--text-dark);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tour-destination-marker {
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  border: 3px solid #272a2f;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.tour-destinations-list button.is-active {
+  color: var(--primary);
+}
+
+.tour-destinations-list button.is-active .tour-destination-marker {
+  border: 4px solid var(--primary);
+}
+
 .tour-attractions {
   display: flex;
   flex-direction: column;
@@ -2773,7 +2967,7 @@ select {
   border: 1px solid #eeeeee;
   border-radius: 1.25rem;
   padding: 1.25rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.095);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.06);
 }
 
 .tour-booking-dialog { position: relative; }
@@ -2821,7 +3015,7 @@ select {
 .tour-price-current {
   font-size: 1.75rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--text-dark);
 }
 
 .tour-price-original {
@@ -2865,6 +3059,12 @@ select {
   box-shadow: 0 0 0 4px #e9eefc;
 }
 
+.tour-booking-card .tour-field input {
+  min-height: 3.9rem;
+  border-radius: 999px;
+  padding-inline: 1.75rem;
+}
+
 .tour-passengers {
   display: flex;
   flex-direction: column;
@@ -2884,14 +3084,19 @@ select {
 
 .tour-counter-controls {
   display: inline-flex;
+  width: 10.5rem;
+  min-height: 2.8rem;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 0.25rem;
+  border: 1px solid #eeeeee;
+  border-radius: 999px;
 }
 
 .tour-counter-controls button {
-  width: 2rem;
-  height: 2rem;
-  border: 1px solid #eeeeee;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 0;
   border-radius: 50%;
   background: #fff;
   font-size: 1.125rem;
@@ -2901,6 +3106,69 @@ select {
 .tour-counter-controls button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.tour-booking-amount {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.tour-booking-amount h4 {
+  margin: 0;
+  color: #a6a6a6;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.tour-booking-addons-head,
+.tour-booking-addons-head > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.tour-booking-addons-head > div {
+  justify-content: flex-start;
+}
+
+.tour-booking-addons-head button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.tour-booking-addon-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.tour-booking-addon-list label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+}
+
+.tour-booking-addon-list input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--primary);
+}
+
+.tour-booking-addon-list span,
+.tour-booking-addon-list strong {
+  font-size: 0.82rem;
+}
+
+.tour-booking-addon-list strong {
+  color: var(--primary);
+  white-space: nowrap;
 }
 
 .tour-booking-total {
@@ -2914,7 +3182,17 @@ select {
 
 .tour-booking-total strong {
   font-size: 1.5rem;
-  color: var(--primary);
+  color: var(--secondary);
+}
+
+.tour-booking-card .btn-primary,
+.tour-mobile-booking-bar .btn-primary {
+  background: var(--primary);
+}
+
+.tour-booking-card .btn-primary:hover,
+.tour-mobile-booking-bar .btn-primary:hover {
+  background: #173788;
 }
 
 .tour-booking-actions {
@@ -3073,6 +3351,41 @@ select {
 }
 
 @media (max-width: 1100px) {
+  .tour-destinations-overlay {
+    align-items: center;
+  }
+
+  .tour-destinations-modal {
+    height: min(48rem, calc(100vh - 1rem));
+    overflow-y: auto;
+  }
+
+  .tour-destinations-head {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background: #fff;
+  }
+
+  .tour-destinations-layout {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .tour-destinations-map {
+    min-height: 18rem;
+  }
+
+  .tour-destinations-summary {
+    overflow: visible;
+    padding-top: 0;
+  }
+
+  .tour-destinations-list {
+    max-height: 18rem;
+    flex: none;
+  }
+
   .tour-page-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -3178,6 +3491,44 @@ select {
 }
 
 @media (max-width: 640px) {
+  .tour-destinations-overlay {
+    padding: 0.25rem;
+  }
+
+  .tour-destinations-modal {
+    width: calc(100vw - 0.5rem);
+    height: calc(100vh - 0.5rem);
+    border-radius: 1rem;
+  }
+
+  .tour-destinations-head {
+    min-height: 4rem;
+    padding-inline: 1rem;
+  }
+
+  .tour-destinations-layout {
+    gap: 1rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .tour-destinations-map {
+    min-height: 14rem;
+  }
+
+  .tour-destinations-summary h3 {
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+
+  .tour-destinations-price-row strong {
+    font-size: 1.6rem;
+  }
+
+  .tour-destinations-price-row .btn-outline {
+    min-width: 7rem;
+    min-height: 3rem;
+  }
+
   .tour-page {
     padding-bottom: 8rem;
   }
