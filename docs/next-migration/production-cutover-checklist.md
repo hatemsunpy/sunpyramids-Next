@@ -468,3 +468,82 @@ Date: 2026-08-13
 | `npm run build` | Passed. |
 | `npm run lint` | ESLint hangs in this environment (known); TypeScript build pass used as validation. |
 | `git diff --check` | Clean. |
+
+## Sprint 11 — P0 blockers + Dynamic Sitemap Phase 1
+
+Date: 2026-08-24
+
+The older checklist entries above remain historical evidence. Current Sprint 11 results are:
+
+| Gate | Result |
+|---|---|
+| Valid/invalid tour, blog, event | PASS — valid 200; confirmed invalid 404. |
+| Transient detail failures | PASS — isolated 429/500/502/503/504 all returned 500 after bounded retries; malformed JSON returned 500. |
+| Redirect parity | PASS — 20/20 HTTP 301 with exact locations. |
+| Customer locale routes | PASS — 126/126; `/en` rejected. |
+| Raw `<html lang>` | PASS — 7/7. |
+| Campaign pages | PASS — 4/4 API content/SEO; invalid slug 404. |
+| Sitemap index/children | PASS — index plus pages/posts/events/guide/taxonomies/one dynamic tour chunk. |
+| Sitemap cache/revalidation | PASS — 86,400 seconds, normalized atomic catalog, no final `no-store`. |
+| Sitemap failure behavior | PASS — initial required-source failure returned 500; failed stale regeneration served byte-identical last-known-good XML. |
+| Sitemap XML/coverage | PASS — 4,972 docs, strict XML, zero duplicates, all locales, `x-default`, no `/en`, frontend document domain. |
+| Robots/XSL | PASS. |
+| `npm run lint` | PASS. |
+| `npm run build` | PASS on Next 16.2.9. |
+| `git diff --check` | PASS. |
+
+Sprint 11 acceptance: **PASS**. Overall production cutover: **BLOCKED**.
+
+## Sprint 12 — Dynamic backend control completion
+
+Date: 2026-08-24
+
+| Gate | Result |
+|---|---|
+| Trips taxonomy/count/destinations | PASS — API-driven IDs/slugs/titles/counts and server filters. |
+| Settings/contact/social/team | PASS for current public setting keys; phone/address/WhatsApp have no backend setting. |
+| Rental active Nuxt contracts | PASS by source — selected currency, available destinations, route lookup, append. No production mutation sent. |
+| Profile/session | PASS by source — me/logout/image/update/401 clearing/social callback. No production auth mutation sent. |
+| Targeted shared UI locale | PASS for header/footer/mobile nav/auth/profile/planner; broader page copy remains PARTIAL. |
+| SEO regression | PASS on representative valid home/about/blog/tour. |
+| Sitemap regression | PASS — 4,972 URLs, zero duplicates, six children, 86,400-second cache. |
+| Lint/build | PASS. |
+| Dashboard edit propagation | BLOCKED — no approved staging dashboard/API/frontend target or reversible test record. |
+| Settings API security | BLOCKED — backend must restrict unfiltered public settings and rotate exposed credentials. |
+
+Sprint 12 implementation acceptance: **PASS WITH DECLARED CONDITIONAL OMISSIONS**. Production cutover: **BLOCKED**.
+
+## Sprint 13 frontend cutover gate — 2026-08-24
+
+| Gate | Result |
+|---|---|
+| Backend files modified | PASS — zero; final digest must equal the recorded baseline. |
+| Live contact/logo parity | PASS — three phones, exact address, WhatsApp 8830, mixed email ownership, approved byte-identical local logo. |
+| Homepage ownership | PASS — 20/20; 12 API-driven/mixed, 8 intentional static, 0 unknown. |
+| Narrow public settings | PASS — no unfiltered frontend request and no unused logo request. |
+| Locale roots/lang/home shared copy | PASS within confirmed Nuxt resources; overall locale status PARTIAL for unconfirmed page-specific copy. |
+| Invalid content/redirects | PASS — 3/3 invalid 404; 20/20 redirects. |
+| Sitemap | PASS — 4,972 URLs, daily cache, complete `x-default`, no `/en`, no duplicates. |
+| Auth/cart/rental/checkout | Source/build PASS; `BLOCKED_BY_STAGING_ACCESS` for mutations. |
+| PayPal/Fawaterk | Frontend safety PASS; sandbox outcomes BLOCKED. |
+| reCAPTCHA | `FRONTEND_TOKEN_PRESENT`; `BACKEND_VERIFICATION_NOT_CONFIRMED`. |
+| Tracking | IDs/architecture present; `BLOCKED_BY_MARKETING_ACCESS`. |
+| Production build | PASS. |
+
+**FRONTEND CUTOVER READINESS: PASS WITH EXTERNAL GATES. PRODUCTION CUTOVER: BLOCKED.** Do not switch DNS until the exact backend/security findings are remediated or accepted and staging mutation/payment/tracking/visual approval evidence is signed off.
+
+## Sprint 15 targeted release-candidate gate — 2026-08-25
+
+| Gate | Result |
+|---|---|
+| Sprint 14 P0/P1 frontend findings | PASS — all six closed; zero remaining confirmed frontend P0/P1 findings in that scope. |
+| Customer-editable backend IDs | PASS — zero visible option/coupon/payment/database/backend-ID controls. |
+| Inquiry responsive widths | PASS — no document overflow at 375/430/768/1024/1440. |
+| Book Egypt Trip | PASS — live/Nuxt identity, localized copy, API-selected tours, contact, reviews, and gallery restored. |
+| SEO and listing schema | PASS — absolute branding, plain metadata fallback, and backend JSON-LD on root/localized listings. |
+| Cart/checkout locale copy | PASS — all seven supported locale forms; `/en` remains 404. |
+| 404/redirect/sitemap regression | PASS — five invalid families 404; 20/20 redirects; 4,972-URL sitemap unchanged at `revalidate=86400`. |
+| Homepage/dynamic ownership | PASS — no regression; no tour/schema record copied into frontend source. |
+| Lint/build/diff | PASS/PASS/PASS. |
+
+**FRONTEND RELEASE CANDIDATE: PASS. PRODUCTION CUTOVER: BLOCKED.** Remaining gates are approved staging/dashboard propagation, protected mutations, payment sandboxes, marketing-debug approval, backend/security remediation or risk acceptance, and final business/QA sign-off. See `sprint15-targeted-release-candidate-fixes.md` for exact evidence.

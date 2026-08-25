@@ -1,10 +1,11 @@
 import Image from "next/image";
+import { siteContact } from "@/lib/site-contact";
 
 export function WhatsAppButton() {
   return (
     <a
       className="whatsapp-float"
-      href="https://api.whatsapp.com/send?phone=201095888830"
+      href={siteContact.whatsapp.contactUrl}
       target="_blank"
       rel="noreferrer"
       aria-label="Contact Sun Pyramids on WhatsApp"

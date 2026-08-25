@@ -1,21 +1,21 @@
 import Link from "next/link";
 import type { Locale } from "@/types/api";
 import { withLocale } from "@/lib/locales";
+import { uiCopy } from "@/lib/ui-copy";
 
 const items = [
-  ["Home", "/", "⌂"],
-  ["Trips", "/trips", "◇"],
-  ["Offers", "/trips?main=special-offers", "%"],
-  ["Cart", "/cart", "▱"],
+  ["home", "/", "⌂"], ["trips", "/trips", "◇"], ["offers", "/trips?main=special-offers", "%"],
+  ["cart", "/cart", "▱"],
 ] as const;
 
 export function BottomBar({ locale = "en" }: { locale?: Locale }) {
+  const copy = uiCopy(locale);
   return (
     <nav className="bottom-bar" aria-label="Mobile shortcuts">
-      {items.map(([label, href, icon]) => (
+      {items.map(([key, href, icon]) => (
         <Link key={href} href={withLocale(href, locale)}>
           <span className="bottom-icon" aria-hidden="true">{icon}</span>
-          <span>{label}</span>
+          <span>{copy[key]}</span>
         </Link>
       ))}
     </nav>

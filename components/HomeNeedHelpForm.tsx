@@ -6,8 +6,10 @@ import { apiPost } from "@/lib/client-api";
 import { generateRecaptchaToken } from "@/lib/recaptcha";
 import { withLocale } from "@/lib/locales";
 import type { Locale } from "@/types/api";
+import { homeCopy } from "@/lib/home-copy";
 
 export function HomeNeedHelpForm({ locale = "en" }: { locale?: Locale }) {
+  const copy = homeCopy(locale);
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -39,10 +41,10 @@ export function HomeNeedHelpForm({ locale = "en" }: { locale?: Locale }) {
 
   return (
     <form className="home-help-form" onSubmit={submit}>
-      <label><span>Full name</span><input name="name" required autoComplete="name" /></label>
-      <label><span>Nationality</span><input name="country" required autoComplete="country-name" /></label>
-      <label><span>Phone</span><input name="phone" type="tel" required autoComplete="tel" /></label>
-      <button className="btn-primary" disabled={pending} type="submit">{pending ? "Sending..." : "Contact Now"}</button>
+      <label><span>{copy.fullName}</span><input name="name" required autoComplete="name" /></label>
+      <label><span>{copy.nationality}</span><input name="country" required autoComplete="country-name" /></label>
+      <label><span>{copy.phone}</span><input name="phone" type="tel" required autoComplete="tel" /></label>
+      <button className="btn-primary" disabled={pending} aria-busy={pending} type="submit">{copy.contactNow}</button>
       {failed ? <p role="alert">Something went wrong. Please try again.</p> : null}
     </form>
   );

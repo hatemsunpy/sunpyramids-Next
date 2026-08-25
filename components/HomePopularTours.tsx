@@ -4,40 +4,41 @@ import { useRef, useState } from "react";
 import { apiGet } from "@/lib/client-api";
 import { TourCard } from "@/components/TourCard";
 import type { ApiList, Locale, Tour } from "@/types/api";
+import { homeCopy } from "@/lib/home-copy";
 
 type Filter = {
   key: string;
-  label: string;
+  labelKey: string;
   endpoint: string | null;
 };
 
 const FILTERS: Filter[] = [
   {
     key: "recommended",
-    label: "Recommended",
+    labelKey: "recommended",
     endpoint: "tours/home?page=1&order_by=display_order,asc&page_limit=8",
   },
   {
     key: "one-day-tours",
-    label: "One Day Tours",
+    labelKey: "oneDayFilter",
     endpoint:
       "tours/home?page=1&page_limit=8&order_by=display_order,asc&categories.slug%5B%5D=night-tours&categories.slug%5B%5D=one-day-tours&categories.slug%5B%5D=half-day-tour&categories.slug%5B%5D=layover",
   },
   {
     key: "multi-days-tours",
-    label: "Multi Days Tours",
+    labelKey: "multiDaysFilter",
     endpoint:
       "tours/home?page_limit=8&page=1&order_by=display_order,asc&categories.id%5B%5D=all&categories.id%5B%5D=48&categories.id%5B%5D=39&categories.id%5B%5D=38&categories.id%5B%5D=12&categories.id%5B%5D=11&categories.id%5B%5D=10&categories.id%5B%5D=9&categories.id%5B%5D=8&categories.id%5B%5D=7&categories.id%5B%5D=6&categories.id%5B%5D=5&categories.id%5B%5D=4&categories.id%5B%5D=3",
   },
   {
     key: "nile-cruises",
-    label: "Nile Cruises",
+    labelKey: "nileCruisesFilter",
     endpoint:
       "tours/home?page_limit=8&page=1&order_by=display_order,asc&categories.id%5B%5D=null&categories.id%5B%5D=26&categories.id%5B%5D=27&categories.id%5B%5D=28",
   },
   {
     key: "shore-excursions",
-    label: "Shore Excursions",
+    labelKey: "shoreExcursionsFilter",
     endpoint:
       "tours/home?page_limit=8&page=1&order_by=display_order,asc&categories.id%5B%5D=all&categories.id%5B%5D=46&categories.id%5B%5D=45&categories.id%5B%5D=44&categories.id%5B%5D=43&categories.id%5B%5D=42&categories.id%5B%5D=23",
   },
@@ -56,9 +57,11 @@ export function HomePopularTours({
   initialTours: Tour[];
   locale?: Locale;
 }) {
+  const copy = homeCopy(locale);
   const [active, setActive] = useState("recommended");
   const [tours, setTours] = useState<Tour[]>(initialTours);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const cache = useRef<Record<string, Tour[]>>({ recommended: initialTours });
 
   async function select(next: Filter) {
@@ -71,14 +74,14 @@ export function HomePopularTours({
     }
     if (!next.endpoint) return;
     setLoading(true);
+    setFailed(false);
     try {
       const response = await apiGet<ApiList<Tour>>(next.endpoint, locale, false);
       const items = listData(response);
       cache.current[next.key] = items;
       setTours(items);
     } catch {
-      cache.current[next.key] = [];
-      setTours([]);
+      setFailed(true);
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,7 @@ export function HomePopularTours({
 
   return (
     <>
-      <div className="home-filter-pills" role="tablist" aria-label="Popular tour categories">
+      <div className="home-filter-pills" role="tablist" aria-label={copy.popularTitle}>
         {FILTERS.map((filter) => (
           <button
             aria-selected={active === filter.key}
@@ -96,13 +99,15 @@ export function HomePopularTours({
             role="tab"
             type="button"
           >
-            {filter.label}
+            {copy[filter.labelKey]}
           </button>
         ))}
       </div>
       <div aria-busy={loading} aria-live="polite" className="grid-cards home-tour-grid">
         {loading
           ? Array.from({ length: 4 }).map((_, index) => <div className="tour-card tour-card-skeleton" key={index} />)
+          : failed
+            ? <div className="home-filter-empty" role="alert">Tours are temporarily unavailable. Please try again.</div>
           : tours.length
             ? tours.map((tour) => <TourCard key={tour.id || tour.slug} locale={locale} tour={tour} />)
             : <div className="home-filter-empty">No tours are available for this category right now.</div>}

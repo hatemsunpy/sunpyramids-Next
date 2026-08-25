@@ -5,7 +5,7 @@
 | Customer flows are API-wired but not fully validated | Auth/profile/cart/checkout | Critical | Sprint 9 aligns confirmed backend contract gaps, but no staging credentials/cart/payment data were available. | Validate with staging backend before cutover; block production until passed. |
 | Payment callbacks could mutate state if moved server-side in future | Payment | Critical | Current implementation is client-only, but callbacks call mutation-like endpoints. | Keep `PaymentCallbackStatus` client-only; add safety validation report; review future changes. |
 | Checkout/payment parity incomplete | Revenue | Critical | Sprint 9 removed the unconfirmed `bookings/update/{id}` call and sends `payment_method` in `POST /api/bookings`, but payment sandbox flow remains unvalidated. | Validate exact flow with staging cart, payment method, payment redirect response, and sandbox invoice IDs. |
-| Dynamic settings/menu/footer/currency may be static in Next | UI/API parity | High | Nuxt shared store fetches `settings`, `countries`, `currencies`; Next shell uses local config/static links. | Validate dashboard-driven requirements; wire API if required. |
+| Dynamic settings/menu/footer/currency may be static in Next | UI/API parity | Closed for exposed Sprint 12 fields | Filtered settings, live currencies, team, and taxonomy are consumed. Phone/address/WhatsApp have no setting key. | Owner decides whether to extend the settings schema. |
 | Sitemap is not fully API/database complete | SEO | High | Current sitemap pulls static paths, tours, blogs, categories, destinations, and blog categories. Custom marketing pages remain undiscoverable. | Backend list endpoint or explicit exclusion/manual list approval required. |
 | UI parity gaps from consolidated React components | UX | High | Next uses fewer generic components than Nuxt. | Screenshot compare priority routes and fix confirmed mismatches. |
 | Tour detail booking/options/seasons may be incomplete | Revenue/UX | High | Nuxt fetches options/days/seasons and has complex right panel; Next includes differ. | Compare representative tour detail and validate booking panel. |
@@ -134,3 +134,38 @@
 ## Production Cutover Rule
 
 Cutover remains blocked while any Critical risk is open.
+
+## Sprint 11 P0 risk closure — 2026-08-24
+
+The following historical P0 risks are now closed:
+
+- Soft-200 detail risk: tour/blog/event valid/invalid statuses pass, and transient/malformed failures surface as 5xx.
+- Historic redirect loss: 20/20 exact Nuxt redirects pass status and `Location` checks.
+- Localized conversion/account 404 risk: 126/126 audited customer-flow locale routes pass; `/en` is still rejected.
+- Wrong server document language: 7/7 raw locale forms pass.
+- Campaign generic-content substitution: four API page mappings pass; unknown confirmed-invalid route 404.
+- Sitemap crawl risk: strict XML, full pagination, events/guide/taxonomies, dynamic chunks, reciprocal locales, daily atomic cache, and last-known-good behavior pass.
+
+The cache-size risk discovered during validation was also resolved. Caching the rich raw dataset exceeded Next's 2 MB item limit; the implementation now builds and caches the compact normalized catalog atomically, with the API origin in the cache key.
+
+## Sprint 12 P1 risk update — 2026-08-24
+
+- Closed: Trips taxonomy/count/destinations, public settings consumption, About team, selected rental currency, rental route lookup, profile refresh/logout/image, reset endpoint, social callback, and targeted shared-UI localization.
+- Critical backend risk: unfiltered public `GET settings` exposes internal/secret options. Restrict the public resource to an allowlist and rotate exposed credentials before cutover. Next requests only exact public keys but cannot secure the Laravel endpoint.
+- Dormant authorization risk: `BookingController::show` does not visibly scope the record to `auth()->id()`. Fix before any booking-detail UI is enabled.
+- Staging dashboard edit/observe/revert proof remains blocked by missing approved staging dashboard/API/frontend access.
+- Protected mutations, payment/coupon callbacks, tracking approval, and guest-cart IP identity acceptance remain governed by their existing owner gates.
+
+Production cutover remains **BLOCKED**.
+
+## Sprint 13 final risk update — 2026-08-24
+
+- **Closed frontend parity risk:** current Live contact data, approved logo, homepage order/content ownership, major homepage locale copy, and static-vs-dynamic classification now pass.
+- **Reduced frontend privacy risk:** profile data is hydrated from `profile/me` and is no longer duplicated into `sunpyramids-user`; legacy cookie is cleared on login/social login/logout/401.
+- **Reduced callback replay risk:** invoice-less callbacks stop before the API; same-page concurrent callback requests share one in-flight promise. Server-side idempotency/HTTP-method design remains backend-owned.
+- **`BACKEND_SECURITY_RISK`:** unfiltered settings exposure/credential rotation and booking-detail authorization scope remain production gates.
+- **`BACKEND_CHANGE_REQUIRED`:** server reCAPTCHA verification, payment GET-mutation/guard/config hardening, optional future guest-cart token, and explicit contact settings if business wants dashboard ownership.
+- **`BLOCKED_BY_STAGING_ACCESS`:** auth/profile/cart/coupon/rental/checkout and payment outcomes.
+- **`BLOCKED_BY_MARKETING_ACCESS`:** GTM Preview, GA4 DebugView, Google Ads, TikTok, and Clarity approval.
+
+Sprint 13 frontend scope passes. Production cutover remains **BLOCKED** until backend/security, staging/payment, marketing, and business-owner gates close or are explicitly accepted.

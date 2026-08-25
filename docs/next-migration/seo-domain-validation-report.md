@@ -199,3 +199,36 @@ Target: local production build at `http://127.0.0.1:3107`.
 | Invalid article 404 | valid-category/nonexistent-article returns 404 | Passed. |
 | API failure not fake 404 | apiFetchReliable throws on transient errors, only HTTP 404 triggers notFound | Passed. |
 | No /en route | resolvePrefixedLocale throws notFound for en | Passed. |
+
+## Sprint 11 P0 SEO/locale/sitemap update — Aug 24, 2026
+
+This update supplements, rather than replaces, the historical checks above.
+
+| Check | After Sprint 11 | Status |
+|---|---|---|
+| Canonical document origin | Runtime canonicals use `https://sunpyramidstours.com`, including root and localized campaign routes. | PASS |
+| API canonical normalization | Backend canonical path/query is retained but host is normalized to the frontend origin. | PASS |
+| Invalid entity metadata | Confirmed invalid tour/blog/event calls `notFound`; transient/malformed data throws. | PASS |
+| `x-default` metadata | Present and points to unprefixed English. | PASS |
+| Capability-aware metadata | English-only plan/tailor routes emit only `x-default` + `en`; seven-locale campaign routes emit their real cluster. | PASS |
+| `/en` | No metadata or sitemap URL uses `/en`; `/en` runtime is 404. | PASS |
+| Meta Keywords | No public `<meta name="keywords">` was emitted. | PASS |
+| Raw language | 7/7 root locale forms emitted the correct server-rendered value. | PASS |
+| Sitemap document domain | 4,972/4,972 `<loc>` values use the frontend domain. | PASS |
+| Sitemap alternates | Reciprocal, capability-aware, and `x-default` present on every record. | PASS |
+
+Sprint 11's directly related SEO scope is **PASS**. Overall SEO parity remains **PARTIAL** pending unrelated/broader SEO and translated UI work already recorded in this report.
+
+## Sprint 15 title, description, and listing-schema closure — Aug 25, 2026
+
+| Check | Evidence | Status |
+|---|---|---|
+| Duplicate brand suffix | Central absolute-title helper preserves one existing brand or adds it once. Representative home/about/contact/tour/blog/event/listing/localized titles contain one brand occurrence at most. | PASS |
+| Rich fallback description | Central metadata normalization recursively decodes common/numeric entities, removes script/style/HTML tags, and collapses whitespace. Parsed rich event description has no tags or encoded semantic markup entities. | PASS |
+| Canonical and `og:url` | Representative raw HTML points to the frontend public origin and matching route. | PASS |
+| Hreflang and language | `x-default` and supported alternates remain present; locale sample emits the correct `html lang`. | PASS |
+| Meta Keywords | Absent on all representative pages. | PASS |
+| Egypt Tours JSON-LD | Root and localized catch-all routes render valid backend `structure_schema` through shared safe parsing; one-day listing emitted two scripts. Empty/null/invalid input omits output. | PASS |
+| Sitemap SEO regression | 4,972 URLs, complete `x-default`, zero duplicates, zero `/en`, frontend origin, daily revalidation. | PASS |
+
+SEO parity for the audited frontend release-candidate scope is **PASS**. Production cutover remains blocked only by the separately documented external/backend gates.

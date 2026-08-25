@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/client-api";
+import { withLocale } from "@/lib/locales";
+import { uiCopy } from "@/lib/ui-copy";
+import type { Locale } from "@/types/api";
 
 type CallbackState = "loading" | "success" | "error" | "missing";
 
@@ -22,16 +25,33 @@ const endpointMap = {
 
 export type PaymentCallbackKind = keyof typeof endpointMap;
 
+// React development checks can mount a callback route more than once. Share
+// the in-flight request so one invoice URL cannot issue concurrent updates.
+const callbackRequests = new Map<string, Promise<ApiStatus>>();
+
+function requestCallbackStatus(callback: PaymentCallbackKind, invoiceId: string) {
+  const requestKey = `${callback}:${invoiceId}`;
+  const existing = callbackRequests.get(requestKey);
+  if (existing) return existing;
+  const request = apiGet<ApiStatus>(`${endpointMap[callback]}?invoice_id=${encodeURIComponent(invoiceId)}`);
+  callbackRequests.set(requestKey, request);
+  request.catch(() => callbackRequests.delete(requestKey));
+  return request;
+}
+
 export function PaymentCallbackStatus({
   provider,
   status,
   callback,
+  locale = "en",
 }: {
   provider: string;
   status: string;
   callback: PaymentCallbackKind;
+  locale?: Locale;
 }) {
   const params = useSearchParams();
+  const copy = uiCopy(locale);
   const invoiceId = params.get("invoice_id");
   const [state, setState] = useState<CallbackState>("loading");
   const [message, setMessage] = useState("");
@@ -53,7 +73,7 @@ export function PaymentCallbackStatus({
       processedKey.current = requestKey;
 
       try {
-        const response = await apiGet<ApiStatus>(`${endpointMap[callback]}?invoice_id=${encodeURIComponent(invoiceId)}`);
+        const response = await requestCallbackStatus(callback, invoiceId);
         if (canceled) return;
         setState(response.status ? "success" : "error");
         setMessage(response.message || "");
@@ -74,14 +94,14 @@ export function PaymentCallbackStatus({
   const isLoading = state === "loading";
   const isSuccess = state === "success";
   const title = isLoading
-    ? "Updating Payment"
+    ? copy.paymentPending
     : isSuccess && expectedSuccess
-      ? "Payment Confirmed"
+      ? copy.paymentSuccess
       : isSuccess
         ? "Payment Updated"
         : state === "missing"
           ? "Missing Invoice"
-          : "Payment Update Failed";
+          : copy.paymentFailed;
 
   return (
     <main className="payment-status">
@@ -97,8 +117,8 @@ export function PaymentCallbackStatus({
             : message || "Your payment callback has been processed."}
         </p>
         <div className="status-actions">
-          <Link className="btn-primary" href="/profile/bookings">View Bookings</Link>
-          <Link className="btn-outline" href="/contact-us">Contact Support</Link>
+          <Link className="btn-primary" href={withLocale("/profile/bookings", locale)}>{copy.myBookings}</Link>
+          <Link className="btn-outline" href={withLocale("/contact-us", locale)}>{copy.contact}</Link>
         </div>
       </section>
     </main>

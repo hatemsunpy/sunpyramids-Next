@@ -1,1 +1,16 @@
-export { default, generateMetadata } from "@/app/book-egypt-trip/page";
+import type { Metadata } from "next";
+import { getPageReliable } from "@/lib/data";
+import { resolveRequiredApiResult } from "@/lib/resolve-api-result";
+import { metadataFromPage } from "@/lib/seo";
+
+export { default } from "@/app/book-egypt-trip/page";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = resolveRequiredApiResult(
+    await getPageReliable("tailor-your-egypt-trip", "en"),
+    "tailor-your-egypt-trip page",
+  );
+  return metadataFromPage(page, "/egypt-tours/tailor-your-egypt-trip", "en", {
+    alternateLocales: ["en"],
+  });
+}

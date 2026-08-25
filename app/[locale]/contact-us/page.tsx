@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GenericPage } from "@/components/GenericPage";
 import { JsonLd } from "@/components/JsonLd";
 import { SiteShell } from "@/components/SiteShell";
-import { getPage } from "@/lib/data";
+import { getPage, getPublicSiteSettings } from "@/lib/data";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { metadataFromPage } from "@/lib/seo";
 
@@ -16,11 +16,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const locale = await resolvePrefixedLocale(params);
-  const page = await getPage("contact-us", locale);
+  const [page, settings] = await Promise.all([getPage("contact-us", locale), getPublicSiteSettings(locale)]);
   return (
-    <SiteShell locale={locale}>
+    <SiteShell locale={locale} settings={settings}>
       <JsonLd schema={page?.seo?.structure_schema} />
-      <GenericPage page={page} fallbackTitle="Contact Us" route="contact-us" locale={locale} />
+      <GenericPage page={page} fallbackTitle="Contact Us" route="contact-us" locale={locale} settings={settings} />
     </SiteShell>
   );
 }

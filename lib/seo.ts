@@ -40,6 +40,8 @@ const VALID_TWITTER_CARDS = new Set<TwitterCard>([
   "player",
 ]);
 
+const BRAND_NAME = "Sun Pyramids Tours";
+
 export const FRONTEND_ORIGIN =
   process.env.NEXT_PUBLIC_APP_URL || "https://sunpyramidstours.com";
 
@@ -71,14 +73,17 @@ export function metadataFromPage(
   page: ApiPage | null | undefined,
   path: string,
   locale: Locale,
+  options: { alternateLocales?: readonly Locale[] } = {},
 ): Metadata {
   const seo = page?.seo || {};
-  const title =
-    seo.meta_title || page?.title || page?.name || "Sun Pyramids Tours";
-  const description =
+  const title = normalizeMetadataText(
+    seo.meta_title || page?.title || page?.name || BRAND_NAME,
+  );
+  const description = normalizeMetadataText(
     seo.meta_description ||
-    page?.description ||
-    "Sun Pyramids Tours offers Egypt tours, Nile cruises, day tours, and vacation packages.";
+      page?.description ||
+      "Sun Pyramids Tours offers Egypt tours, Nile cruises, day tours, and vacation packages.",
+  );
   const canonical = normalizeCanonical(seo.canonical, path);
   const barePath = path === "/" ? "/" : path.replace(/^\/(fr|de|it|pt|es|zh)/, "") || "/";
 
@@ -89,18 +94,18 @@ export function metadataFromPage(
     },
   };
 
-  for (const item of locales) {
+  for (const item of options.alternateLocales ?? locales) {
     alternates.languages![item] = publicUrl(withLocale(barePath, item));
   }
 
   return {
-    title,
+    title: { absolute: brandedTitle(title) },
     description,
     robots: seo.robots || "index, follow",
     alternates,
     openGraph: {
       title: seo.og_title || title,
-      description: seo.og_description || description,
+      description: normalizeMetadataText(seo.og_description || description),
       url: canonical,
       siteName: "Sun Pyramids Tours",
       type: openGraphType(seo.og_type),
@@ -110,11 +115,65 @@ export function metadataFromPage(
     twitter: {
       card: twitterCard(seo.twitter_card),
       title: seo.twitter_title || seo.og_title || title,
-      description: seo.twitter_description || seo.og_description || description,
+      description: normalizeMetadataText(seo.twitter_description || seo.og_description || description),
       images: seo.twitter_image ? [seo.twitter_image] : undefined,
       creator: seo.twitter_creator || "@sunpyramidstours",
     },
   };
+}
+
+function brandedTitle(title: string) {
+  return title.toLocaleLowerCase().includes(BRAND_NAME.toLocaleLowerCase())
+    ? title
+    : `${title} | ${BRAND_NAME}`;
+}
+
+function normalizeMetadataText(value: string | null | undefined) {
+  if (!value) return "";
+
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    bull: "•",
+    copy: "©",
+    euro: "€",
+    gt: ">",
+    hellip: "…",
+    ldquo: "“",
+    lsquo: "‘",
+    lt: "<",
+    mdash: "—",
+    nbsp: " ",
+    ndash: "–",
+    pound: "£",
+    quot: '"',
+    rdquo: "”",
+    reg: "®",
+    rsquo: "’",
+    trade: "™",
+  };
+  let decoded = value;
+  for (let pass = 0; pass < 3; pass += 1) {
+    const next = decoded.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (entity, key: string) => {
+      if (key[0] !== "#") return namedEntities[key.toLowerCase()] ?? entity;
+      const hexadecimal = key[1]?.toLowerCase() === "x";
+      const codePoint = Number.parseInt(key.slice(hexadecimal ? 2 : 1), hexadecimal ? 16 : 10);
+      try {
+        return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity;
+      } catch {
+        return entity;
+      }
+    });
+    if (next === decoded) break;
+    decoded = next;
+  }
+
+  return decoded
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function openGraphType(type: string | null | undefined): OpenGraphType {

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ApiPage, Locale, Tour } from "@/types/api";
+import type { ApiPage, Locale, PublicSiteSettings, TeamMember, Tour } from "@/types/api";
 import { ContactForm } from "@/components/ContactForm";
 import { DestinationCard } from "@/components/DestinationCard";
 import { TourCard } from "@/components/TourCard";
@@ -8,6 +8,8 @@ import { BlogCard } from "@/components/BlogCard";
 import { PlannerRequestFlow } from "@/components/CustomerFlows";
 import { withLocale } from "@/lib/locales";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { uiCopy } from "@/lib/ui-copy";
+import { siteContact } from "@/lib/site-contact";
 
 type GenericPageProps = {
   page: ApiPage | null;
@@ -18,6 +20,8 @@ type GenericPageProps = {
   categories?: ApiPage[];
   tours?: Tour[];
   blogs?: ApiPage[];
+  team?: TeamMember[];
+  settings?: PublicSiteSettings;
 };
 
 const fallbackBanners: Record<string, string> = {
@@ -52,16 +56,18 @@ export function GenericPage({
   categories = [],
   tours = [],
   blogs = [],
+  team = [],
+  settings,
 }: GenericPageProps) {
   const title = page?.title || page?.name || fallbackTitle;
   const image = heroImage(page, route);
 
   if (route === "about-us") {
-    return <AboutPage page={page} title={title} image={image} locale={locale} faqs={faqs} />;
+    return <AboutPage page={page} title={title} image={image} locale={locale} faqs={faqs} team={team} />;
   }
 
   if (route === "contact-us") {
-    return <ContactPage page={page} title={title} image={image} locale={locale} />;
+    return <ContactPage page={page} title={title} image={image} locale={locale} settings={settings} />;
   }
 
   if (route === "faqs") {
@@ -102,20 +108,34 @@ function ContentPage({ page, title, image }: { page: ApiPage | null; title: stri
   );
 }
 
-function ContactPage({ page, title, image, locale }: { page: ApiPage | null; title: string; image: string; locale: Locale }) {
+function ContactPage({ page, title, image, locale, settings }: { page: ApiPage | null; title: string; image: string; locale: Locale; settings?: PublicSiteSettings }) {
+  const dynamicEmails = settings?.notificationEmails.length ? settings.notificationEmails : siteContact.safeFallbackEmails;
+  const emails = [...new Set([...dynamicEmails, ...siteContact.staticEmails])];
+  const copy = uiCopy(locale);
   return (
     <main>
       <PageHero title={title} image={image} />
       <section className="contact-clone container-shell">
         <div className="contact-info-panel">
-          <p className="eyebrow">Contact Info</p>
+          <p className="eyebrow">{copy.contactInfo}</p>
           <h2>Send Your Feedback</h2>
           <div className="content-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(page?.content || page?.description || "We would be happy to help you plan your Egypt trip.") }} />
           <div className="contact-methods">
-            <a href="tel:+201095888830">+20 109 588 8830</a>
-            <a href="tel:+201095888831">+20 109 588 8831</a>
-            <a href="mailto:info@sunpyramidstours.com">info@sunpyramidstours.com</a>
-            <p>Pyramids View Tower - Mansourieh Intersection with Faisal - Above Tseppas Pastry - Fourth Floor</p>
+            {siteContact.phones.map((phone) => <a key={phone.href} href={phone.href}>{phone.display}</a>)}
+            <a href={siteContact.whatsapp.contactUrl} target="_blank" rel="noreferrer">
+              WhatsApp {siteContact.whatsapp.display}
+            </a>
+            {emails.map((email) => <a key={email} href={`mailto:${email}`}>{email}</a>)}
+            {settings?.locationUrl ? (
+              <a href={settings.locationUrl} target="_blank" rel="noreferrer">{siteContact.address}</a>
+            ) : <p>{siteContact.address}</p>}
+            {settings?.socialLinks.length ? (
+              <div className="footer-social-links" aria-label="Social links">
+                {settings.socialLinks.map((item) => (
+                  <a key={`${item.type}-${item.url}`} href={item.url} target="_blank" rel="noreferrer">{item.type}</a>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
         <ContactForm locale={locale} />
@@ -124,7 +144,8 @@ function ContactPage({ page, title, image, locale }: { page: ApiPage | null; tit
   );
 }
 
-function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null; title: string; image: string; locale: Locale; faqs: ApiPage[] }) {
+function AboutPage({ page, title, image, locale, faqs, team }: { page: ApiPage | null; title: string; image: string; locale: Locale; faqs: ApiPage[]; team: TeamMember[] }) {
+  const copy = uiCopy(locale);
   const gallery = page?.gallery || [];
   const goals = [
     ["Mission", metaHtml(page, "mission")],
@@ -158,15 +179,20 @@ function AboutPage({ page, title, image, locale, faqs }: { page: ApiPage | null;
       <section className="team-section container-shell">
         <div className="section-heading original-heading">
           <div>
-            <h2>Our Team</h2>
+            <h2>{copy.team}</h2>
             <p>The people behind your Egypt journey</p>
           </div>
         </div>
         <div className="team-grid">
-          {["Ahmed_Talaat", "Yasmin_Ahmed", "NadaAbdelazim", "HagarHassan"].map((name) => (
-            <Image key={name} src={`/images/team/${name}.png`} alt={name.replaceAll("_", " ")} width={260} height={300} />
+          {team.map((member) => (
+            <article className="team-card" key={`${member.name}-${member.position}`}>
+              <Image src={member.image} alt={member.name} width={260} height={300} />
+              <h3>{member.name}</h3>
+              <p>{member.position}</p>
+            </article>
           ))}
         </div>
+        {!team.length ? <p className="muted">Team information is temporarily unavailable.</p> : null}
       </section>
       <FaqTeaser faqs={faqs} locale={locale} />
     </main>

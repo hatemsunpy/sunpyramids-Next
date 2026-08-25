@@ -7,21 +7,32 @@ function buildUrl(endpoint: string) {
   return new URL(endpoint.replace(/^\/+/, ""), API_BASE).toString();
 }
 
-function authHeaders(locale: Locale, withToken = false) {
-  const headers: HeadersInit = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    "X-Localize": locale,
-  };
-
+function authHeaders(locale: Locale, withToken = false, json = true) {
+  const headers: HeadersInit = { Accept: "application/json", "X-Localize": locale };
+  if (json) headers["Content-Type"] = "application/json";
   if (withToken && typeof document !== "undefined") {
     const token = getCookie("sunpyramids-token");
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) headers.Authorization = `Bearer ${token}`;
   }
-
   return headers;
+}
+
+export class ApiClientError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiClientError";
+  }
+}
+
+async function throwApiError(response: Response): Promise<never> {
+  let message = `API request failed: ${response.status}`;
+  try {
+    const payload = await response.clone().json() as { message?: string };
+    if (payload.message) message = payload.message;
+  } catch {
+    // Non-JSON error responses retain the status-based message.
+  }
+  throw new ApiClientError(message, response.status);
 }
 
 export function getCookie(name: string) {
@@ -40,99 +51,52 @@ export function setCookie(name: string, value: string | null) {
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=2592000; samesite=lax`;
 }
 
-export async function apiPost<T>(
-  endpoint: string,
-  body: unknown,
-  locale: Locale = "en",
-  withToken = false,
-): Promise<T> {
+export async function apiPost<T>(endpoint: string, body: unknown, locale: Locale = "en", withToken = false): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
-    method: "POST",
-    headers: authHeaders(locale, withToken),
-    body: JSON.stringify(body),
-    cache: "no-store",
+    method: "POST", headers: authHeaders(locale, withToken), body: JSON.stringify(body), cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as T;
 }
 
-export async function apiGet<T>(
-  endpoint: string,
-  locale: Locale = "en",
-  withToken = true,
-): Promise<T> {
+export async function apiGet<T>(endpoint: string, locale: Locale = "en", withToken = true): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
-    method: "GET",
-    headers: authHeaders(locale, withToken),
-    cache: "no-store",
+    method: "GET", headers: authHeaders(locale, withToken), cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as T;
 }
 
-export async function apiPatch<T>(
-  endpoint: string,
-  body: unknown,
-  locale: Locale = "en",
-  withToken = true,
-): Promise<T> {
+export async function apiPatch<T>(endpoint: string, body: unknown, locale: Locale = "en", withToken = true): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
-    method: "PATCH",
-    headers: authHeaders(locale, withToken),
-    body: JSON.stringify(body),
-    cache: "no-store",
+    method: "PATCH", headers: authHeaders(locale, withToken), body: JSON.stringify(body), cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as T;
 }
 
-export async function apiPut<T>(
-  endpoint: string,
-  locale: Locale = "en",
-  withToken = true,
-  body?: unknown,
-): Promise<T> {
+export async function apiPut<T>(endpoint: string, locale: Locale = "en", withToken = true, body?: unknown): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
-    method: "PUT",
-    headers: authHeaders(locale, withToken),
-    body: body === undefined ? undefined : JSON.stringify(body),
-    cache: "no-store",
+    method: "PUT", headers: authHeaders(locale, withToken),
+    body: body === undefined ? undefined : JSON.stringify(body), cache: "no-store",
   });
-
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as T;
 }
 
-export async function apiDelete<T>(
-  endpoint: string,
-  locale: Locale = "en",
-  withToken = true,
-): Promise<T> {
+export async function apiDelete<T>(endpoint: string, locale: Locale = "en", withToken = true): Promise<T> {
   const response = await fetchWithTimeout(buildUrl(endpoint), {
-    method: "DELETE",
-    headers: authHeaders(locale, withToken),
-    cache: "no-store",
+    method: "DELETE", headers: authHeaders(locale, withToken), cache: "no-store",
   });
+  if (!response.ok) await throwApiError(response);
+  return (await response.json()) as T;
+}
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
-
+export async function apiPostForm<T>(endpoint: string, body: FormData, locale: Locale = "en", withToken = true): Promise<T> {
+  const response = await fetchWithTimeout(buildUrl(endpoint), {
+    method: "POST", headers: authHeaders(locale, withToken, false), body, cache: "no-store",
+  });
+  if (!response.ok) await throwApiError(response);
   return (await response.json()) as T;
 }
 

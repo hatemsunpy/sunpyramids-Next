@@ -1,0 +1,42 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { Locale } from "@/types/api";
+import { setCookie } from "@/lib/client-api";
+import { withLocale } from "@/lib/locales";
+
+export function SocialLoginCallback({ locale = "en" }: { locale?: Locale }) {
+  const params = useSearchParams();
+  const router = useRouter();
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = params.get("token");
+    const rawUser = params.get("user");
+    if (!token || !rawUser) {
+      queueMicrotask(() => setError("The social login response was incomplete."));
+      return;
+    }
+    try {
+      const user = JSON.parse(rawUser) as Record<string, unknown>;
+      if (!user || typeof user !== "object") throw new Error("Invalid user payload");
+      setCookie("sunpyramids-token", token);
+      setCookie("sunpyramids-user", null);
+      router.replace(withLocale("/", locale));
+    } catch {
+      queueMicrotask(() => setError("The social login response could not be verified."));
+    }
+  }, [locale, params, router]);
+
+  return (
+    <main className="payment-status">
+      <section className="status-card">
+        <h1>{error ? "Social login failed" : "Completing social login"}</h1>
+        <p className={error ? "form-message error" : "muted"}>{error || "Please wait while your session is created."}</p>
+        {error ? <Link className="btn-primary" href={withLocale("/auth/sign-in", locale)}>Return to sign in</Link> : null}
+      </section>
+    </main>
+  );
+}

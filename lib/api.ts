@@ -68,6 +68,7 @@ async function sleep(ms: number) {
 export type ApiResult<T> =
   | { ok: true; value: T | null }
   | { ok: false; reason: "not_found" }
+  | { ok: false; reason: "invalid_response"; status?: number; message?: string }
   | { ok: false; reason: "error"; status?: number; message?: string };
 
 export function formatApiError(result: ApiResult<unknown>): string {
@@ -124,8 +125,24 @@ export async function apiFetchReliable<T>(
         return { ok: false, reason: "error", status: response.status };
       }
 
-      const value = (await response.json()) as T;
-      return { ok: true, value };
+      try {
+        const value = (await response.json()) as T;
+        return { ok: true, value };
+      } catch (error) {
+        if (
+          controller.signal.aborted ||
+          (error instanceof DOMException && error.name === "AbortError") ||
+          error instanceof TypeError
+        ) {
+          throw error;
+        }
+        return {
+          ok: false,
+          reason: "invalid_response",
+          status: response.status,
+          message: error instanceof Error ? error.message : "Response was not valid JSON",
+        };
+      }
     } catch (err) {
       lastMessage = err instanceof Error ? err.message : String(err);
       if (attempt < maxAttempts) {

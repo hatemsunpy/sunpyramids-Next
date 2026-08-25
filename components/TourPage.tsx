@@ -13,6 +13,7 @@ import { useCurrency } from "@/components/CurrencyProvider";
 import { PriceText } from "@/components/PriceText";
 import { optionCost } from "@/components/CustomerFlows";
 import { parseLocalCalendarDate } from "@/lib/local-date";
+import { whatsappInquiryUrl } from "@/lib/site-contact";
 
 export function TourPage({
   tour,
@@ -397,7 +398,7 @@ function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; 
           <button type="button" className="btn-outline">
             Favorites
           </button>
-          <a className="btn-outline" href={`https://wa.me/201095888830?text=${encodeURIComponent(`I want to inquire about a tour (${tour?.title})`)}`} target="_blank" rel="noreferrer">
+          <a className="btn-outline" href={whatsappInquiryUrl(`I want to inquire about a tour (${tour?.title})`)} target="_blank" rel="noreferrer">
             Ask a question
           </a>
         </div>

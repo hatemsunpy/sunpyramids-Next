@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DestinationCard } from "@/components/DestinationCard";
+import { JsonLd } from "@/components/JsonLd";
 import { Pagination } from "@/components/Pagination";
 import { ResultCount } from "@/components/ResultCount";
 import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
-import { getCategory, getCategoryReliable, getDestination, getDestinationReliable, getDestinations, getPage, getTours, tourListData, tourMeta } from "@/lib/data";
+import { getCategoryReliable, getDestinationReliable, getDestinations, getPageReliable, getTours, tourListData, tourMeta } from "@/lib/data";
 import { formatApiError, type ApiResult } from "@/lib/api";
 import { metadataFromPage } from "@/lib/seo";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
@@ -15,6 +16,13 @@ const pageSlugMap: Record<string, string> = {
   "multi-days-tours": "multi-days-tours",
   "nile-cruises": "nile-cruises",
   "shore-excursions": "shore-excursions",
+};
+
+const marketingPageKeyMap: Record<string, string> = {
+  "egypt-sightseeing-tours": "egypt-sightseeing-tours",
+  "egypt-travel-packages": "egypt-travel-packages",
+  "egypt-vacation-packages": "egypt-vacation-packages",
+  "pyramids-tours": "pyramids-tours",
 };
 
 type Props = {
@@ -38,9 +46,9 @@ async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<Ap
   if (root === "multi-days-tours" || root === "shore-excursions") {
     return getCategoryReliable(root, locale);
   }
-  const pageSlug = pageSlugMap[root] || "tours-search-results";
-  const page = await getPage(pageSlug, locale);
-  return { ok: true, value: page };
+  const pageSlug = pageSlugMap[root] || marketingPageKeyMap[root];
+  if (pageSlug) return getPageReliable(pageSlug, locale);
+  return getCategoryReliable(root, locale);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -97,6 +105,7 @@ export default async function Page({ params, searchParams }: Props) {
 
   return (
     <SiteShell locale="en">
+      <JsonLd schema={page.seo?.structure_schema} />
       <main>
         <section
           className="page-hero"
