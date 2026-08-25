@@ -329,6 +329,7 @@ export async function getRelatedTours(tour: Tour | null, locale: Locale, limit =
   const params = new URLSearchParams();
   params.set("page_limit", String(limit + 1));
   params.set("order_by", "display_order,asc");
+  params.set("exists", "wishlisted");
   categoryIds.forEach((id) => params.append("categories.id[]", String(id)));
   const response = await apiFetch<ApiList<Tour>>(`tours?${params.toString()}`, { locale });
   return listData(response).filter((item) => item.id !== tour.id).slice(0, limit);
@@ -413,6 +414,50 @@ export async function getBlogs(locale: Locale, limit = 9) {
   return listData(response);
 }
 
+export type BlogListing = {
+  blogs: ApiPage[];
+  currentPage: number;
+  lastPage: number;
+};
+
+function blogListingData(response: ApiList<ApiPage> | null | undefined): BlogListing {
+  const pagination = Array.isArray(response?.data) ? response : response?.data;
+  return {
+    blogs: listData(response),
+    currentPage: pagination?.current_page ?? 1,
+    lastPage: pagination?.last_page ?? 1,
+  };
+}
+
+export async function getBlogListing(
+  locale: Locale,
+  title = "",
+) {
+  const params = new URLSearchParams({
+    includes: "categories,seo",
+    page_limit: "10",
+    order_by: "display_order,asc",
+    page: "1",
+  });
+  if (title.trim()) params.set("title", `*${title.trim()}*`);
+  const response = await apiFetch<ApiList<ApiPage>>(`blogs?${params.toString()}`, { locale });
+  return blogListingData(response);
+}
+
+export async function getAllBlogCategories(locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>("blog-categories?page_limit=100", { locale });
+  const livePageExcludedCategoryId = "36";
+  return listData(response).filter((category) => String(category.id ?? "").trim() !== livePageExcludedCategoryId);
+}
+
+export async function getBlogFaqs(locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    "faqs?page_limit=5&tag%5B%5D=pages.general&tag%5B%5D=pages.blog",
+    { locale },
+  );
+  return listData(response);
+}
+
 export async function getBlog(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: ApiPage }>(
     `blogs/${encodeURIComponent(slug)}?includes=seo,category,related`,
@@ -426,7 +471,7 @@ export async function getBlogReliable(
   locale: Locale,
 ): Promise<ApiResult<ApiPage>> {
   const apiResult = await apiFetchReliable<{ data?: ApiPage }>(
-    `blogs/${encodeURIComponent(slug)}?includes=seo,categories`,
+    `blogs/${encodeURIComponent(slug)}?includes=seo,categories,relatedTours`,
     { locale },
   );
   if (!apiResult.ok) return apiResult;
@@ -434,4 +479,22 @@ export async function getBlogReliable(
     return { ok: false, reason: "invalid_response", message: "Blog response did not contain data" };
   }
   return { ok: true, value: apiResult.value.data };
+}
+
+export async function getBlogPostFaqs(slug: string, locale: Locale) {
+  const response = await apiFetch<ApiList<ApiPage>>(
+    `faqs?page_limit=5&tag%5B%5D=blogs.general&tag%5B%5D=blogs.${encodeURIComponent(slug)}`,
+    { locale },
+  );
+  return listData(response);
+}
+
+export async function getRelatedBlogs(slug: string, locale: Locale) {
+  const params = new URLSearchParams({
+    page_limit: "5",
+    order_by: "display_order,asc",
+    slug: `!eq::${slug}`,
+  });
+  const response = await apiFetch<ApiList<ApiPage>>(`blogs?${params.toString()}`, { locale });
+  return listData(response);
 }

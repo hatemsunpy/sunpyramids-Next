@@ -9,6 +9,8 @@ import { HomeNeedHelpForm } from "@/components/HomeNeedHelpForm";
 import { HomeSearchShortcuts } from "@/components/HomeSearchShortcuts";
 import { HomePopularTours } from "@/components/HomePopularTours";
 import { HomeHeroMedia } from "@/components/HomeHeroMedia";
+import { TravelPartners } from "@/components/TravelPartners";
+import { SwipeCarousel } from "@/components/SwipeCarousel";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { homeCopy } from "@/lib/home-copy";
 
@@ -18,12 +20,6 @@ const gallery = [
   ["/images/tiktok.png", "/images/tiktok-gallary.png", "TikTok", "tiktok"],
   ["/images/instagram.png", "/images/insta-gallary.png", "Instagram", "insta-link"],
   ["/images/youtubetwo.png", "/images/fb-logo.webp", "Facebook", "youtube-video-2"],
-];
-
-const partners = [
-  "partner1.webp", "civitatis.webp", "partner.webp", "partner2.webp", "partner3.webp",
-  "partner4.webp", "partner5.webp", "partner6.webp", "partner7.webp", "partner8.webp",
-  "partner9.webp", "partner12.webp", "partner99.webp", "tourradar.webp", "viator.webp",
 ];
 
 function ShortcutIcon({ type }: { type: "make" | "find" | "car" }) {
@@ -112,9 +108,9 @@ export function HomePage({
           </div>
           <Link className="see-more-link" href={withLocale("/event/egypt-christmas-event-2027", locale)}>{copy.seeMore}</Link>
         </div>
-        <div className="grid-cards">
+        <SwipeCarousel className="grid-cards home-mobile-card-track" ariaLabel={copy.seasonalTitle}>
           {tours.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale={locale} />)}
-        </div>
+        </SwipeCarousel>
       </section>
 
       <section className="section-pad container-shell home-live-section">
@@ -139,9 +135,9 @@ export function HomePage({
           <div><h2>{copy.specialOffersTitle}</h2><p>{copy.specialOffersDescription}</p></div>
           <Link className="see-more-link" href={withLocale("/trips?main=special-offers", locale)}>{copy.seeMore}</Link>
         </div>
-        <div className="grid-cards">
+        <SwipeCarousel className="grid-cards home-mobile-card-track" ariaLabel={copy.specialOffersTitle}>
           {specialOffers.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale={locale} />)}
-        </div>
+        </SwipeCarousel>
       </section>
 
       <section className="home-how-section">
@@ -160,13 +156,13 @@ export function HomePage({
 
       <section className="section-pad home-highlights-section">
         <div className="container-shell home-centered-heading"><h2>{copy.highlightsTitle}</h2><p>{copy.highlightsDescription}</p></div>
-        <div className="home-highlight-track">
+        <SwipeCarousel className="home-highlight-track" ariaLabel={copy.highlightsTitle}>
           {highlights.map((destination) => {
             const title = destination.title || destination.name || "Egypt";
             const image = destination.featured_image || destination.image || destination.banner || "/images/mainBanner.png";
             return <Link className="home-highlight-card" key={destination.id || destination.slug} href={withLocale(`/egypt-tours/one-day-tours/${destination.slug || destination.id}`, locale)}><Image src={image} alt={title} fill sizes="(max-width: 768px) 44vw, 24vw" /><span>{title}</span></Link>;
           })}
-        </div>
+        </SwipeCarousel>
       </section>
 
       <section className="section-pad container-shell">
@@ -176,9 +172,9 @@ export function HomePage({
           </div>
           <Link className="see-more-link" href={withLocale("/blogs/all-blogs", locale)}>{copy.seeMore}</Link>
         </div>
-        <div className="grid-cards blog-grid">
+        <SwipeCarousel className="grid-cards blog-grid home-mobile-card-track home-blog-track" ariaLabel={copy.travelBlogs}>
           {blogs.slice(0, 4).map((blog) => <BlogCard key={blog.id || blog.slug} blog={blog} locale={locale} />)}
-        </div>
+        </SwipeCarousel>
       </section>
 
       <section className="home-certification-section">
@@ -188,13 +184,13 @@ export function HomePage({
 
       <section className="section-pad container-shell home-gallery-section">
         <div className="home-centered-heading"><h2>{copy.galleryTitle}</h2><p>{copy.galleryDescription}</p></div>
-        <div className="home-social-gallery">
+        <SwipeCarousel className="home-social-gallery" ariaLabel={copy.galleryTitle}>
           {gallery.map(([image, icon, label, type]) => {
             const content = <><Image src={image} alt={`${label} travel moments`} fill sizes="(max-width: 768px) 72vw, 25vw" /><Image className="home-gallery-icon" src={icon} alt="" width={66} height={66} /></>;
             const url = socialUrls.get(type);
             return <article key={label}>{url ? <a href={url} target="_blank" rel="noreferrer" aria-label={label}>{content}</a> : content}</article>;
           })}
-        </div>
+        </SwipeCarousel>
       </section>
 
       <section className="section-pad container-shell review-section">
@@ -213,9 +209,7 @@ export function HomePage({
         <div className="home-help-panel"><h2>{copy.needHelp}</h2><HomeNeedHelpForm locale={locale} /></div>
       </section>
 
-      <section className="home-partners" aria-label="Travel partners">
-        {partners.map((name) => <Image key={name} src={`https://sunpyramidtours.com/storage/media/pages/assets/partner/${name}`} alt="Sun Pyramids Tours partner" width={110} height={72} />)}
-      </section>
+      <TravelPartners />
     </main>
   );
 }

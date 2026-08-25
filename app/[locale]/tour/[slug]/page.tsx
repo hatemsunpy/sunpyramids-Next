@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
 import { SiteShell } from "@/components/SiteShell";
 import { TourPage } from "@/components/TourPage";
-import { getTourReliable } from "@/lib/data";
+import { getRelatedTours, getTourReliable } from "@/lib/data";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { resolveRequiredApiResult } from "@/lib/resolve-api-result";
 import { metadataFromPage } from "@/lib/seo";
@@ -20,10 +20,11 @@ export default async function Page({ params }: Props) {
   const resolved = await params;
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
   const tour = resolveRequiredApiResult(await getTourReliable(resolved.slug, locale), `tour "${resolved.slug}"`);
+  const relatedTours = await getRelatedTours(tour, locale, 12);
   return (
     <SiteShell locale={locale}>
       <JsonLd schema={tour?.seo?.structure_schema} />
-      <TourPage tour={tour} locale={locale} />
+      <TourPage tour={tour} relatedTours={relatedTours} locale={locale} />
     </SiteShell>
   );
 }

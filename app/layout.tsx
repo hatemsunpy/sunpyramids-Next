@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { ThirdPartyScripts } from "@/components/ThirdPartyScripts";
 import { isLocale } from "@/lib/locales";
@@ -11,6 +11,12 @@ export const metadata: Metadata = {
     template: "%s | Sun Pyramids Tours",
   },
   description: "Sun Pyramids Tours offers Egypt tours, Nile cruises, day tours, and vacation packages.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
