@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { ThirdPartyScripts } from "@/components/ThirdPartyScripts";
+import { isLocale } from "@/lib/locales";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -11,9 +13,11 @@ export const metadata: Metadata = {
   description: "Sun Pyramids Tours offers Egypt tours, Nile cruises, day tours, and vacation packages.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const routeLocale = (await headers()).get("x-sunpyramids-route-locale") || "en";
+  const lang = isLocale(routeLocale) ? routeLocale : "en";
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body>
         <noscript>
           <iframe
@@ -25,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </noscript>
         {children}
         <ThirdPartyScripts />
-</body>
+      </body>
     </html>
   );
 }

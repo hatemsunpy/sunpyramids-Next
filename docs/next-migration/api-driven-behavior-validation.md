@@ -20,7 +20,7 @@
 
 | Area | Gap | Required action |
 |---|---|---|
-| Settings/header/footer | Nuxt fetches `settings`, `countries`, `currencies`; Next may use static shell values. | Confirm whether dashboard-managed header/footer/currency must be API-driven before cutover. |
+| Settings/header/footer | Nuxt fetches `settings`, `countries`, `currencies`; Next now requests an explicit public setting-key allowlist and live currencies. | Current public keys pass; phone/address/WhatsApp require backend schema or owner acceptance. |
 | Auth | Next now posts login/register/password endpoints. | Validate with staging credentials and expired/invalid session cases. |
 | Profile | Next now patches profile and fetches bookings/favourites client-side after token check. | Validate with staging account data. |
 | Cart | Next now fetches cart list and supports clear/remove/coupon/tour edit via confirmed endpoints. | Validate with populated staging cart state. |
@@ -376,6 +376,17 @@ Date: 2026-08-09
 | CORS | `Access-Control-Allow-Origin: *`, `supports_credentials = false`; no cookie needed. |
 | Currency conversion | Guest cart totals convert via `exchange_rate` (verified USD → EUR). |
 | Checkout | Guest `bookings` payload includes selected `currency_id`; no auth required by API. |
+
+## Sprint 12 API-driven regression — 2026-08-24
+
+- Live Trips taxonomy/count/destinations rendered from three reliable server GETs and drove category/destination/title tour queries.
+- Shell/contact/about rendered filtered current settings and `company_team`; unfiltered settings are deliberately never requested by Next.
+- Rental route lookup and append payload use exact backend names and the selected live currency ID.
+- Profile state refreshes from `profile/me`; update/image/logout contracts are wired with 401 cleanup.
+- Missing/partial taxonomy and team payloads render explicit unavailable states instead of invented records.
+- Safe runtime and optimized build passed; protected and customer-data mutations were not invoked.
+
+Current API-driven behavior: **PARTIAL overall, PASS for the Sprint 12 P1 surfaces**.
 | Nuxt parity | Live Nuxt frontend behaves identically (no `credentials`, no proxy, same API). |
 | Conclusion | Guest cart works in Next.js, but the IP-keyed shared state is a **cross-user privacy and cart-integrity risk** (guests on the same public IP can view and mutate one another's cart). Cutover acceptance requires the product/security owner to **record their name and date in `risk-register.md`**. Earlier "HTTP-only session cookie" assumption was incorrect. See `guest-cart-session-investigation.md`. |
 
@@ -420,3 +431,33 @@ A new `apiFetchReliable` helper (`lib/api.ts`) returns a typed `ApiResult<T>`:
 ### Remaining limitations
 - The `[cate]` index route (`page.tsx`) does not validate the parent cate on the `[id]` page's behalf — this is intentional because the `[id]` page now performs its own parent validation independently.
 - The `generateMetadata` function calls the same `resolveTravelGuideDetail` helper, so metadata fetch failures are handled identically to page-body failures.
+
+## Sprint 13 safe regression — 2026-08-24
+
+| Behavior | Result |
+|---|---|
+| Homepage dynamic/static ownership | 20/20 proven; 12 API-driven/mixed, 8 intentional static, 0 unknown |
+| Homepage/contact render | HTTP 200; all required section headings; approved logo; exact phones/address/sustainability mailbox; no browser console errors in diagnostic mode |
+| Invalid detail semantics | tour/blog/event invalid slugs: 404/404/404 |
+| Redirect contract | 20/20 exact permanent redirects PASS |
+| Locale/document contract | 7/7 supported roots PASS; `/en` 404 |
+| Payment no-invoice safety | 200 shell renders “Missing Invoice”; source exits before API request |
+| Split sitemap | index + 6 children HTTP 200; 4,972 URLs; 4,972 `x-default`; 0 `/en`; 0 duplicate locations; `revalidate=86400` |
+| Build/type | Next 16.2.9 production build PASS |
+
+Frontend dynamic behavior passes within the safe read-only runtime scope. Protected/staging mutations, dashboard propagation, payment sandbox outcomes, backend reCAPTCHA verification, and tracking-debug approval remain external gates.
+
+## Sprint 15 targeted safe regression — 2026-08-25
+
+| Behavior | Result |
+|---|---|
+| Cart option ownership | PASS — API tour options render as named/price-bearing checkboxes; only selected response IDs enter `options[]`. |
+| Coupon/payment ownership | PASS — coupon code validation supplies the internal coupon ID; Card/PayPal are visible choices and the confirmed Card gateway value is internal. |
+| Book selected tours | PASS — Nuxt category `54` query remains API-driven and rendered four cards in every supported locale. |
+| Backend SEO/schema ownership | PASS — backend metadata remains authoritative; valid listing `structure_schema` emits through the shared safe parser. |
+| 404/redirect/locale | PASS — five invalid detail/guide cases 404; 20/20 redirects; 7/7 roots/lang; `/en` 404. |
+| Responsive inquiry route | PASS — document width never exceeds viewport at 375/430/768/1024/1440. |
+| Split sitemap | PASS — six children, 4,972 URLs, 4,972 `x-default`, no `/en`, no duplicates, frontend origin, `revalidate=86400`. |
+| Build/type/lint/diff | PASS/PASS/PASS. |
+
+No production mutation was performed. Populated-cart and payment outcomes remain gated on approved staging/test data and payment sandboxes.

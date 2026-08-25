@@ -1009,8 +1009,10 @@ select {
 .home-certification-section img { width: 100%; height: auto; object-fit: contain; }
 .home-social-gallery { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 190px); gap: .75rem; margin-top: 2.5rem; }
 .home-social-gallery article { position: relative; overflow: hidden; border-radius: 16px; }
+.home-social-gallery article > a { position: absolute; inset: 0; display: block; }
 .home-social-gallery article:nth-child(1), .home-social-gallery article:nth-child(3), .home-social-gallery article:nth-child(4) { grid-row: span 2; }
-.home-social-gallery article > img:first-child { object-fit: cover; }
+.home-social-gallery article > img:first-child,
+.home-social-gallery article > a > img:first-child { object-fit: cover; }
 .home-social-gallery .home-gallery-icon { position: absolute; z-index: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px; object-fit: contain; }
 .home-faq-section { display: grid; grid-template-columns: minmax(260px, .75fr) minmax(0, 1.25fr); gap: 5rem; padding: 4rem max(1rem, calc((100vw - 1280px) / 2)); background: #fff; }
 .home-faq-title { min-height: 180px; background: url('/images/mark.svg') no-repeat right center / contain; }
@@ -1082,6 +1084,20 @@ select {
 .footer-links {
   display: grid;
   gap: 0.75rem;
+}
+
+.footer-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.footer-social-links a {
+  border: 1px solid #666;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  text-transform: capitalize;
 }
 
 .whatsapp-float {
@@ -1531,6 +1547,7 @@ select {
 
 .account-form input,
 .checkout-form-card input,
+.checkout-form-card select,
 .checkout-form-card textarea {
   width: 100%;
   border: 1px solid #eeeeee;
@@ -1654,11 +1671,94 @@ select {
   margin-top: 0;
 }
 
-.trips-filter span {
+.trips-filter > span,
+.trips-filter a {
   border-radius: 999px;
   background: #f7f7f7;
   padding: 0.65rem 0.85rem;
   font-weight: 600;
+}
+
+.cart-inline-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.cart-inline-form > input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid #eeeeee;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.cart-option-fieldset {
+  min-width: 0;
+  grid-column: 1 / -1;
+  border: 1px solid #eeeeee;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.cart-option-fieldset legend {
+  padding-inline: 0.35rem;
+  font-weight: 700;
+}
+
+.account-profile-forms,
+.profile-image-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-image-form {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.profile-image-form img {
+  width: 6rem;
+  height: 6rem;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.team-card {
+  overflow: hidden;
+  border: 1px solid #e6e6e6;
+  border-radius: 1rem;
+  text-align: center;
+}
+
+.team-card h3 {
+  margin: 1rem 1rem 0.25rem;
+  color: #125e87;
+}
+
+.team-card p {
+  margin: 0 1rem 1.25rem;
+  color: #666;
+}
+
+.trips-filter a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.trips-filter a.is-active {
+  background: #e9eefc;
+  color: var(--primary);
+}
+
+.trips-filter small {
+  color: #666;
+  font-size: 0.75rem;
 }
 
 .trips-results {
@@ -1676,11 +1776,18 @@ select {
   color: #fff;
   background-position: center;
   background-size: cover;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55)), var(--landing-desktop-image);
   padding: 8rem clamp(1rem, 4vw, 5rem) 5rem;
 }
 
 .landing-hero > div {
   width: min(100%, 48rem);
+}
+
+@media (max-width: 767px) {
+  .landing-hero {
+    background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55)), var(--landing-mobile-image);
+  }
 }
 
 .landing-hero h1 {
@@ -1692,6 +1799,36 @@ select {
 
 .landing-hero .eyebrow {
   color: #fff;
+}
+
+.landing-hero-description {
+  max-width: 42rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.6;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+
+.landing-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #1faf38;
+  color: #fff;
+  font-weight: 700;
+}
+
+.book-trip-why .why-grid {
+  padding-block: 0;
 }
 
 .why-grid {
@@ -1711,6 +1848,11 @@ select {
 
 .landing-contact {
   margin-bottom: 4rem;
+}
+
+.book-trip-contact .landing-contact {
+  max-width: 54rem;
+  margin: 0 auto;
 }
 
 .content-prose {
@@ -2055,6 +2197,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 .tour-right-panel {
@@ -2064,12 +2207,15 @@ select {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  min-width: 0;
 }
 
 .tour-gallery {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .tour-gallery-main {
@@ -2097,6 +2243,8 @@ select {
   gap: 0.5rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .tour-gallery-thumb {
@@ -2693,7 +2841,7 @@ select {
 
 @media (max-width: 1100px) {
   .tour-page-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .tour-right-panel {

@@ -36,6 +36,39 @@ export type ApiPage = {
   [key: string]: unknown;
 };
 
+export type SiteSetting = {
+  id?: number;
+  option_key: string;
+  option_value: unknown;
+};
+
+export type SocialLink = {
+  type: string;
+  url: string;
+};
+
+export type TeamMember = {
+  name: string;
+  position: string;
+  image: string;
+};
+
+export type PublicSiteSettings = {
+  siteTitle: string | null;
+  notificationEmails: string[];
+  socialLinks: SocialLink[];
+  locationUrl: string | null;
+};
+
+export type TripTaxonomy = {
+  allCategories: ApiPage[];
+  rootCategories: ApiPage[];
+  childCategories: ApiPage[];
+  destinations: ApiPage[];
+  counts: Record<string, number>;
+  available: boolean;
+};
+
 export type ApiList<T> = {
   data?: T[] | { data?: T[]; current_page?: number; from?: number; to?: number; total?: number; last_page?: number };
   current_page?: number;

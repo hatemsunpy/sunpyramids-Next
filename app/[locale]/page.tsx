@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/SiteShell";
 import { HomePage } from "@/components/HomePage";
 import { JsonLd } from "@/components/JsonLd";
-import { getHome, getHomeBlogs, getHomeDestinations, getHomeFaqs, getHomeTours } from "@/lib/data";
+import { getHome, getHomeBlogs, getHomeDestinations, getHomeFaqs, getHomeTours, getPublicSiteSettings } from "@/lib/data";
 import { isLocale } from "@/lib/locales";
 import { metadataFromPage } from "@/lib/seo";
 import type { Locale } from "@/types/api";
@@ -24,20 +24,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const locale = await resolveLocale(params);
-  const [page, tours, popularTours, specialOffers, highlights, blogs, faqs] = await Promise.all([
+  const [page, tours, popularTours, specialOffers, highlights, blogs, faqs, settings] = await Promise.all([
     getHome(locale),
-    getHomeTours("tours?exists=wishlisted&categories.id=59&order_by=display_order,asc&page=1&page_limit=4", locale),
+    getHomeTours("tours?exists=wishlisted&categories.id=7&order_by=display_order,asc&page=1&page_limit=4", locale),
     getHomeTours("tours/home?featured=1&page=1&order_by=display_order,asc&page_limit=8", locale),
     getHomeTours("tours/home?page=1&page_limit=4&order_by=display_order,asc&categories.id=53", locale),
     getHomeDestinations(locale),
     getHomeBlogs(locale),
     getHomeFaqs(locale),
+    getPublicSiteSettings(locale),
   ]);
 
   return (
-    <SiteShell locale={locale}>
+    <SiteShell locale={locale} settings={settings}>
       <JsonLd schema={page?.seo?.structure_schema} />
-      <HomePage page={page} tours={tours} popularTours={popularTours} specialOffers={specialOffers} highlights={highlights} blogs={blogs} faqs={faqs} locale={locale} />
+      <HomePage page={page} tours={tours} popularTours={popularTours} specialOffers={specialOffers} highlights={highlights} blogs={blogs} faqs={faqs} socialLinks={settings.socialLinks} locale={locale} />
     </SiteShell>
   );
 }

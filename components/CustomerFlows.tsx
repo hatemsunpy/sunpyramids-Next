@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import type { Locale } from "@/types/api";
@@ -9,7 +10,9 @@ import {
   apiGet,
   apiPatch,
   apiPost,
+  apiPostForm,
   apiPut,
+  ApiClientError,
   clientApiUrl,
   getCookie,
   setCookie,
@@ -18,6 +21,7 @@ import { withLocale } from "@/lib/locales";
 import { parseLocalCalendarDate } from "@/lib/local-date";
 import { generateRecaptchaToken } from "@/lib/recaptcha";
 import { useCurrency } from "@/components/CurrencyProvider";
+import { uiCopy } from "@/lib/ui-copy";
 
 type ApiResponse<T = any> = {
   status?: boolean;
@@ -42,8 +46,12 @@ const allowedPaymentRedirectHosts = new Set([
   "www.sunpyramidstours.com",
 ]);
 
-function messageFromError(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+// Confirmed by the original Nuxt checkout integration. This gateway value is
+// deliberately kept out of customer-editable form controls.
+const CARD_PAYMENT_METHOD_ID = 9;
+
+function messageFromError(error: unknown, fallback = "Something went wrong. Please try again.") {
+  return error instanceof Error ? error.message : fallback;
 }
 
 function statusClass(state: LoadState) {
@@ -56,16 +64,6 @@ function isAllowedPaymentRedirect(value: string) {
     return url.protocol === "https:" && allowedPaymentRedirectHosts.has(url.hostname.toLowerCase());
   } catch {
     return false;
-  }
-}
-
-function readUserCookie() {
-  const raw = getCookie("sunpyramids-user");
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
   }
 }
 
@@ -137,18 +135,19 @@ function cartItemTotal(item: any): number | null {
 }
 
 export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Locale }) {
+  const copy = uiCopy(locale);
   const router = useRouter();
   const params = useSearchParams();
   const [state, setState] = useState<LoadState>("idle");
   const [message, setMessage] = useState("");
   const [rememberEmail, setRememberEmail] = useState("");
   const title = {
-    "sign-in": "Welcome back",
-    "sign-up": "Create New Account",
-    "forget-password": "Forget Password",
-    "reset-password": "Reset Password",
-    "create-password": "Create Password",
-    "confirm-code": "Confirm Code",
+    "sign-in": copy.welcome,
+    "sign-up": copy.createAccount,
+    "forget-password": copy.forgetPassword,
+    "reset-password": copy.createPassword,
+    "create-password": copy.createPassword,
+    "confirm-code": copy.confirmCode,
   }[mode] || "Account";
 
   useEffect(() => {
@@ -169,7 +168,9 @@ export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Local
         const res = await apiPost<ApiResponse<{ accessToken?: string; [key: string]: unknown }>>("auth/login", { email, password }, locale);
         if (res.data?.accessToken) {
           setCookie("sunpyramids-token", res.data.accessToken);
-          setCookie("sunpyramids-user", JSON.stringify(res.data));
+          // Reload hydration comes from profile/me. Avoid duplicating the full
+          // user/profile payload in a JavaScript-readable cookie.
+          setCookie("sunpyramids-user", null);
           setCookie("sunpyramids-email", remember ? email : null);
         }
         setMessage(res.message || "Signed in successfully.");
@@ -228,18 +229,18 @@ export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Local
       if (mode === "reset-password") {
         const body = {
           email: String(form.get("email") || params.get("email") || ""),
-          token: String(form.get("token") || params.get("token") || ""),
+          otp: String(form.get("token") || params.get("token") || params.get("otp") || ""),
           password: String(form.get("password") || ""),
           password_confirmation: String(form.get("confirmPassword") || ""),
         };
-        const res = await apiPost<ApiResponse>("client/reset-password", body, locale);
+        const res = await apiPost<ApiResponse>("auth/password/reset", body, locale);
         setMessage(res.message || "Password updated.");
         setState("success");
         router.push(withLocale("/auth/sign-in", locale));
       }
     } catch (error) {
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
@@ -256,32 +257,32 @@ export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Local
       {mode === "sign-in" || mode === "sign-up" ? (
         <div className="social-row">
           <button type="button" onClick={() => socialRedirect("auth/google/redirect")}>Google</button>
-          <button type="button" onClick={() => socialRedirect("auth/facebook/redirect/")}>Facebook</button>
+          <button type="button" onClick={() => socialRedirect("auth/facebook/redirect")}>Facebook</button>
         </div>
       ) : null}
       <form className="auth-form" onSubmit={submit}>
-        {mode === "sign-up" ? <input name="name" placeholder="Full name" required /> : null}
+        {mode === "sign-up" ? <input name="name" placeholder={copy.fullName} required /> : null}
         {mode === "confirm-code" || mode === "create-password" || mode === "reset-password" ? (
-          <input name="email" type="email" placeholder="Email address" defaultValue={params.get("email") || ""} required />
+          <input name="email" type="email" placeholder={copy.email} defaultValue={params.get("email") || ""} required />
         ) : null}
         {mode === "sign-in" || mode === "sign-up" || mode === "forget-password" ? (
-          <input name="email" type="email" placeholder="Email address" defaultValue={mode === "sign-in" ? rememberEmail : ""} required />
+          <input name="email" type="email" placeholder={copy.email} defaultValue={mode === "sign-in" ? rememberEmail : ""} required />
         ) : null}
         {mode === "confirm-code" ? <input name="otp" placeholder="Confirmation code" inputMode="numeric" minLength={6} maxLength={6} required /> : null}
         {mode === "reset-password" ? <input name="token" placeholder="Reset token" defaultValue={params.get("token") || ""} required /> : null}
         {mode === "create-password" ? <input name="otp" placeholder="Confirmation code" defaultValue={params.get("otp") || ""} required /> : null}
-        {isPasswordMode ? <input name="password" type="password" placeholder="Password" minLength={8} required /> : null}
+        {isPasswordMode ? <input name="password" type="password" placeholder={copy.password} minLength={8} required /> : null}
         {mode === "sign-up" || mode === "create-password" || mode === "reset-password" ? (
-          <input name="confirmPassword" type="password" placeholder="Confirm password" minLength={8} required />
+          <input name="confirmPassword" type="password" placeholder={copy.confirmPassword} minLength={8} required />
         ) : null}
         {mode === "sign-in" ? (
           <label className="inline-check">
-            <input name="signSave" type="checkbox" defaultChecked={!!rememberEmail} /> Save login
+            <input name="signSave" type="checkbox" defaultChecked={!!rememberEmail} /> {copy.saveLogin}
           </label>
         ) : null}
         {mode === "sign-up" ? (
           <label className="inline-check">
-            <input name="agreeTerms" type="checkbox" required /> I agree to the terms and conditions
+            <input name="agreeTerms" type="checkbox" required /> {copy.agreeTerms}
           </label>
         ) : null}
         <button className="btn-primary" type="submit" disabled={state === "loading"}>
@@ -290,15 +291,16 @@ export function AuthFlow({ mode, locale = "en" }: { mode: string; locale?: Local
       </form>
       {message ? <p className={statusClass(state)}>{message}</p> : null}
       <div className="auth-links">
-        <Link href={withLocale("/auth/sign-in", locale)}>Sign in</Link>
-        <Link href={withLocale("/auth/sign-up", locale)}>Create account</Link>
-        <Link href={withLocale("/auth/forget-password", locale)}>Forgot password?</Link>
+        <Link href={withLocale("/auth/sign-in", locale)}>{copy.signIn}</Link>
+        <Link href={withLocale("/auth/sign-up", locale)}>{copy.createAccount}</Link>
+        <Link href={withLocale("/auth/forget-password", locale)}>{copy.forgetPassword}</Link>
       </div>
     </div>
   );
 }
 
 export function AccountFlow({ view = "profile", locale = "en" }: { view?: string; locale?: Locale }) {
+  const copy = uiCopy(locale);
   const router = useRouter();
   const [state, setState] = useState<LoadState>("loading");
   const [message, setMessage] = useState("");
@@ -308,10 +310,8 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
 
   useEffect(() => {
     const hasToken = !!getCookie("sunpyramids-token");
-    const cookieUser = readUserCookie();
     queueMicrotask(() => {
       setIsAuthenticated(hasToken);
-      setUser(cookieUser);
     });
 
     async function load() {
@@ -320,6 +320,9 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
         return;
       }
       try {
+        const me = await apiGet<ApiResponse<Record<string, unknown>>>("profile/me", locale, true);
+        const liveUser = me.data ?? null;
+        setUser(liveUser);
         if (view === "bookings") {
           const res = await apiGet<ApiResponse<{ data?: any[] }>>("bookings?page_limit=200&includes=currency,tours", locale);
           setItems(Array.isArray(res.data?.data) ? res.data.data : []);
@@ -329,6 +332,11 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
         }
         setState("success");
       } catch (error) {
+        if (error instanceof ApiClientError && error.status === 401) {
+          setCookie("sunpyramids-token", null);
+          setCookie("sunpyramids-user", null);
+          setIsAuthenticated(false);
+        }
         setState("error");
         setMessage(messageFromError(error));
       }
@@ -337,10 +345,17 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
     load();
   }, [locale, view]);
 
-  function logout() {
-    setCookie("sunpyramids-token", null);
-    setCookie("sunpyramids-user", null);
-    router.push(withLocale("/", locale));
+  async function logout() {
+    try {
+      await apiPost<ApiResponse>("profile/logout", {}, locale, true);
+    } catch {
+      // Local logout must still complete when a stale token cannot be revoked.
+    } finally {
+      setCookie("sunpyramids-token", null);
+      setCookie("sunpyramids-user", null);
+      setIsAuthenticated(false);
+      router.push(withLocale("/", locale));
+    }
   }
 
   async function updateProfile(event: FormEvent<HTMLFormElement>) {
@@ -348,14 +363,11 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
     setState("loading");
     setMessage("");
     const form = new FormData(event.currentTarget);
-    const currentUser = user || {};
     const body: Record<string, unknown> = {
-      ...currentUser,
-      name: String(form.get("fullName") || currentUser.name || ""),
-      email: String(form.get("email") || currentUser.email || ""),
-      phone: String(form.get("phone") || currentUser.phone || ""),
-      nationality: String(form.get("nationality") || currentUser.nationality || ""),
-      birthdate: String(form.get("birthDate") || currentUser.birthdate || ""),
+      name: String(form.get("fullName") || user?.name || ""),
+      phone: String(form.get("phone") || "") || null,
+      nationality: String(form.get("nationality") || "") || null,
+      birthdate: String(form.get("birthDate") || "") || null,
       password: null,
       password_confirmation: null,
     };
@@ -367,11 +379,10 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
 
     try {
       const res = await apiPatch<ApiResponse>("profile", body, locale);
-      const nextUser = { ...body };
-      delete nextUser.password;
-      delete nextUser.password_confirmation;
-      setCookie("sunpyramids-user", JSON.stringify(nextUser));
-      setUser(nextUser);
+      const me = await apiGet<ApiResponse<Record<string, unknown>>>("profile/me", locale, true);
+      if (me.data) {
+        setUser(me.data);
+      }
       setState("success");
       setMessage(res.message || "Profile updated successfully.");
     } catch (error) {
@@ -380,33 +391,69 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
     }
   }
 
+  async function uploadProfileImage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const image = form.get("image");
+    if (!(image instanceof File) || !image.size) return;
+    if (image.size > 2 * 1024 * 1024) {
+      setState("error");
+      setMessage("Profile image must be 2 MB or smaller.");
+      return;
+    }
+    setState("loading");
+    setMessage("");
+    try {
+      const body = new FormData();
+      body.set("image", image);
+      const res = await apiPostForm<ApiResponse>("profile/change/image", body, locale, true);
+      const me = await apiGet<ApiResponse<Record<string, unknown>>>("profile/me", locale, true);
+      if (me.data) {
+        setUser(me.data);
+      }
+      setState("success");
+      setMessage(res.message || "Profile image updated successfully.");
+      event.currentTarget.reset();
+    } catch (error) {
+      setState("error");
+      setMessage(messageFromError(error, copy.messageError));
+    }
+  }
+
   return (
     <div className="account-card">
       <div className="account-card-head">
         <p className="eyebrow">Account area</p>
-        {isAuthenticated ? <button className="btn-outline" type="button" onClick={logout}>Logout</button> : null}
+        {isAuthenticated ? <button className="btn-outline" type="button" onClick={logout}>{copy.signOut}</button> : null}
       </div>
       {!isAuthenticated ? (
         <>
           <h2>Sign in required</h2>
           <p className="muted">Sign in to sync your bookings, favourites, profile settings, and checkout activity.</p>
-          <Link className="btn-primary" href={withLocale("/auth/sign-in", locale)}>Sign in</Link>
+          <Link className="btn-primary" href={withLocale("/auth/sign-in", locale)}>{copy.signIn}</Link>
         </>
       ) : view === "settings" || view === "profile" ? (
+        <div className="account-profile-forms">
+        <form className="profile-image-form" onSubmit={uploadProfileImage}>
+          {user?.image ? <Image src={String(user.image)} alt={String(user.name || copy.myProfile)} width={96} height={96} /> : null}
+          <input name="image" type="file" accept="image/*" required />
+          <button className="btn-outline" type="submit" disabled={state === "loading"}>Update profile image</button>
+        </form>
         <form className="form-grid account-form" onSubmit={updateProfile}>
-          <input name="fullName" placeholder="Full name" defaultValue={user?.name || ""} required />
-          <input name="email" type="email" placeholder="Email" defaultValue={user?.email || ""} required />
-          <input name="phone" placeholder="Phone" defaultValue={user?.phone || ""} />
+          <input name="fullName" placeholder={copy.fullName} defaultValue={user?.name || ""} required />
+          <input name="email" type="email" placeholder={copy.email} defaultValue={user?.email || ""} readOnly aria-readonly="true" />
+          <input name="phone" placeholder={copy.phone} defaultValue={user?.phone || ""} />
           <input name="birthDate" type="date" defaultValue={user?.birthdate || ""} />
-          <input name="nationality" placeholder="Nationality" defaultValue={user?.nationality || ""} />
-          <input name="password" type="password" placeholder="New password" minLength={8} />
-          <input name="confirmPassword" type="password" placeholder="Confirm password" minLength={8} />
-          <button className="btn-primary" type="submit" disabled={state === "loading"}>Save Changes</button>
+          <input name="nationality" placeholder={copy.nationality} defaultValue={user?.nationality || ""} />
+          <input name="password" type="password" placeholder={copy.password} minLength={8} />
+          <input name="confirmPassword" type="password" placeholder={copy.confirmPassword} minLength={8} />
+          <button className="btn-primary" type="submit" disabled={state === "loading"}>{copy.saveChanges}</button>
           {message ? <p className={statusClass(state)}>{message}</p> : null}
         </form>
+        </div>
       ) : (
         <>
-          <h2>{view === "bookings" ? "My Bookings" : "My Favorites"}</h2>
+          <h2>{view === "bookings" ? copy.myBookings : copy.myFavorites}</h2>
           {state === "loading" ? <p className="muted">Loading...</p> : null}
           {state === "error" ? <p className="form-message error">{message}</p> : null}
           {state !== "loading" && items.length === 0 ? <p className="muted">{view === "bookings" ? "There are no bookings." : "The wishlist is empty."}</p> : null}
@@ -426,8 +473,78 @@ export function AccountFlow({ view = "profile", locale = "en" }: { view?: string
   );
 }
 
+function CartTourEditor({
+  item,
+  locale,
+  disabled,
+  onSubmit,
+}: {
+  item: any;
+  locale: Locale;
+  disabled: boolean;
+  onSubmit: (event: FormEvent<HTMLFormElement>, item: any) => void;
+}) {
+  const copy = uiCopy(locale);
+  const { format } = useCurrency();
+  const slug = String(item?.tour?.slug || "");
+  const selectedOptionIds = Array.isArray(item?.options)
+    ? item.options.map((option: any) => Number(option?.id)).filter(Boolean)
+    : [];
+  const [options, setOptions] = useState<any[]>(() => {
+    if (Array.isArray(item?.tour?.options) && item.tour.options.length) return item.tour.options;
+    return Array.isArray(item?.options) ? item.options : [];
+  });
+
+  useEffect(() => {
+    if (!slug) return;
+    let active = true;
+    apiGet<ApiResponse<any>>(`tours/${encodeURIComponent(slug)}?includes=options`, locale, false)
+      .then((response) => {
+        if (active && Array.isArray(response.data?.options)) setOptions(response.data.options);
+      })
+      .catch(() => {
+        // Preserve the meaningful option objects already returned with the cart.
+      });
+    return () => {
+      active = false;
+    };
+  }, [locale, slug]);
+
+  return (
+    <form className="cart-inline-form" onSubmit={(event) => onSubmit(event, item)}>
+      <input name="startDate" type="date" defaultValue={String(item.start_date || "").slice(0, 10)} aria-label={copy.date} />
+      <input name="adults" type="number" min={1} defaultValue={item.adults || 1} aria-label={copy.adults} />
+      <input name="children" type="number" min={0} defaultValue={item.children || 0} aria-label={copy.children} />
+      <input name="infants" type="number" min={0} defaultValue={item.infants || 0} aria-label={copy.infants} />
+      {options.length ? (
+        <fieldset className="cart-option-fieldset">
+          <legend>{copy.addOns}</legend>
+          <div className="tour-addon-list">
+            {options.map((option) => {
+              const adultPrice = Number(option?.adult_price || 0);
+              const childPrice = Number(option?.child_price || 0);
+              return (
+                <label key={option.id} className="tour-addon">
+                  <input name="options" type="checkbox" value={option.id} defaultChecked={selectedOptionIds.includes(Number(option.id))} />
+                  <span className="tour-addon-name">{option.name}</span>
+                  <span className="tour-addon-price">
+                    {format(adultPrice)} {copy.adults}
+                    {childPrice ? ` · ${format(childPrice)} ${copy.children}` : ""}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      ) : null}
+      <button className="btn-outline" type="submit" disabled={disabled}>{copy.saveEdits}</button>
+    </form>
+  );
+}
+
 export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boolean; locale?: Locale }) {
   const router = useRouter();
+  const copy = uiCopy(locale);
   const { selected, format } = useCurrency();
   const [state, setState] = useState<LoadState>("loading");
   const [message, setMessage] = useState("");
@@ -435,6 +552,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
   const [checkoutData, setCheckoutData] = useState<any>(null);
   const [hasToken, setHasToken] = useState(false);
   const [coupon, setCoupon] = useState<any>(null);
+  const [couponCode, setCouponCode] = useState("");
 
   async function loadCart(tokenExists = hasToken) {
     setState("loading");
@@ -444,21 +562,19 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       setState("success");
     } catch (error) {
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
   useEffect(() => {
     const tokenExists = !!getCookie("sunpyramids-token");
     queueMicrotask(() => setHasToken(tokenExists));
-    if (checkout) {
-      const raw = getCookie("sunpyramids-checkout-data");
-      if (raw) {
-        try {
-          queueMicrotask(() => setCheckoutData(JSON.parse(raw)));
-        } catch {
-          queueMicrotask(() => setCheckoutData(null));
-        }
+    const raw = getCookie("sunpyramids-checkout-data");
+    if (raw) {
+      try {
+        queueMicrotask(() => setCheckoutData(JSON.parse(raw)));
+      } catch {
+        queueMicrotask(() => setCheckoutData(null));
       }
     }
     queueMicrotask(() => loadCart(tokenExists));
@@ -471,10 +587,10 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       const res = await apiDelete<ApiResponse>("cart/clear", locale);
       setCart([]);
       setState("success");
-      setMessage(res.message || "Cart cleared.");
+      setMessage(res.message || copy.clearAll);
     } catch (error) {
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
@@ -482,17 +598,17 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     const removeId = cartRemoveIdentifier(item);
     if (!removeId) {
       setState("error");
-      setMessage("This cart item cannot be safely removed because its backend identifier is missing.");
+      setMessage(copy.messageError);
       return;
     }
     setState("loading");
     try {
       const res = await apiDelete<ApiResponse>(`cart/remove/${removeId}`, locale, true);
       await loadCart(hasToken);
-      setMessage(res.message || "Cart item removed.");
+      setMessage(res.message || copy.delete);
     } catch (error) {
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
@@ -503,9 +619,8 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
     if (!tourId) return;
     setState("loading");
     try {
-      const options = String(form.get("options") || "")
-        .split(",")
-        .map((value) => Number(value.trim()))
+      const options = form.getAll("options")
+        .map((value) => Number(value))
         .filter(Boolean);
       const res = await apiPost<ApiResponse>("cart/tours/append", {
         tour_id: tourId,
@@ -516,38 +631,48 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
         options,
       }, locale, hasToken);
       await loadCart(hasToken);
-      setMessage(res.message || "Cart item updated.");
+      setMessage(res.message || copy.saveEdits);
     } catch (error) {
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
+  }
+
+  function clearValidatedCoupon() {
+    setCoupon(null);
+    const nextCheckoutData = { ...(checkoutData || {}) };
+    delete nextCheckoutData.discountID;
+    setCheckoutData(nextCheckoutData);
+    setCookie("sunpyramids-checkout-data", JSON.stringify(nextCheckoutData));
   }
 
   async function applyCoupon(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!getCookie("sunpyramids-token")) {
       setState("error");
-      setMessage("Please login to apply the coupon.");
+      setMessage(copy.signIn);
       return;
     }
-    const form = new FormData(event.currentTarget);
-    const code = String(form.get("couponCode") || "").trim();
+    const code = couponCode.trim();
     if (!code) return;
     setState("loading");
     try {
       const res = await apiGet<ApiResponse>(`coupons/${encodeURIComponent(code)}/validate`, locale, true);
-      setCoupon(res.data);
       const couponId = couponIdFrom(res.data);
-      if (couponId) {
-        const nextCheckoutData = { ...(checkoutData || {}), discountID: couponId };
-        setCheckoutData(nextCheckoutData);
-        setCookie("sunpyramids-checkout-data", JSON.stringify(nextCheckoutData));
+      if (!couponId) {
+        clearValidatedCoupon();
+        throw new Error(copy.messageError);
       }
+      setCoupon(res.data);
+      const nextCheckoutData = { ...(checkoutData || {}), discountID: couponId };
+      setCheckoutData(nextCheckoutData);
+      setCookie("sunpyramids-checkout-data", JSON.stringify(nextCheckoutData));
       setState("success");
-      setMessage(res.message || "Coupon applied.");
+      setMessage(res.message || copy.discount);
     } catch (error) {
+      clearValidatedCoupon();
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
@@ -570,10 +695,10 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       notes: String(form.get("note") || ""),
       payment_method: paymentMethod,
       currency_id: selected.id || Number(form.get("currencyId") || 1),
-      coupon_id: form.get("couponId") ? Number(form.get("couponId")) : couponIdFrom(coupon),
+      coupon_id: couponIdFrom(coupon) || checkoutData?.discountID || undefined,
     };
     if (paymentMethod === "card") {
-      body.payment_method_id = Number(form.get("paymentMethodId") || 9);
+      body.payment_method_id = CARD_PAYMENT_METHOD_ID;
     }
     let bookingCreated = false;
 
@@ -588,44 +713,37 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       }
       if (redirect) throw new Error("Payment redirect URL was not approved.");
       setState("success");
-      setMessage(res.message || "Booking created.");
+      setMessage(res.message || copy.checkout);
     } catch (error) {
       if (bookingCreated) {
-        const redirectRejected = /redirect URL was not approved/i.test(messageFromError(error));
         setState("error");
-        setMessage(
-          redirectRejected
-            ? "Booking was created, but the payment redirect was not approved. Please contact support or open your bookings before retrying checkout."
-            : "Booking was created, but checkout could not finish. Please contact support or open your bookings before retrying checkout."
-        );
+        setMessage(copy.messageError);
         return;
       }
       setState("error");
-      setMessage(messageFromError(error));
+      setMessage(messageFromError(error, copy.messageError));
     }
   }
 
   if (checkout) {
     return (
       <div className="cart-empty checkout-form-card">
-        <p className="eyebrow">Secure checkout</p>
-        <h2>Complete Your Booking</h2>
+        <p className="eyebrow">{copy.billingDetails}</p>
+        <h2>{copy.checkout}</h2>
         <form className="form-grid" onSubmit={checkoutSubmit}>
-          <input name="fullName" placeholder="Full name" required />
-          <input name="email" type="email" placeholder="Email" required />
-          <input name="phone" placeholder="Phone" required />
-          <input name="country" placeholder="Country" required />
-          <input name="state" placeholder="State" required />
-          <input name="pickupLocation" placeholder="Pickup location" />
+          <input name="fullName" placeholder={copy.fullName} required />
+          <input name="email" type="email" placeholder={copy.email} required />
+          <input name="phone" placeholder={copy.phone} required />
+          <input name="country" placeholder={copy.country} required />
+          <input name="state" placeholder={copy.state} required />
+          <input name="pickupLocation" placeholder={copy.pickupLocation} />
           <input name="currencyId" type="hidden" value={selected.id} />
-          <input name="couponId" type="number" placeholder="Coupon ID" defaultValue={checkoutData?.discountID || ""} />
-          <select name="paymentMethod" defaultValue="card" required>
-            <option value="paypal">PayPal</option>
-            <option value="card">Card</option>
+          <select name="paymentMethod" defaultValue="card" required aria-label={copy.paymentMethod}>
+            <option value="card">{copy.card}</option>
+            <option value="paypal">{copy.paypal}</option>
           </select>
-          <input name="paymentMethodId" type="number" placeholder="Card payment method ID" defaultValue={9} />
-          <textarea name="note" placeholder="Note" rows={4} />
-          <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Creating booking..." : "Create Booking"}</button>
+          <textarea name="note" placeholder={copy.note} rows={4} />
+          <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? copy.checkoutLoading : copy.checkoutNow}</button>
         </form>
         {message ? <p className={statusClass(state)}>{message}</p> : null}
       </div>
@@ -634,30 +752,23 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
 
   return (
     <div className="cart-empty">
-      <p className="eyebrow">Your cart</p>
-      <h2>Your cart is ready for your next Egypt tour</h2>
-      {state === "loading" ? <p className="muted">Loading cart...</p> : null}
+      <p className="eyebrow">{copy.cart}</p>
+      <h2>{copy.cart}</h2>
+      {state === "loading" ? <p className="muted">{copy.loadingCart}</p> : null}
       {state === "error" ? <p className="form-message error">{message}</p> : null}
-      {state !== "loading" && cart.length === 0 ? <p className="muted">Add tours or car rentals to continue.</p> : null}
+      {state !== "loading" && cart.length === 0 ? <p className="muted">{copy.emptyCart}</p> : null}
       {cart.length ? (
         <div className="account-list">
           {cart.map((item, index) => {
             const itemTotal = cartItemTotal(item);
             return (
             <article key={item.id || index}>
-              <strong>{item.tour?.title || item.title || item.name || `Cart item ${index + 1}`}</strong>
-              {itemTotal !== null ? <span>Total: {format(itemTotal)}</span> : null}
+              <strong>{item.tour?.title || item.title || item.name || `${copy.cart} ${index + 1}`}</strong>
+              {itemTotal !== null ? <span>{copy.total}: {format(itemTotal)}</span> : null}
               {item.type === "tour" || item.tour ? (
-                <form className="cart-inline-form" onSubmit={(event) => editTourCartItem(event, item)}>
-                  <input name="startDate" type="date" defaultValue={String(item.start_date || "").slice(0, 10)} />
-                  <input name="adults" type="number" min={1} defaultValue={item.adults || 1} aria-label="Adults" />
-                  <input name="children" type="number" min={0} defaultValue={item.children || 0} aria-label="Children" />
-                  <input name="infants" type="number" min={0} defaultValue={item.infants || 0} aria-label="Infants" />
-                  <input name="options" placeholder="Option IDs, comma separated" defaultValue={Array.isArray(item.options) ? item.options.map((option: any) => option.id).filter(Boolean).join(",") : ""} />
-                  <button className="btn-outline" type="submit" disabled={state === "loading"}>Save</button>
-                </form>
+                <CartTourEditor item={item} locale={locale} disabled={state === "loading"} onSubmit={editTourCartItem} />
               ) : null}
-              <button className="btn-outline" type="button" onClick={() => removeCartItem(item)} disabled={state === "loading"}>Remove</button>
+              <button className="btn-outline" type="button" onClick={() => removeCartItem(item)} disabled={state === "loading"}>{copy.delete}</button>
             </article>
             );
           })}
@@ -665,15 +776,23 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       ) : null}
       {cart.length ? (
         <form className="cart-inline-form" onSubmit={applyCoupon}>
-          <input name="couponCode" placeholder="Coupon code" />
-          <button className="btn-outline" type="submit" disabled={state === "loading"}>Apply Coupon</button>
-          {coupon?.value ? <span>Discount: {coupon.value}%</span> : null}
+          <input
+            name="couponCode"
+            placeholder={copy.addCouponCode}
+            value={couponCode}
+            onChange={(event) => {
+              if (coupon || checkoutData?.discountID) clearValidatedCoupon();
+              setCouponCode(event.target.value);
+            }}
+          />
+          <button className="btn-outline" type="submit" disabled={state === "loading"}>{copy.apply}</button>
+          {coupon?.value ? <span>{copy.discount}: {coupon.value}%</span> : null}
         </form>
       ) : null}
       <div className="status-actions">
-        <Link className="btn-primary" href={withLocale("/trips", locale)}>Explore Trips</Link>
-        {cart.length ? <Link className="btn-outline" href={withLocale("/cart/checkout", locale)}>Checkout</Link> : null}
-        {cart.length ? <button className="btn-outline" type="button" onClick={clearCart}>Clear Cart</button> : null}
+        <Link className="btn-primary" href={withLocale("/trips", locale)}>{copy.exploreTours}</Link>
+        {cart.length ? <Link className="btn-outline" href={withLocale("/cart/checkout", locale)}>{copy.checkout}</Link> : null}
+        {cart.length ? <button className="btn-outline" type="button" onClick={clearCart}>{copy.clearAll}</button> : null}
       </div>
       {message && state !== "error" ? <p className="form-message">{message}</p> : null}
     </div>
@@ -689,11 +808,15 @@ export async function toggleWishlist(tourId: number | string, locale: Locale = "
 
 export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your-trip" | "rent-car"; locale?: Locale }) {
   const router = useRouter();
+  const { selected } = useCurrency();
+  const copy = uiCopy(locale);
   const [state, setState] = useState<LoadState>("idle");
   const [message, setMessage] = useState("");
   const [locations, setLocations] = useState<any[]>([]);
   const [destinations, setDestinations] = useState<any[]>([]);
   const [countries, setCountries] = useState<any[]>([]);
+  const [pickupLocationId, setPickupLocationId] = useState("");
+  const [routeMessage, setRouteMessage] = useState("");
   const isCar = route === "rent-car";
 
   useEffect(() => {
@@ -714,7 +837,12 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
   }, [isCar, locale]);
 
   async function loadRentalDestinations(pickupId: string) {
-    if (!pickupId) return;
+    setPickupLocationId(pickupId);
+    setRouteMessage("");
+    if (!pickupId) {
+      setDestinations([]);
+      return;
+    }
     try {
       const res = await apiPost<ApiResponse<any[]>>("car/rental/available/destinations", {
         pickup_location_id: Number(pickupId),
@@ -722,6 +850,20 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
       setDestinations(Array.isArray(res.data) ? res.data : []);
     } catch {
       setDestinations([]);
+    }
+  }
+
+  async function loadRentalRoute(destinationId: string) {
+    setRouteMessage("");
+    if (!pickupLocationId || !destinationId) return;
+    try {
+      const res = await apiPost<ApiResponse>("car/rental/search/for/route", {
+        pickup_location_id: Number(pickupLocationId),
+        destination_id: Number(destinationId),
+      }, locale);
+      setRouteMessage(res.message || "Rental route is available.");
+    } catch (error) {
+      setRouteMessage(messageFromError(error));
     }
   }
 
@@ -738,9 +880,15 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
         if (form.get("type") === "roundTrip" && (!returnDate || !returnTime)) {
           throw new Error("Return date and time are required for round trips.");
         }
+        const pickupId = String(form.get("pickupLocationId") || "");
+        const destinationId = String(form.get("destinationId") || "");
+        await apiPost<ApiResponse>("car/rental/search/for/route", {
+          pickup_location_id: Number(pickupId),
+          destination_id: Number(destinationId),
+        }, locale);
         const body: Record<string, unknown> = {
-          pickup_location_id: String(form.get("pickupLocationId") || ""),
-          destination_id: String(form.get("destinationId") || ""),
+          pickup_location_id: pickupId,
+          destination_id: destinationId,
           pickup_date: String(form.get("pickupDate") || ""),
           pickup_time: String(form.get("pickupTime") || ""),
           oneway: form.get("type") !== "roundTrip",
@@ -749,7 +897,7 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
           name: String(form.get("fullName") || ""),
           email: String(form.get("email") || ""),
           phone: String(form.get("phone") || ""),
-          currency_id: 1,
+          currency_id: selected.id,
           nationality: String(form.get("nationality") || ""),
           stops: [],
         };
@@ -823,20 +971,21 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
 
   return (
     <form className="planner-form" onSubmit={submit}>
-      <div className="step-label">Quick Info</div>
+      <div className="step-label">{copy.quickInfo}</div>
       {isCar ? (
         <>
-          <select name="type" defaultValue="oneWay"><option value="oneWay">One way</option><option value="roundTrip">Round trip</option></select>
+          <select name="type" defaultValue="oneWay"><option value="oneWay">{copy.oneWay}</option><option value="roundTrip">{copy.roundTrip}</option></select>
           <input name="pickupDate" type="date" required />
           <input name="pickupTime" type="time" required />
           <select name="pickupLocationId" required onChange={(event) => loadRentalDestinations(event.currentTarget.value)}>
-            <option value="">Pickup location</option>
+            <option value="">{copy.pickupLocation}</option>
             {locations.map((location) => <option key={location.id} value={location.id}>{location.name}</option>)}
           </select>
-          <select name="destinationId" required>
-            <option value="">Drop-off location</option>
+          <select name="destinationId" required onChange={(event) => loadRentalRoute(event.currentTarget.value)}>
+            <option value="">{copy.dropoffLocation}</option>
             {destinations.map((destination) => <option key={destination.id} value={destination.id}>{destination.name}</option>)}
           </select>
+          {routeMessage ? <p className="muted">{routeMessage}</p> : null}
           <input name="returnDate" type="date" />
           <input name="returnTime" type="time" />
         </>
@@ -849,12 +998,12 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
           <input name="days" type="number" min={1} placeholder="Days" />
         </>
       )}
-      <div className="step-label">Personal Info</div>
-      <input name="fullName" placeholder="Full name" required />
-      <input name="email" type="email" placeholder="Email address" required />
-      <input name="phone" placeholder="Phone number" required />
+      <div className="step-label">{copy.personalInfo}</div>
+      <input name="fullName" placeholder={copy.fullName} required />
+      <input name="email" type="email" placeholder={copy.email} required />
+      <input name="phone" placeholder={copy.phone} required />
       <select name="nationality" required>
-        <option value="">Nationality</option>
+        <option value="">{copy.nationality}</option>
         {countries.map((country) => <option key={country.id || country.name} value={country.name}>{country.name}</option>)}
       </select>
       <input name="adults" type="number" min={1} defaultValue={1} />
@@ -868,7 +1017,7 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
           <textarea name="note" placeholder="Additional notes" rows={4} />
         </>
       ) : null}
-      <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Submitting..." : isCar ? "Add Rental To Cart" : "Submit Trip Request"}</button>
+      <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? "Submitting..." : isCar ? copy.addToCart : copy.submit}</button>
       {message ? <p className={statusClass(state)}>{message}</p> : null}
     </form>
   );

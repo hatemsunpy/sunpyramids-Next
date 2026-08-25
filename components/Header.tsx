@@ -7,32 +7,27 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Locale } from "@/types/api";
 import { withLocale } from "@/lib/locales";
 import { LanguageCurrencyModal, LanguageCurrencyTrigger } from "@/components/LanguageCurrencyModal";
+import { uiCopy } from "@/lib/ui-copy";
+import { homeCopy } from "@/lib/home-copy";
+import { APPROVED_BRAND_LOGO } from "@/lib/site-contact";
 
 const tourLinks = [
-  ["One Day Tours", "/egypt-tours/one-day-tours"],
-  ["Multi Days Tours", "/egypt-tours/multi-days-tours"],
-  ["Nile Cruises", "/egypt-tours/nile-cruises"],
-  ["Shore Excursions", "/egypt-tours/shore-excursions"],
-];
+  ["oneDay", "/egypt-tours/one-day-tours"], ["multiDays", "/egypt-tours/multi-days-tours"],
+  ["nileCruises", "/egypt-tours/nile-cruises"], ["shoreExcursions", "/egypt-tours/shore-excursions"],
+] as const;
 
 const mainNavLinks = [
-  ["Home", "/"],
-  ["About Us", "/about-us"],
-  ["Contact Us", "/contact-us"],
-  ["Blogs", "/blogs/all-blogs"],
-  ["Events", "/events"],
-];
+  ["home", "/"], ["about", "/about-us"], ["contact", "/contact-us"],
+  ["blogs", "/blogs/all-blogs"], ["events", "/events"],
+] as const;
 
 const secondaryNavLinks = [
-  ["Home", "/"],
-  ["Rent Car", "/rent-car"],
-  ["About Us", "/about-us"],
-  ["Contact Us", "/contact-us"],
-  ["Blogs", "/blogs/all-blogs"],
-  ["Events", "/events"],
-];
+  ["home", "/"], ["rentCar", "/rent-car"], ["about", "/about-us"], ["contact", "/contact-us"],
+  ["blogs", "/blogs/all-blogs"], ["events", "/events"],
+] as const;
 
 function NavDropdown({ locale }: { locale: Locale }) {
+  const copy = uiCopy(locale);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -62,12 +57,12 @@ function NavDropdown({ locale }: { locale: Locale }) {
           if (event.key === "Escape") setOpen(false);
         }}
       >
-        Egypt Tours <span aria-hidden="true">⌄</span>
+        {copy.egyptTours} <span aria-hidden="true">⌄</span>
       </button>
       <div className="dropdown-panel">
-        {tourLinks.map(([label, href]) => (
+        {tourLinks.map(([key, href]) => (
           <Link key={href} href={withLocale(href, locale)}>
-            {label}
+            {copy[key]}
             <span aria-hidden="true">›</span>
           </Link>
         ))}
@@ -76,7 +71,9 @@ function NavDropdown({ locale }: { locale: Locale }) {
   );
 }
 
-export function Header({ locale = "en" }: { locale?: Locale }) {
+export function Header({ locale = "en", siteTitle }: { locale?: Locale; siteTitle?: string | null }) {
+  const copy = uiCopy(locale);
+  const home = homeCopy(locale);
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -107,27 +104,27 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
     <header className={`site-header ${isHome ? "site-header-home" : ""}`}>
       <div className="header-main">
         <Link href={withLocale("/", locale)} aria-label="Sun Pyramids home" className="header-logo">
-          <Image src="/images/logo.png" alt="Sun Pyramids Tours" width={190} height={68} priority />
+          <Image src={APPROVED_BRAND_LOGO} alt={siteTitle || "Sun Pyramids Tours"} width={190} height={54} priority />
         </Link>
 
         {firstStyle ? (
           <nav className="header-inline-nav" aria-label="Main navigation">
-            {mainNavLinks.slice(0, 1).map(([label, href]) => (
+            {mainNavLinks.slice(0, 1).map(([key, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
-                {label}
+                {copy[key]}
               </Link>
             ))}
             <NavDropdown locale={locale} />
-            {mainNavLinks.slice(1).map(([label, href]) => (
+            {mainNavLinks.slice(1).map(([key, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
-                {label}
+                {copy[key]}
               </Link>
             ))}
           </nav>
         ) : (
           <form className="header-search" action={withLocale("/trips", locale)}>
             <span aria-hidden="true">⌕</span>
-            <input name="title" placeholder="Find places and things to do" />
+            <input name="title" placeholder={copy.search} aria-label={copy.search} />
           </form>
         )}
 
@@ -137,7 +134,7 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
             <span aria-hidden="true">▱</span>
           </Link>
           <Link className="signin-action" href={withLocale("/auth/sign-in", locale)}>
-            Sign in
+            {copy.signIn}
           </Link>
           <button className="circle-action menu-action" type="button" onClick={() => setMenuOpen(true)} aria-label="Open menu">
             <span aria-hidden="true">☰</span>
@@ -145,15 +142,11 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
         </div>
       </div>
 
-      {isHome && firstStyle ? (
+      {firstStyle ? (
         <div className="promo-strip original-strip">
-          <div className="strip-icons" aria-hidden="true">
-            <Image src="/images/clover.png" alt="" width={24} height={24} />
-            <Image src="/images/easter-egg.png" alt="" width={32} height={32} />
-          </div>
-          <p>Book any package tour and enjoy a FREE tour experience included at no extra cost!</p>
-          <Link className="btn-primary" href={withLocale("/egypt-tours/multi-days-tours/easter-packages", locale)}>
-            View Packages
+          <p>{home.promoTitle}</p>
+          <Link className="btn-primary" href={withLocale("/egypt-tours/multi-days-tours", locale)}>
+            {home.promoButton}
           </Link>
         </div>
       ) : null}
@@ -161,25 +154,25 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
       {!firstStyle ? (
         <div className="header-nav-row">
           <nav className="desktop-nav" aria-label="Main navigation">
-            {secondaryNavLinks.slice(0, 1).map(([label, href]) => (
+            {secondaryNavLinks.slice(0, 1).map(([key, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
-                {label}
+                {copy[key]}
               </Link>
             ))}
             <NavDropdown locale={locale} />
-            {secondaryNavLinks.slice(1).map(([label, href]) => (
+            {secondaryNavLinks.slice(1).map(([key, href]) => (
               <Link key={href} href={withLocale(href, locale)}>
-                {label}
+                {copy[key]}
               </Link>
             ))}
             <Link className="special-offer-link" href={withLocale("/trips?main=special-offers", locale)}>
               <span aria-hidden="true">✥</span>
-              Special Offer
+              {copy.specialOffer}
             </Link>
           </nav>
 
           <Link className="make-trip-action" href={withLocale("/make-your-trip", locale)}>
-            Make Your Trip
+            {copy.makeTrip}
           </Link>
         </div>
       ) : null}
@@ -188,16 +181,16 @@ export function Header({ locale = "en" }: { locale?: Locale }) {
         <div className="mobile-drawer-backdrop" role="dialog" aria-modal="true" onClick={() => setMenuOpen(false)}>
           <div className="mobile-drawer" onClick={(event) => event.stopPropagation()}>
             <div className="mobile-drawer-head">
-              <Image src="/images/logo.png" alt="Sun Pyramids Tours" width={180} height={64} />
+              <Image src={APPROVED_BRAND_LOGO} alt={siteTitle || "Sun Pyramids Tours"} width={180} height={51} />
               <button className="circle-action" type="button" onClick={() => setMenuOpen(false)} aria-label="Close menu">
                 ×
               </button>
             </div>
             <nav className="mobile-links" aria-label="Mobile navigation">
-              {[...mainNavLinks, ["Rent Car", "/rent-car"], ...tourLinks, ["Make Your Trip", "/make-your-trip"], ["Special Offer", "/trips?main=special-offers"]].map(
-                ([label, href]) => (
-                  <Link key={`${label}-${href}`} href={withLocale(href, locale)} onClick={() => setMenuOpen(false)}>
-                    {label}
+              {[...mainNavLinks, ["rentCar", "/rent-car"] as const, ...tourLinks, ["makeTrip", "/make-your-trip"] as const, ["specialOffer", "/trips?main=special-offers"] as const].map(
+                ([key, href]) => (
+                  <Link key={`${key}-${href}`} href={withLocale(href, locale)} onClick={() => setMenuOpen(false)}>
+                    {copy[key]}
                   </Link>
                 ),
               )}

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { ApiPage, Locale, Tour } from "@/types/api";
+import type { ApiPage, Locale, SocialLink, Tour } from "@/types/api";
 import { withLocale } from "@/lib/locales";
 import { TourCard } from "@/components/TourCard";
 import { BlogCard } from "@/components/BlogCard";
@@ -8,27 +8,16 @@ import { TrustIndexLoader } from "@/components/TrustIndexLoader";
 import { HomeNeedHelpForm } from "@/components/HomeNeedHelpForm";
 import { HomeSearchShortcuts } from "@/components/HomeSearchShortcuts";
 import { HomePopularTours } from "@/components/HomePopularTours";
+import { HomeHeroMedia } from "@/components/HomeHeroMedia";
 import { sanitizeHtml } from "@/lib/sanitize-html";
-
-const stats = [
-  ["+100K", "Happy customer"],
-  ["+50", "Years of experience"],
-  ["+60", "Total Destinations"],
-  ["5.0", "Rating in Tripadvisor"],
-];
-
-const bookingSteps = [
-  ["1", "Find your trip", "Choose the experience, destination, and pace that fit your journey."],
-  ["2", "Book your trip", "Reserve securely and receive clear confirmation from our local team."],
-  ["3", "Enjoy your trip", "Meet your guide and experience Egypt with every detail arranged."],
-];
+import { homeCopy } from "@/lib/home-copy";
 
 const gallery = [
-  ["/images/shorts.png", "/images/shorts-gallary.png", "YouTube Shorts"],
-  ["/images/youtubeone.png", "/images/youtube-gallary.png", "YouTube"],
-  ["/images/tiktok.png", "/images/tiktok-gallary.png", "TikTok"],
-  ["/images/instagram.png", "/images/insta-gallary.png", "Instagram"],
-  ["/images/youtubetwo.png", "/images/fb-logo.webp", "Facebook"],
+  ["/images/shorts.png", "/images/shorts-gallary.png", "YouTube Shorts", "shorts"],
+  ["/images/youtubeone.png", "/images/youtube-gallary.png", "YouTube", "youtube-video-1"],
+  ["/images/tiktok.png", "/images/tiktok-gallary.png", "TikTok", "tiktok"],
+  ["/images/instagram.png", "/images/insta-gallary.png", "Instagram", "insta-link"],
+  ["/images/youtubetwo.png", "/images/fb-logo.webp", "Facebook", "youtube-video-2"],
 ];
 
 const partners = [
@@ -55,6 +44,7 @@ export function HomePage({
   highlights,
   blogs,
   faqs,
+  socialLinks,
   locale = "en",
 }: {
   page: ApiPage | null;
@@ -64,19 +54,35 @@ export function HomePage({
   highlights: ApiPage[];
   blogs: ApiPage[];
   faqs: ApiPage[];
+  socialLinks: SocialLink[];
   locale?: Locale;
 }) {
-  const heroImage = page?.gallery?.[0] || page?.banner || page?.image || "/images/mainBanner.png";
+  const copy = homeCopy(locale);
+  const heroImages = page?.gallery?.length
+    ? page.gallery
+    : [page?.banner || page?.image || "/images/mainBanner.png"];
+  const stats = [
+    ["+100K", copy.happyCustomer],
+    ["+50", copy.yearsExperience],
+    ["+60", copy.totalDestinations],
+    ["5.0", copy.tripadvisorRating],
+  ];
+  const bookingSteps = [
+    ["1", copy.findingTitle, copy.findingDescription],
+    ["2", copy.bookingTitle, copy.bookingDescription],
+    ["3", copy.enjoyTitle, copy.enjoyDescription],
+  ];
+  const socialUrls = new Map(socialLinks.map((item) => [item.type, item.url]));
 
   return (
     <main className="home-page">
       <section className="hero original-home-hero">
         <div className="hero-media">
-          <Image src={heroImage} alt="Sun Pyramids Tours Egypt experience" fill priority sizes="100vw" />
+          <HomeHeroMedia images={heroImages} alt="Sun Pyramids Tours Egypt experience" />
         </div>
         <div className="hero-content">
-          <p className="hero-kicker">Get Started</p>
-          <h1 className="hero-title">Exciting Journey With Us</h1>
+          <p className="hero-kicker">{copy.heroKicker}</p>
+          <h1 className="hero-title">{copy.heroTitle}</h1>
           <HomeSearchShortcuts locale={locale} destinations={highlights} />
         </div>
         <div className="hero-stats">
@@ -88,9 +94,9 @@ export function HomePage({
           ))}
         </div>
         <nav className="home-mobile-shortcuts" aria-label="Quick trip actions">
-          <Link href={withLocale("/make-your-trip", locale)}><ShortcutIcon type="make" /><strong>Make Trip</strong></Link>
-          <Link href={withLocale("/trips", locale)}><ShortcutIcon type="find" /><strong>Find Trip</strong></Link>
-          <Link href={withLocale("/rent-car", locale)}><ShortcutIcon type="car" /><strong>Rent Car</strong></Link>
+          <Link href={withLocale("/make-your-trip", locale)}><ShortcutIcon type="make" /><strong>{copy.makeTripShort}</strong></Link>
+          <Link href={withLocale("/trips", locale)}><ShortcutIcon type="find" /><strong>{copy.findTripShort}</strong></Link>
+          <Link href={withLocale("/rent-car", locale)}><ShortcutIcon type="car" /><strong>{copy.rentCarShort}</strong></Link>
         </nav>
       </section>
 
@@ -101,10 +107,10 @@ export function HomePage({
       <section className="section-pad container-shell">
         <div className="section-heading original-heading">
           <div>
-            <h2>Egypt Easter Tours</h2>
-            <p>Celebrate Easter with unforgettable Egypt Itineraries</p>
+            <h2>{copy.seasonalTitle}</h2>
+            <p>{copy.seasonalDescription}</p>
           </div>
-          <Link className="see-more-link" href={withLocale("/egypt-tours/multi-days-tours/easter-packages", locale)}>See more</Link>
+          <Link className="see-more-link" href={withLocale("/event/egypt-christmas-event-2027", locale)}>{copy.seeMore}</Link>
         </div>
         <div className="grid-cards">
           {tours.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale={locale} />)}
@@ -113,29 +119,25 @@ export function HomePage({
 
       <section className="section-pad container-shell home-live-section">
         <div className="section-heading original-heading home-centered-heading">
-          <div><h2>Popular Destination</h2><p>Explore our most recommended Egypt tours and experiences</p></div>
-          <Link className="see-more-link" href={withLocale("/trips", locale)}>See more</Link>
+          <div><h2>{copy.popularTitle}</h2><p>{copy.popularDescription}</p></div>
+          <Link className="see-more-link" href={withLocale("/trips", locale)}>{copy.seeMore}</Link>
         </div>
         <HomePopularTours initialTours={popularTours} locale={locale} />
       </section>
 
       <section className="section-pad original-destination-band">
-        <div className="container-shell two-col make-trip-section">
+        <div className="container-shell make-trip-section">
           <div>
-            <h2>Make Your Trip</h2>
-            <p className="content-prose">
-              Customize every step of your Egypt journey with Sun Pyramids Tours, from route planning to guided visits and transport.
-            </p>
-            <Link className="btn-primary" href={withLocale("/make-your-trip", locale)}>Start Planning</Link>
+            <h2>{copy.makeYourTrip}</h2>
+            <HomeSearchShortcuts locale={locale} destinations={highlights} modeOnly="make" />
           </div>
-          <Image src="/images/makeYourTripImage.png" alt="Make your Egypt trip" width={620} height={430} />
         </div>
       </section>
 
       <section className="section-pad container-shell home-live-section">
         <div className="section-heading original-heading home-centered-heading">
-          <div><h2>Special offers for you</h2><p>Save on selected Egypt tours and vacation packages</p></div>
-          <Link className="see-more-link" href={withLocale("/trips?main=special-offers", locale)}>See more</Link>
+          <div><h2>{copy.specialOffersTitle}</h2><p>{copy.specialOffersDescription}</p></div>
+          <Link className="see-more-link" href={withLocale("/trips?main=special-offers", locale)}>{copy.seeMore}</Link>
         </div>
         <div className="grid-cards">
           {specialOffers.map((tour) => <TourCard key={tour.id || tour.slug} tour={tour} locale={locale} />)}
@@ -144,7 +146,7 @@ export function HomePage({
 
       <section className="home-how-section">
         <div className="container-shell">
-          <div className="home-centered-heading"><h2>How it works?</h2><p>Plan your Egypt journey in three simple steps</p></div>
+          <div className="home-centered-heading"><h2>{copy.howItWorks}</h2><p>{copy.howItWorksDescription}</p></div>
           <div className="home-booking-steps">
             {bookingSteps.map(([number, title, description], index) => (
               <div className="home-step-wrap" key={number}>
@@ -157,7 +159,7 @@ export function HomePage({
       </section>
 
       <section className="section-pad home-highlights-section">
-        <div className="container-shell home-centered-heading"><h2>Highlights of Egypt</h2><p>Discover the places that make every Egypt journey unforgettable</p></div>
+        <div className="container-shell home-centered-heading"><h2>{copy.highlightsTitle}</h2><p>{copy.highlightsDescription}</p></div>
         <div className="home-highlight-track">
           {highlights.map((destination) => {
             const title = destination.title || destination.name || "Egypt";
@@ -170,10 +172,9 @@ export function HomePage({
       <section className="section-pad container-shell">
         <div className="section-heading original-heading">
           <div>
-            <h2>Travel Blogs</h2>
-            <p>Fresh Egypt travel advice, guides, and inspiration</p>
+            <h2>{copy.travelBlogs}</h2>
           </div>
-          <Link className="see-more-link" href={withLocale("/blogs/all-blogs", locale)}>See more</Link>
+          <Link className="see-more-link" href={withLocale("/blogs/all-blogs", locale)}>{copy.seeMore}</Link>
         </div>
         <div className="grid-cards blog-grid">
           {blogs.slice(0, 4).map((blog) => <BlogCard key={blog.id || blog.slug} blog={blog} locale={locale} />)}
@@ -181,14 +182,18 @@ export function HomePage({
       </section>
 
       <section className="home-certification-section">
-        <div><h2>Tailored <span>guidance</span> for your <span>sustainability</span> journey</h2><p>Sustainability is not an add-on. It is integrated into how we design, operate, and deliver travel experiences across Egypt.</p><Link className="btn-primary" href={withLocale("/sustainability", locale)}>See more</Link></div>
+        <div><h2>Tailored <span>guidance</span> for your <span>sustainability</span> journey</h2><p>Sustainability is not an add-on — it is integrated into how we design, operate, and deliver travel experiences across Egypt.</p><Link className="btn-primary" href={withLocale("/sustainability", locale)}>{copy.seeMore}</Link></div>
         <Image src="/images/certified-logo.png" alt="Certified sustainable travel" width={430} height={350} />
       </section>
 
       <section className="section-pad container-shell home-gallery-section">
-        <div className="home-centered-heading"><h2>Gallery of Exciting journeys</h2><p>Follow moments from our travellers across Egypt</p></div>
+        <div className="home-centered-heading"><h2>{copy.galleryTitle}</h2><p>{copy.galleryDescription}</p></div>
         <div className="home-social-gallery">
-          {gallery.map(([image, icon, label]) => <article key={label}><Image src={image} alt={`${label} travel moments`} fill sizes="(max-width: 768px) 72vw, 25vw" /><Image className="home-gallery-icon" src={icon} alt={label} width={66} height={66} /></article>)}
+          {gallery.map(([image, icon, label, type]) => {
+            const content = <><Image src={image} alt={`${label} travel moments`} fill sizes="(max-width: 768px) 72vw, 25vw" /><Image className="home-gallery-icon" src={icon} alt="" width={66} height={66} /></>;
+            const url = socialUrls.get(type);
+            return <article key={label}>{url ? <a href={url} target="_blank" rel="noreferrer" aria-label={label}>{content}</a> : content}</article>;
+          })}
         </div>
       </section>
 
@@ -198,14 +203,14 @@ export function HomePage({
       </section>
 
       <section className="home-faq-section">
-        <div className="home-faq-title"><h2>Frequently Asked Questions</h2><Link className="see-more-link" href={withLocale("/faqs", locale)}>See more</Link></div>
+        <div className="home-faq-title"><h2>{copy.faqTitle}</h2><Link className="see-more-link" href={withLocale("/faqs", locale)}>{copy.seeMore}</Link></div>
         <div className="faq-list">
           {faqs.map((faq) => <details className="faq-item" key={String(faq.id || faq.question || faq.title)}><summary>{String(faq.question || faq.title || "Question")}</summary><div dangerouslySetInnerHTML={{ __html: sanitizeHtml(faq.answer || faq.description) }} /></details>)}
         </div>
       </section>
 
       <section className="home-help-section container-shell">
-        <div className="home-help-panel"><h2>Need help to Finding your Trip?</h2><HomeNeedHelpForm locale={locale} /></div>
+        <div className="home-help-panel"><h2>{copy.needHelp}</h2><HomeNeedHelpForm locale={locale} /></div>
       </section>
 
       <section className="home-partners" aria-label="Travel partners">

@@ -1,5 +1,15 @@
 import { apiFetch, apiFetchReliable, type ApiResult } from "@/lib/api";
-import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
+import type {
+  ApiList,
+  ApiPage,
+  Locale,
+  PublicSiteSettings,
+  SiteSetting,
+  SocialLink,
+  TeamMember,
+  Tour,
+  TripTaxonomy,
+} from "@/types/api";
 
 function listData<T>(response: ApiList<T> | null | undefined): T[] {
   if (Array.isArray(response?.data)) return response.data;
@@ -15,6 +25,21 @@ export async function getPage(slug: string, locale: Locale) {
   return response?.data ?? null;
 }
 
+export async function getPageReliable(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<ApiPage>> {
+  const apiResult = await apiFetchReliable<{ data?: ApiPage }>(
+    `pages/${encodeURIComponent(slug)}?includes=seo,metas`,
+    { locale },
+  );
+  if (!apiResult.ok) return apiResult;
+  if (!apiResult.value?.data) {
+    return { ok: false, reason: "invalid_response", message: "Page response did not contain data" };
+  }
+  return { ok: true, value: apiResult.value.data };
+}
+
 export async function getDestination(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: ApiPage }>(
     `destinations/${encodeURIComponent(slug)}?includes=seo`,
@@ -27,12 +52,15 @@ export async function getDestinationReliable(
   slug: string,
   locale: Locale,
 ): Promise<ApiResult<ApiPage | null>> {
-  const result = await apiFetchReliable<{ data?: ApiPage }>(
+  const apiResult = await apiFetchReliable<{ data?: ApiPage }>(
     `destinations/${encodeURIComponent(slug)}?includes=seo`,
     { locale },
   );
-  if (!result.ok) return result;
-  return { ok: true, value: result.value?.data ?? null };
+  if (!apiResult.ok) return apiResult;
+  if (!apiResult.value?.data) {
+    return { ok: false, reason: "invalid_response", message: "Destination response did not contain data" };
+  }
+  return { ok: true, value: apiResult.value.data };
 }
 
 export async function getHome(locale: Locale) {
@@ -112,6 +140,102 @@ export async function getCategories(endpoint: string, locale: Locale, limit = 10
   return listData(response);
 }
 
+async function getListReliable<T>(endpoint: string, locale: Locale): Promise<ApiResult<T[]>> {
+  const result = await apiFetchReliable<ApiList<T>>(endpoint, { locale });
+  if (!result.ok) return result;
+  return { ok: true, value: listData(result.value) };
+}
+
+export async function getTripTaxonomy(locale: Locale): Promise<TripTaxonomy> {
+  const [categoriesResult, countsResult, destinationsResult] = await Promise.all([
+    getListReliable<ApiPage>("categories?page_limit=200&order_by=display_order,asc", locale),
+    apiFetchReliable<{ data?: Record<string, number> }>("categories/count", { locale }),
+    getListReliable<ApiPage>("destinations?page_limit=200&parent.slug=egypt&order_by=display_order,asc", locale),
+  ]);
+
+  const categories = categoriesResult.ok ? (categoriesResult.value ?? []) : [];
+  const counts = countsResult.ok && countsResult.value?.data ? countsResult.value.data : {};
+  const countSlugs = new Set(Object.keys(counts));
+  const rootCategories = categories.filter(
+    (category) => category.parent_id == null && category.slug && countSlugs.has(category.slug),
+  );
+  const rootIds = new Set(rootCategories.map((category) => category.id).filter(Boolean));
+  const childCategories = categories.filter((category) => rootIds.has(category.parent_id as number));
+  const destinations = destinationsResult.ok ? (destinationsResult.value ?? []) : [];
+
+  return {
+    allCategories: categories,
+    rootCategories,
+    childCategories,
+    destinations,
+    counts,
+    available: rootCategories.length > 0 || childCategories.length > 0 || destinations.length > 0,
+  };
+}
+
+export async function getSettingValueReliable<T>(
+  optionKey: string,
+  locale: Locale,
+): Promise<ApiResult<T | null>> {
+  const result = await apiFetchReliable<{ data?: SiteSetting[] }>(
+    `settings?option_key=${encodeURIComponent(optionKey)}`,
+    { locale },
+  );
+  if (!result.ok) return result;
+  const setting = result.value?.data?.find((item) => item.option_key === optionKey);
+  return { ok: true, value: (setting?.option_value as T | undefined) ?? null };
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && !!item.trim()) : [];
+}
+
+function firstString(value: unknown): string | null {
+  return stringList(value)[0] ?? null;
+}
+
+function socialList(value: unknown): SocialLink[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is SocialLink =>
+      !!item &&
+      typeof item === "object" &&
+      typeof (item as SocialLink).type === "string" &&
+      typeof (item as SocialLink).url === "string",
+  );
+}
+
+export async function getPublicSiteSettings(locale: Locale): Promise<PublicSiteSettings> {
+  // Request only public presentation keys. The unfiltered endpoint also contains
+  // operational settings that must never be copied into the browser payload.
+  const [title, emails, socials, location] = await Promise.all([
+    getSettingValueReliable<unknown>("site_title", locale),
+    getSettingValueReliable<unknown>("notification_emails", locale),
+    getSettingValueReliable<unknown>("social_links", locale),
+    getSettingValueReliable<unknown>("company_location_url", locale),
+  ]);
+
+  return {
+    siteTitle: title.ok ? firstString(title.value) : null,
+    notificationEmails: emails.ok ? stringList(emails.value) : [],
+    socialLinks: socials.ok ? socialList(socials.value) : [],
+    locationUrl: location.ok ? firstString(location.value) : null,
+  };
+}
+
+export async function getCompanyTeam(locale: Locale): Promise<TeamMember[]> {
+  const result = await getSettingValueReliable<unknown>("company_team", locale);
+  if (!result.ok || !Array.isArray(result.value)) return [];
+  return result.value.filter(
+    (item): item is TeamMember =>
+      !!item &&
+      typeof item === "object" &&
+      typeof (item as TeamMember).name === "string" &&
+      typeof (item as TeamMember).position === "string" &&
+      typeof (item as TeamMember).image === "string",
+  );
+}
+
 export async function getCategory(slug: string, locale: Locale) {
   const response = await apiFetch<{ data?: ApiPage }>(
     `categories/${encodeURIComponent(slug)}?includes=seo,children`,
@@ -124,12 +248,15 @@ export async function getCategoryReliable(
   slug: string,
   locale: Locale,
 ): Promise<ApiResult<ApiPage | null>> {
-  const result = await apiFetchReliable<{ data?: ApiPage }>(
+  const apiResult = await apiFetchReliable<{ data?: ApiPage }>(
     `categories/${encodeURIComponent(slug)}?includes=seo,children`,
     { locale },
   );
-  if (!result.ok) return result;
-  return { ok: true, value: result.value?.data ?? null };
+  if (!apiResult.ok) return apiResult;
+  if (!apiResult.value?.data) {
+    return { ok: false, reason: "invalid_response", message: "Category response did not contain data" };
+  }
+  return { ok: true, value: apiResult.value.data };
 }
 
 export async function getBlogCategories(locale: Locale, parentId: number | null = null) {
@@ -177,6 +304,22 @@ export async function getTour(slug: string, locale: Locale) {
     { locale, next: { revalidate: 180 } },
   );
   return listData(fallback)[0] ?? null;
+}
+
+export async function getTourReliable(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<Tour>> {
+  const includes = "seo,destinations,categories,options,days,seasons";
+  const apiResult = await apiFetchReliable<{ data?: Tour }>(
+    `tours/${encodeURIComponent(slug)}?includes=${includes}`,
+    { locale, next: { revalidate: 180 } },
+  );
+  if (!apiResult.ok) return apiResult;
+  if (!apiResult.value?.data) {
+    return { ok: false, reason: "invalid_response", message: "Tour response did not contain data" };
+  }
+  return { ok: true, value: apiResult.value.data };
 }
 
 export async function getRelatedTours(tour: Tour | null, locale: Locale, limit = 12) {
@@ -276,4 +419,19 @@ export async function getBlog(slug: string, locale: Locale) {
     { locale },
   );
   return response?.data ?? null;
+}
+
+export async function getBlogReliable(
+  slug: string,
+  locale: Locale,
+): Promise<ApiResult<ApiPage>> {
+  const apiResult = await apiFetchReliable<{ data?: ApiPage }>(
+    `blogs/${encodeURIComponent(slug)}?includes=seo,categories`,
+    { locale },
+  );
+  if (!apiResult.ok) return apiResult;
+  if (!apiResult.value?.data) {
+    return { ok: false, reason: "invalid_response", message: "Blog response did not contain data" };
+  }
+  return { ok: true, value: apiResult.value.data };
 }

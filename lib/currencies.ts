@@ -19,8 +19,6 @@ export const DEFAULT_CURRENCY: Currency = {
 };
 
 export const FALLBACK_CURRENCIES: Currency[] = [
-  { id: 3, title: "Egyptian Pound", name: "EGP", symbol: "£", exchange_rate: 48.14 },
-  { id: 2, title: "Euro", name: "EUR", symbol: "€", exchange_rate: 0.85 },
   DEFAULT_CURRENCY,
 ];
 

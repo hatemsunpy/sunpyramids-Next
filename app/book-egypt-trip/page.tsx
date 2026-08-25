@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Page() {
   const [page, toursResponse] = await Promise.all([
     getPage("book-egypt-trip", "en"),
-    getTours("tours?exists=wishlisted&order_by=display_order,asc&page=1", "en", 4),
+    getTours("tours?order_by=display_order,asc&categories.id[]=54", "en", 4),
   ]);
   const tours = tourListData(toursResponse);
   return (

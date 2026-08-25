@@ -30,8 +30,8 @@ Source of truth: Nuxt components/pages and current Next routes/components.
 | Forgot password | `components/Auth/ForgetPassword.vue` | `POST auth/password/forget` | `/auth/forget-password` posts email and redirects to confirm-code | Implemented; backend validation pending. |
 | Confirm code | `components/Auth/ConfirmCode.vue` | `POST auth/password/otp/verify`, `POST auth/password/forget` | `/auth/confirm-code` verifies OTP and redirects to create-password | Implemented; resend flow still pending. |
 | Create password | `components/Auth/CreatePassword.vue` | `POST auth/password/reset` | `/auth/create-password` posts email/OTP/password | Implemented; backend validation pending. |
-| Reset password | `components/Auth/ResetPassword.vue` | `POST client/reset-password` | `/auth/reset-password` posts email/token/password | Implemented; backend validation pending. |
-| Profile | `pages/profile.vue`, `pages/profile/settings.vue` | `PATCH profile` | `/profile`, `/profile/settings` load cookie user client-side and patch profile | Implemented; staging auth validation pending. |
+| Reset password | `components/Auth/CreatePassword.vue` | `POST auth/password/reset` | Both Next reset/create-password modes post email/OTP/password confirmation | Implemented; production mutation not run. |
+| Profile | profile/settings Nuxt pages + Laravel profile routes | `GET profile/me`, `PATCH profile`, `POST profile/change/image`, `POST profile/logout` | Next refreshes live user, updates accepted fields, uploads image, and revokes logout | Implemented; staging auth validation pending. |
 | Bookings | `pages/profile/bookings.vue` | `bookings?page_limit=200&includes=currency,tours` | `/profile/bookings` fetches after client auth cookie check | Implemented; staging auth/data validation pending. |
 | Favourites | `pages/profile/favourites.vue` | `wishlist?page=1&page_limit=200`, wishlist toggle | `/profile/favourites` fetches wishlist; toggle helper added | Partial implementation; card integration/staging validation pending. |
 
@@ -256,11 +256,11 @@ Environment tested: local Next production build at `http://localhost:3000`, conn
 | `/auth/sign-in` | `auth/login` | POST | Nuxt stores/uses `sunpyramids-token`; current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only; must wire and validate login API. |
 | `/auth/sign-up` | `auth/register` | POST | Current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only; must wire and validate registration API. |
 | `/auth/forget-password` | `auth/password/forget` | POST | Public. Current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only. |
-| `/auth/reset-password` | `client/reset-password` | POST | Public token/query flow must be confirmed. Current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only. |
+| `/auth/reset-password` | `auth/password/reset` | POST | Email/OTP/password confirmation per current Laravel/Nuxt contract. | Not run. | Not run. | Implemented. | Yes | Pass by source | Production mutation intentionally skipped. |
 | `/auth/create-password` | `auth/password/reset` | POST | Public token/query flow must be confirmed. Current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only. |
 | `/auth/confirm-code` | `auth/password/otp/verify`, `auth/password/forget` | POST | Public OTP flow. Current Next form does not submit. | Not testable. | Not testable. | Not implemented. | No | Fail | Static clone only. |
 | `/profile` | Profile/customer APIs | GET/PATCH as applicable | Requires `sunpyramids-token`; current Next page does not fetch user. | Not testable. | Not testable. | Shows sign-in CTA. | Partial UI only | Fail | Auth guard/user API missing. |
-| `/profile/settings` | `profile` | PATCH | Requires token; current Next page does not submit. | Not testable. | Not testable. | Shows sign-in CTA. | No | Fail | Profile update flow missing. |
+| `/profile/settings` | `profile/me`, `profile`, `profile/change/image`, `profile/logout` | GET/PATCH/POST | Requires bearer token; exact contracts wired. | Not run. | Not run. | Sign-in CTA without token; live forms with token. | Yes | Pass by source | Staging authenticated proof pending. |
 | `/profile/bookings` | `bookings?page_limit=200&includes=currency,tours` | GET | Requires token; current Next page does not fetch bookings. | Not testable. | Not testable. | Shows sign-in CTA. | No | Fail | Booking history API missing. |
 | `/profile/favourites` | `wishlist?page=1&page_limit=200`, `wishlist/{id}/toggle` | GET/PUT | Requires token; current Next page does not fetch wishlist. | Not testable. | Not testable. | Shows sign-in CTA. | No | Fail | Wishlist API missing. |
 | `/cart` | `cart/list`, `cart/remove/{id}`, `cart/clear`, `coupons/{code}/validate` | GET/DELETE | Optional/auth cart behavior must be confirmed; current Next page does not fetch cart. | Not testable. | Not testable. | Static empty cart UI. | No | Fail | Cart behavior missing. |
@@ -297,6 +297,10 @@ Date: 2026-08-09
 | Tour cart append/edit/remove | Guest cart confirmed working with zero cookies and no auth header. Identity is the client public IP, stored server-side by Laravel. No session cookie is involved. |
 | Cart list | Returns guest items with no credentials; `cart/list` is unauthenticated and IP-keyed. Same as live Nuxt. |
 | Checkout booking | Guest bookings submit `currency_id` of the selected currency; no session cookie required. |
+
+## Sprint 12 current-flow correction — 2026-08-24
+
+The rows above tagged as older static-clone failures are historical unless explicitly replaced. Current truth is summarized in `forms-and-flows.md`: supported reset, social callback, profile me/update/image/logout, selected-currency rental route/append, and targeted locale dictionaries are implemented. No protected or customer-data mutation was executed in Sprint 12.
 | Currency conversion | Cart/checkout totals convert client-side via `exchange_rate` (USD/EUR/EGP verified). |
 
 Root cause of the earlier "append succeeds but list empty" concern: a test-flow misread. In one automated run a headless browser appended items, the context closed, and the follow-up screenshot was taken before items had been added in that same flow. No session/cookie bug exists.
