@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import type { Locale, Tour } from "@/types/api";
 import { ContactForm } from "@/components/ContactForm";
+import { HomeSearchShortcuts } from "@/components/HomeSearchShortcuts";
 import { TourCard } from "@/components/TourCard";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { withLocale } from "@/lib/locales";
@@ -11,7 +13,7 @@ import { apiPost } from "@/lib/client-api";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/components/CurrencyProvider";
 import { PriceText } from "@/components/PriceText";
-import { optionCost } from "@/components/CustomerFlows";
+import { optionCost, toggleWishlist } from "@/components/CustomerFlows";
 import { parseLocalCalendarDate } from "@/lib/local-date";
 import { whatsappInquiryUrl } from "@/lib/site-contact";
 
@@ -29,11 +31,12 @@ export function TourPage({
 
   return (
     <main className="tour-page">
+      <TourBreadcrumb title={title} locale={locale} />
       <section className="tour-page-shell">
-        <h1 className="tour-page-title">{title}</h1>
+        <h1 className="tour-page-title tour-page-title-desktop">{title}</h1>
 
         <div className="tour-page-grid">
-          <TourLeftPanel tour={tour} locale={locale} selectedOptions={selectedOptions} onSelectedOptionsChange={setSelectedOptions} />
+          <TourLeftPanel tour={tour} locale={locale} title={title} selectedOptions={selectedOptions} onSelectedOptionsChange={setSelectedOptions} />
           <TourRightPanel tour={tour} locale={locale} selectedOptions={selectedOptions} onSelectedOptionsChange={setSelectedOptions} />
         </div>
       </section>
@@ -54,16 +57,72 @@ export function TourPage({
           </div>
         </section>
       ) : null}
+
+      <section className="tour-make-trip section-pad original-destination-band">
+        <div className="container-shell make-trip-section">
+          <div>
+            <h2>Make Your Trip</h2>
+            <HomeSearchShortcuts
+              locale={locale}
+              destinations={(tour?.destinations ?? []).map(({ id, name, title: destinationTitle, slug }) => ({ id, name, title: destinationTitle, slug }))}
+              modeOnly="make"
+            />
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
 
-function TourLeftPanel({ tour, locale, selectedOptions, onSelectedOptionsChange }: { tour: Tour | null; locale: Locale; selectedOptions: number[]; onSelectedOptionsChange: (ids: number[]) => void }) {
+function TourBreadcrumb({ title, locale }: { title: string; locale: Locale }) {
+  return (
+    <nav className="tour-breadcrumb" aria-label="Breadcrumb">
+      <Link className="tour-breadcrumb-back" href={withLocale("/trips", locale)} aria-label="Back to tours">←</Link>
+      <span className="tour-breadcrumb-trail">
+        <Link href={withLocale("/", locale)}>Home</Link><span aria-hidden="true">›</span>
+        <Link href={withLocale("/trips", locale)}>Tours</Link><span aria-hidden="true">›</span>
+      </span>
+      <span className="tour-breadcrumb-current">{title}</span>
+    </nav>
+  );
+}
+
+function useTourActions(tour: Tour | null, locale: Locale) {
+  const [actionMessage, setActionMessage] = useState("");
+
+  async function shareTour() {
+    const shareData = { title: tour?.title || "Sun Pyramids Tour", url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(shareData.url);
+        setActionMessage("Tour link copied");
+      }
+    } catch {
+      setActionMessage("Sharing was cancelled");
+    }
+  }
+
+  async function favoriteTour() {
+    if (!tour?.id) return;
+    try {
+      await toggleWishlist(tour.id, locale);
+      setActionMessage("Favorites updated");
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : "Please sign in to use favorites");
+    }
+  }
+
+  return { actionMessage, favoriteTour, shareTour };
+}
+
+function TourLeftPanel({ tour, locale, title, selectedOptions, onSelectedOptionsChange }: { tour: Tour | null; locale: Locale; title: string; selectedOptions: number[]; onSelectedOptionsChange: (ids: number[]) => void }) {
   return (
     <div className="tour-left-panel">
-      <TourGallery tour={tour} />
+      <TourGallery tour={tour} locale={locale} />
+      <h1 className="tour-page-title tour-page-title-mobile">{title}</h1>
       <TourInfo tour={tour} />
-      <TourHighlights tour={tour} />
+      <TourHighlights tour={tour} locale={locale} />
       {tour?.days?.length ? <TourItinerary days={tour.days} locale={locale} /> : null}
       {tour?.included ? <TourIncludedExcluded title="What's Included?" items={tour.included} icon="check" /> : null}
       {tour?.excluded ? <TourIncludedExcluded title="What's Excluded?" items={tour.excluded} icon="cross" /> : null}
@@ -72,13 +131,28 @@ function TourLeftPanel({ tour, locale, selectedOptions, onSelectedOptionsChange 
   );
 }
 
-function TourGallery({ tour }: { tour: Tour | null }) {
+function TourGallery({ tour, locale }: { tour: Tour | null; locale: Locale }) {
   const [active, setActive] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const { actionMessage, favoriteTour, shareTour } = useTourActions(tour, locale);
   const gallery = tour?.gallery?.length ? tour.gallery : [tour?.featured_image || "/images/mainBanner.png"];
+
+  function showPhoto(index: number) {
+    setActive((index + gallery.length) % gallery.length);
+  }
 
   return (
     <section className="tour-gallery">
-      <div className="tour-gallery-main">
+      <div
+        className="tour-gallery-main"
+        onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null; }}
+        onTouchEnd={(event) => {
+          if (touchStartX.current == null) return;
+          const distance = (event.changedTouches[0]?.clientX ?? touchStartX.current) - touchStartX.current;
+          if (Math.abs(distance) > 45) showPhoto(active + (distance < 0 ? 1 : -1));
+          touchStartX.current = null;
+        }}
+      >
         {gallery.map((src, index) => (
           <Image
             key={`${src}-${index}`}
@@ -90,6 +164,17 @@ function TourGallery({ tour }: { tour: Tour | null }) {
             className={`tour-gallery-slide ${index === active ? "is-active" : ""}`}
           />
         ))}
+        {gallery.length > 1 ? (
+          <>
+            <button className="tour-gallery-arrow tour-gallery-prev" type="button" onClick={() => showPhoto(active - 1)} aria-label="Previous photo">‹</button>
+            <button className="tour-gallery-arrow tour-gallery-next" type="button" onClick={() => showPhoto(active + 1)} aria-label="Next photo">›</button>
+          </>
+        ) : null}
+        <div className="tour-gallery-actions">
+          <button type="button" onClick={favoriteTour} aria-label="Add tour to favorites">♡</button>
+          <button type="button" onClick={shareTour} aria-label="Share tour">↗</button>
+        </div>
+        <a className="tour-gallery-expand" href={gallery[active]} target="_blank" rel="noreferrer" aria-label="Open current photo">↗</a>
       </div>
       <div className="tour-gallery-thumbs">
         {gallery.map((src, index) => (
@@ -104,31 +189,56 @@ function TourGallery({ tour }: { tour: Tour | null }) {
           </button>
         ))}
       </div>
+      <span className="tour-gallery-count" aria-live="polite">{active + 1} / {gallery.length}</span>
+      {actionMessage ? <p className="tour-gallery-message" role="status">{actionMessage}</p> : null}
     </section>
   );
 }
 
+function normalizedDestinationSlug(title: string) {
+  return title
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function tourDestinationCount(tour: Tour | null) {
+  const destinations = tour?.destinations ?? [];
+  const featuredDestinations = destinations.filter((destination) => !destination.global && destination.enabled && destination.featured);
+  const globalDestinations = destinations.filter((destination) => destination.global && destination.enabled);
+  const namedRegions = featuredDestinations.filter((destination) => {
+    const titleSlug = normalizedDestinationSlug(String(destination.title || destination.name || ""));
+    return titleSlug && titleSlug === String(destination.slug || "").toLowerCase();
+  });
+  return globalDestinations.length + namedRegions.length || featuredDestinations.length;
+}
+
 function TourInfo({ tour }: { tour: Tour | null }) {
-  const featuredDestinations = tour?.destinations?.filter((d) => !d.global && d.enabled && d.featured) ?? [];
   const category = tour?.categories?.[0]?.title || tour?.category?.name || "—";
-  const destinationCount = featuredDestinations.length;
+  const destinationCount = tourDestinationCount(tour);
 
   return (
     <>
       <section className="tour-info-grid">
         <div className="tour-info-card">
+          <TourInfoIcon type="duration" />
           <span className="tour-info-label">Duration</span>
           <span className="tour-info-value">{tour?.duration || `${tour?.duration_in_days || 1} Days`}</span>
         </div>
         <div className="tour-info-card">
+          <TourInfoIcon type="cities" />
           <span className="tour-info-label">Cities</span>
           <span className="tour-info-value">{destinationCount} Cities</span>
         </div>
         <div className="tour-info-card">
+          <TourInfoIcon type="type" />
           <span className="tour-info-label">Type</span>
           <span className="tour-info-value">{tour?.type || "Private Tour"}</span>
         </div>
         <div className="tour-info-card">
+          <TourInfoIcon type="category" />
           <span className="tour-info-label">Category</span>
           <span className="tour-info-value">{category}</span>
         </div>
@@ -155,8 +265,113 @@ function TourInfo({ tour }: { tour: Tour | null }) {
   );
 }
 
-function TourHighlights({ tour }: { tour: Tour | null }) {
+function TourInfoIcon({ type }: { type: "duration" | "cities" | "type" | "category" }) {
+  const paths = {
+    duration: <><circle cx="12" cy="12" r="8" /><path d="M12 7v5l3 2" /></>,
+    cities: <><path d="M5 21v-8l7-4 7 4v8" /><path d="M9 21v-4h6v4M12 3v6" /></>,
+    type: <><path d="M4 20V9l8-5 8 5v11" /><path d="M8 20v-6h8v6" /></>,
+    category: <><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z" /></>,
+  } as const;
+  return <svg className="tour-info-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths[type]}</svg>;
+}
+
+type TourDestination = NonNullable<Tour["destinations"]>[number];
+
+function destinationMapUrl(destinations: TourDestination[], activeDestination: TourDestination) {
+  const coordinates = destinations
+    .map((destination) => ({ latitude: Number(destination.latitude), longitude: Number(destination.longitude) }))
+    .filter(({ latitude, longitude }) => Number.isFinite(latitude) && Number.isFinite(longitude));
+  const activeLatitude = Number(activeDestination.latitude);
+  const activeLongitude = Number(activeDestination.longitude);
+  if (!coordinates.length || !Number.isFinite(activeLatitude) || !Number.isFinite(activeLongitude)) return "";
+  const latitudes = coordinates.map(({ latitude }) => latitude);
+  const longitudes = coordinates.map(({ longitude }) => longitude);
+  const latitudePadding = Math.max(0.8, (Math.max(...latitudes) - Math.min(...latitudes)) * 0.18);
+  const longitudePadding = Math.max(0.8, (Math.max(...longitudes) - Math.min(...longitudes)) * 0.18);
+  const bounds = [Math.min(...longitudes) - longitudePadding, Math.min(...latitudes) - latitudePadding, Math.max(...longitudes) + longitudePadding, Math.max(...latitudes) + latitudePadding];
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bounds.join("%2C")}&layer=mapnik&marker=${activeLatitude}%2C${activeLongitude}`;
+}
+
+function DestinationMap({ destinations, activeDestination }: { destinations: TourDestination[]; activeDestination: TourDestination }) {
+  const mapUrl = destinationMapUrl(destinations, activeDestination);
+  return (
+    <div className="tour-destinations-map">
+      {mapUrl ? (
+        <iframe key={mapUrl} src={mapUrl} title={`Map showing ${activeDestination.title || "tour destination"}`} loading="lazy" />
+      ) : (
+        <Image src="/images/map.png" alt="Tour destinations map" fill sizes="(max-width: 800px) 100vw, 50vw" />
+      )}
+    </div>
+  );
+}
+
+function DestinationList({ destinations, activeDestination, onSelect }: { destinations: TourDestination[]; activeDestination: TourDestination; onSelect: (destination: TourDestination) => void }) {
+  return (
+    <div className="tour-destinations-list" aria-label="Tour destinations">
+      {destinations.map((destination) => (
+        <button key={destination.id || destination.slug} type="button" className={destination === activeDestination ? "is-active" : ""} onClick={() => onSelect(destination)}>
+          <span className="tour-destination-marker" aria-hidden="true" />
+          <span>{destination.title || destination.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TourDestinationsModal({ tour, locale, destinations, open, onClose }: { tour: Tour; locale: Locale; destinations: TourDestination[]; open: boolean; onClose: () => void }) {
+  const { format } = useCurrency();
+  const [activeDestination, setActiveDestination] = useState(destinations[0]);
+  const { actionMessage, shareTour } = useTourActions(tour, locale);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose, open]);
+
+  if (!open || !activeDestination) return null;
+
+  function openBookingPanel() {
+    onClose();
+    window.dispatchEvent(new CustomEvent("tour:open-booking"));
+  }
+
+  return (
+    <div className="tour-destinations-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="tour-destinations-modal" role="dialog" aria-modal="true" aria-labelledby="tour-destinations-title">
+        <header className="tour-destinations-head">
+          <h2 id="tour-destinations-title">View Destinations</h2>
+          <button type="button" onClick={onClose} aria-label="Close destinations">×</button>
+        </header>
+        <div className="tour-destinations-layout">
+          <DestinationMap destinations={destinations} activeDestination={activeDestination} />
+          <div className="tour-destinations-summary">
+            <h3>{tour.title || tour.name}</h3>
+            <div className="tour-destinations-price-row">
+              <div><span>Price</span><strong>{format(tour.adult_price || tour.start_from || tour.price || 0)}</strong></div>
+              <button className="btn-outline" type="button" onClick={shareTour}>Share</button>
+            </div>
+            <button className="btn-primary tour-destinations-book" type="button" onClick={openBookingPanel}>Book now</button>
+            <h4>Destinations</h4>
+            <DestinationList destinations={destinations} activeDestination={activeDestination} onSelect={setActiveDestination} />
+            {actionMessage ? <p className="tour-booking-status" role="status">{actionMessage}</p> : null}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function TourHighlights({ tour, locale }: { tour: Tour | null; locale: Locale }) {
+  const [destinationsOpen, setDestinationsOpen] = useState(false);
   const featuredDestinations = tour?.destinations?.filter((d) => !d.global && d.enabled && d.featured) ?? [];
+  const attractionDestinations = tour?.destinations?.filter((destination) => !destination.global && !destination.featured && destination.enabled) ?? [];
 
   return (
     <section className="tour-highlights">
@@ -167,7 +382,7 @@ function TourHighlights({ tour }: { tour: Tour | null }) {
           <>
             <div className="tour-highlights-map">
               <Image src="/images/map.png" alt="Tour destinations map" fill sizes="100vw" />
-              <button type="button" className="tour-map-button">
+              <button type="button" className="tour-map-button" onClick={() => setDestinationsOpen(true)}>
                 <Image src="/images/eye-white.png" alt="" width={20} height={20} />
                 View Destinations
               </button>
@@ -188,6 +403,9 @@ if (!children.length) return null;
                 );
               })}
             </div>
+            {tour && attractionDestinations.length ? (
+              <TourDestinationsModal tour={tour} locale={locale} destinations={attractionDestinations} open={destinationsOpen} onClose={() => setDestinationsOpen(false)} />
+            ) : null}
           </>
         )}
       </Collapsible>
@@ -264,7 +482,7 @@ function TourAddOns({ options, selected, onChange }: { options: NonNullable<Tour
                 checked={selected.includes(Number(option.id))}
                 onChange={(event) => {
                   const id = Number(option.id);
-                  onChange(event.target.checked ? [...selected, id] : selected.filter((v) => v !== id));
+                  onChange(updatedSelectedOptions(selected, id, event.target.checked));
                 }}
               />
               <span className="tour-addon-name">{option.name}</span>
@@ -273,6 +491,41 @@ function TourAddOns({ options, selected, onChange }: { options: NonNullable<Tour
           ))}
         </div>
       </Collapsible>
+    </section>
+  );
+}
+
+function updatedSelectedOptions(selected: number[], optionId: number, checked: boolean) {
+  return checked ? [...selected, optionId] : selected.filter((selectedId) => selectedId !== optionId);
+}
+
+function TourBookingAddOns({ options, selected, optionsTotal, onChange }: { options: NonNullable<Tour["options"]>; selected: number[]; optionsTotal: number; onChange: (ids: number[]) => void }) {
+  const { format } = useCurrency();
+  const [expanded, setExpanded] = useState(true);
+  return (
+    <section className="tour-booking-amount" aria-labelledby="tour-booking-amount-title">
+      <h4 id="tour-booking-amount-title">Amount</h4>
+      <div className="tour-booking-addons-head">
+        <div>
+          <strong>Add-ons</strong>
+          <button type="button" onClick={() => setExpanded((current) => !current)} aria-expanded={expanded}>{expanded ? "Hide details" : "See details"}</button>
+        </div>
+        <strong>{format(optionsTotal)}</strong>
+      </div>
+      {expanded ? (
+        <div className="tour-booking-addon-list">
+          {options.map((option) => {
+            const optionId = Number(option.id);
+            return (
+              <label key={option.id || option.name}>
+                <input type="checkbox" checked={selected.includes(optionId)} onChange={(event) => onChange(updatedSelectedOptions(selected, optionId, event.target.checked))} />
+                <span>{option.name}</span>
+                <strong>{format(option.adult_price || 0)}</strong>
+              </label>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -294,7 +547,7 @@ function matchingSeason(tour: Tour | null | undefined, dateString?: string) {
   }) ?? null;
 }
 
-function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; locale: Locale; selectedOptions: number[]; onSelectedOptionsChange?: (ids: number[]) => void }) {
+function TourRightPanel({ tour, locale, selectedOptions, onSelectedOptionsChange }: { tour: Tour | null; locale: Locale; selectedOptions: number[]; onSelectedOptionsChange: (ids: number[]) => void }) {
   const router = useRouter();
   const { format } = useCurrency();
   const [adults, setAdults] = useState(1);
@@ -302,6 +555,17 @@ function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; 
   const [infants, setInfants] = useState(0);
   const [date, setDate] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { actionMessage, favoriteTour, shareTour } = useTourActions(tour, locale);
+
+  useEffect(() => {
+    const openBookingPanel = () => {
+      setMobileOpen(true);
+      requestAnimationFrame(() => document.querySelector<HTMLInputElement>(".tour-field input")?.focus());
+    };
+    window.addEventListener("tour:open-booking", openBookingPanel);
+    return () => window.removeEventListener("tour:open-booking", openBookingPanel);
+  }, []);
 
   // Inquiry tours bypass all booking/pricing logic and render a contact form instead.
   if (tour?.is_inquiry) {
@@ -358,55 +622,64 @@ function TourRightPanel({ tour, locale, selectedOptions }: { tour: Tour | null; 
 
   return (
     <aside className="tour-right-panel">
-      <div className="tour-booking-card">
-        <div className="tour-booking-price">
-          <div>
-            <span className="tour-booking-label">Price</span>
-            <strong className="tour-price-current">{format(total)}</strong>
-            {offer ? <span className="tour-price-original">{format(baseTotal)}</span> : null}
-          </div>
-          <button type="button" className="btn-outline btn-sm">
-            Share
-          </button>
-        </div>
-
-        <form className="tour-booking-form" onSubmit={submit}>
-          <label className="tour-field">
-            <span>Date</span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-          </label>
-
-          <div className="tour-passengers">
-            <span className="tour-booking-label">Passengers</span>
-            <Counter label="Adults (12+)" value={adults} onChange={setAdults} min={1} />
-            <Counter label="Children (3 - 11)" value={children} onChange={setChildren} />
-            <Counter label="Infants (0 - 2)" value={infants} onChange={setInfants} />
+      <div className={`tour-booking-dialog ${mobileOpen ? "is-open" : ""}`} role="dialog" aria-modal={mobileOpen || undefined} aria-label="Book this tour">
+        <button className="tour-booking-backdrop" type="button" onClick={() => setMobileOpen(false)} aria-label="Close booking panel" />
+        <div className="tour-booking-card">
+          <button className="tour-booking-close" type="button" onClick={() => setMobileOpen(false)} aria-label="Close booking panel">×</button>
+          <div className="tour-booking-price">
+            <div>
+              <span className="tour-booking-label">Price</span>
+              <strong className="tour-price-current">{format(passengerTotal)}</strong>
+              {offer ? <span className="tour-price-original">{format(baseTotal)}</span> : null}
+            </div>
+            <button type="button" className="btn-outline btn-sm" onClick={shareTour}>
+              Share
+            </button>
           </div>
 
-          <div className="tour-booking-total">
-            <span>Total</span>
-            <strong>{format(total)}</strong>
+          <form className="tour-booking-form" onSubmit={submit}>
+            <label className="tour-field">
+              <span>Date</span>
+              <input type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
+            </label>
+
+            <div className="tour-passengers">
+              <span className="tour-booking-label">Passengers</span>
+              <Counter label="Adults (12+)" value={adults} onChange={setAdults} min={1} />
+              <Counter label="Children (3 - 11)" value={children} onChange={setChildren} />
+              <Counter label="Infants (0 - 2)" value={infants} onChange={setInfants} />
+            </div>
+
+            {tour?.options?.length ? (
+              <TourBookingAddOns options={tour.options} selected={selectedOptions} optionsTotal={optionsTotal} onChange={onSelectedOptionsChange} />
+            ) : null}
+
+            <div className="tour-booking-total">
+              <span>Total</span>
+              <strong>{format(total)}</strong>
+            </div>
+
+            <button type="submit" className="btn-primary" disabled={status === "loading"}>
+              {status === "loading" ? "Booking..." : "Book now"}
+            </button>
+            {status === "error" ? <p className="tour-booking-error">Something went wrong. Please try again.</p> : null}
+          </form>
+
+          <div className="tour-booking-actions">
+            <button type="button" className="btn-outline" onClick={favoriteTour}>
+              Favorites
+            </button>
+            <a className="btn-outline" href={whatsappInquiryUrl(`I want to inquire about a tour (${tour?.title})`)} target="_blank" rel="noreferrer">
+              Ask a question
+            </a>
           </div>
-
-          <button type="submit" className="btn-primary" disabled={status === "loading"}>
-            {status === "loading" ? "Booking..." : "Book now"}
-          </button>
-          {status === "error" ? <p className="tour-booking-error">Something went wrong. Please try again.</p> : null}
-        </form>
-
-        <div className="tour-booking-actions">
-          <button type="button" className="btn-outline">
-            Favorites
-          </button>
-          <a className="btn-outline" href={whatsappInquiryUrl(`I want to inquire about a tour (${tour?.title})`)} target="_blank" rel="noreferrer">
-            Ask a question
-          </a>
+          {actionMessage ? <p className="tour-booking-status" role="status">{actionMessage}</p> : null}
         </div>
       </div>
 
-      <div className="tour-right-help">
-        <p className="eyebrow">Need help?</p>
-        <ContactForm locale={locale} />
+      <div className="tour-mobile-booking-bar">
+        <div><span>Price</span><strong>{format(total)}</strong></div>
+        <button type="button" className="btn-primary" onClick={() => setMobileOpen(true)}>Book now</button>
       </div>
     </aside>
   );
@@ -441,11 +714,16 @@ function TourSeasonPrices({ seasons }: { seasons: NonNullable<Tour["seasons"]> }
             const availability = season.calender_availability || {};
             const months = availability.month_names ?? [];
             const years = availability.years_numbers ?? [];
+            const days = availability.day_numbers ?? [];
+            const monthLabel = months.map((month) => month.slice(0, 3).replace(/^./, (letter) => letter.toUpperCase())).join(" & ");
+            const dayLabel = days.length ? `${Math.min(...days)} - ${Math.max(...days)}` : "";
+            const yearLabel = years.join(" & ");
+            const seasonLabel = monthLabel
+              ? `${dayLabel ? `(${dayLabel}) ` : ""}${monthLabel}${yearLabel ? ` ${yearLabel}` : ""}`
+              : season.title || `Season ${index + 1}`;
             return (
               <div key={index} className="tour-season-card">
-                <p className="tour-season-date">
-                  {months.length ? `${months[0]} ${years[0] || ""}` : `Season ${index + 1}`}
-                </p>
+                <p className="tour-season-date">{seasonLabel}</p>
                 {solo ? (
                   <div className="tour-season-row">
                     <span>Solo</span>
@@ -474,12 +752,12 @@ function TourSeasonPrices({ seasons }: { seasons: NonNullable<Tour["seasons"]> }
 }
 
 const defaultSocials = [
-  { type: "shorts", image: "/images/shorts.png", icon: "/images/shorts-gallary.png", url: "#" },
-  { type: "youtube", image: "/images/youtubetwo.png", icon: "/images/youtube-gallary.png", url: "#" },
-  { type: "facebook", image: "/images/youtubetwo.png", icon: "/images/fb-logo.webp", url: "#" },
-  { type: "youtube", image: "/images/youtubeone.png", icon: "/images/youtube-gallary.png", url: "#" },
-  { type: "tiktok", image: "/images/tiktok.png", icon: "/images/tiktok-gallary.png", url: "#" },
-  { type: "instagram", image: "/images/instagram.png", icon: "/images/insta-gallary.png", url: "#" },
+  { type: "shorts", image: "/images/shorts.png", icon: "/images/shorts-gallary.png", url: "https://www.youtube.com/channel/UCCsn_rbLMuer0kJd9iK6RDA" },
+  { type: "youtube", image: "/images/youtubetwo.png", icon: "/images/youtube-gallary.png", url: "https://www.youtube.com/channel/UCCsn_rbLMuer0kJd9iK6RDA" },
+  { type: "facebook", image: "/images/youtubetwo.png", icon: "/images/fb-logo.webp", url: "https://www.facebook.com/SunPyramidsTours/" },
+  { type: "youtube", image: "/images/youtubeone.png", icon: "/images/youtube-gallary.png", url: "https://www.youtube.com/channel/UCCsn_rbLMuer0kJd9iK6RDA" },
+  { type: "tiktok", image: "/images/tiktok.png", icon: "/images/tiktok-gallary.png", url: "https://www.tiktok.com/@sunpyramidstours" },
+  { type: "instagram", image: "/images/instagram.png", icon: "/images/insta-gallary.png", url: "https://www.instagram.com/sunpyramidstours/" },
 ];
 
 function TourSocialGallery({ socials }: { socials?: { image?: string; icon?: string; url?: string; type?: string }[] }) {
@@ -494,7 +772,7 @@ function TourSocialGallery({ socials }: { socials?: { image?: string; icon?: str
         <div className="tour-social-scroll">
           {items.map((item, index) => (
             <a key={index} href={item.url || "#"} target="_blank" rel="noreferrer" className="tour-social-card">
-              <Image src={item.image || "/images/shorts.png"} alt="" fill sizes="20vw" />
+              <Image src={item.image || "/images/shorts.png"} alt="" fill sizes="20vw" loading="eager" />
               <Image src={item.icon || "/images/shorts-gallary.png"} alt="Social gallery icon" width={72} height={72} className="tour-social-icon" />
             </a>
           ))}

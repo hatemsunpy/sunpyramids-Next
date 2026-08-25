@@ -5,6 +5,7 @@ import { apiGet } from "@/lib/client-api";
 import { TourCard } from "@/components/TourCard";
 import type { ApiList, Locale, Tour } from "@/types/api";
 import { homeCopy } from "@/lib/home-copy";
+import { SwipeCarousel } from "@/components/SwipeCarousel";
 
 type Filter = {
   key: string;
@@ -103,7 +104,12 @@ export function HomePopularTours({
           </button>
         ))}
       </div>
-      <div aria-busy={loading} aria-live="polite" className="grid-cards home-tour-grid">
+      <SwipeCarousel
+        aria-busy={loading}
+        ariaLabel={copy.popularTitle}
+        aria-live="polite"
+        className="grid-cards home-tour-grid"
+      >
         {loading
           ? Array.from({ length: 4 }).map((_, index) => <div className="tour-card tour-card-skeleton" key={index} />)
           : failed
@@ -111,7 +117,7 @@ export function HomePopularTours({
           : tours.length
             ? tours.map((tour) => <TourCard key={tour.id || tour.slug} locale={locale} tour={tour} />)
             : <div className="home-filter-empty">No tours are available for this category right now.</div>}
-      </div>
+      </SwipeCarousel>
     </>
   );
 }

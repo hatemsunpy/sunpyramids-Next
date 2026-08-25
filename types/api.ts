@@ -31,6 +31,10 @@ export type ApiPage = {
   featured_image?: string;
   image?: string;
   gallery?: string[];
+  created_at?: string | null;
+  published_at?: string | null;
+  related_tours?: Tour[];
+  categories?: { id?: number; name?: string; title?: string; slug?: string }[];
   metas?: { meta_key?: string; meta_value?: string; value?: string; title?: string; description?: string; [key: string]: unknown }[];
   seo?: SeoFields | null;
   [key: string]: unknown;
@@ -113,10 +117,23 @@ export type Tour = ApiPage & {
     featured?: boolean;
     latitude?: string;
     longitude?: string;
+    display_order?: number;
+    banner?: string | null;
+    phone_banner?: string | null;
+    featured_image?: string | null;
+    gallery?: string[];
+    pivot?: { tour_id?: number; destination_id?: number; order?: number };
   }[];
   images?: string[];
   gallery?: string[];
-  options?: { id?: number; name?: string; adult_price?: number | string; child_price?: number | string }[];
+  options?: {
+    id?: number;
+    name?: string;
+    description?: string | null;
+    adult_price?: number | string;
+    child_price?: number | string;
+    pricing_groups?: { from?: number; to?: number; price?: number | string; child_price?: number | string }[];
+  }[];
   days?: {
     id?: number;
     tour_id?: number;
@@ -126,6 +143,7 @@ export type Tour = ApiPage & {
   }[];
   seasons?: {
     id?: number;
+    title?: string;
     date?: string;
     calender_availability?: {
       day_numbers?: number[];

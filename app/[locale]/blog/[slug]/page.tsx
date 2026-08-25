@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { GenericPage } from "@/components/GenericPage";
+import { BlogPostPage } from "@/components/BlogPostPage";
 import { JsonLd } from "@/components/JsonLd";
 import { SiteShell } from "@/components/SiteShell";
-import { getBlogReliable } from "@/lib/data";
+import { getBlogPostFaqs, getBlogReliable, getRelatedBlogs } from "@/lib/data";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { resolveRequiredApiResult } from "@/lib/resolve-api-result";
 import { metadataFromPage } from "@/lib/seo";
@@ -19,11 +19,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const resolved = await params;
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const blog = resolveRequiredApiResult(await getBlogReliable(resolved.slug, locale), `blog "${resolved.slug}"`);
+  const [blogResult, faqs, relatedBlogs] = await Promise.all([
+    getBlogReliable(resolved.slug, locale),
+    getBlogPostFaqs(resolved.slug, locale),
+    getRelatedBlogs(resolved.slug, locale),
+  ]);
+  const blog = resolveRequiredApiResult(blogResult, `blog "${resolved.slug}"`);
   return (
     <SiteShell locale={locale}>
       <JsonLd schema={blog?.seo?.structure_schema} />
-      <GenericPage page={blog} fallbackTitle="Egypt Travel Guide" route="blog" locale={locale} />
+      <BlogPostPage blog={blog} faqs={faqs} relatedBlogs={relatedBlogs} locale={locale} />
     </SiteShell>
   );
 }

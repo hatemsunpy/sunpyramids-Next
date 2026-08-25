@@ -1,31 +1,30 @@
 import type { Metadata } from "next";
-import { BlogCard } from "@/components/BlogCard";
+import { AllBlogsPage } from "@/components/AllBlogsPage";
 import { JsonLd } from "@/components/JsonLd";
 import { SiteShell } from "@/components/SiteShell";
-import { getBlogs, getPage } from "@/lib/data";
+import { getAllBlogCategories, getBlogFaqs, getBlogListing, getPage } from "@/lib/data";
 import { metadataFromPage } from "@/lib/seo";
+
+type Props = { searchParams: Promise<{ title?: string | string[] }> };
 
 export async function generateMetadata(): Promise<Metadata> {
   const page = await getPage("all-blogs", "en");
   return metadataFromPage(page, "/blogs/all-blogs", "en");
 }
 
-export default async function Page() {
-  const [page, blogs] = await Promise.all([getPage("all-blogs", "en"), getBlogs("en", 12)]);
+export default async function Page({ searchParams }: Props) {
+  const query = await searchParams;
+  const initialTitle = Array.isArray(query.title) ? query.title[0] || "" : query.title || "";
+  const [page, listing, categories, faqs] = await Promise.all([
+    getPage("all-blogs", "en"),
+    getBlogListing("en", initialTitle),
+    getAllBlogCategories("en"),
+    getBlogFaqs("en"),
+  ]);
   return (
     <SiteShell locale="en">
-        <JsonLd schema={page?.seo?.structure_schema} />
-      <main>
-        <section
-          className="page-hero"
-          style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.38)), url(${page?.banner || "/images/blogsHero.png"})` }}
-        >
-          <h1>{page?.title || "Travel Blogs"}</h1>
-        </section>
-        <section className="section-pad container-shell grid-cards">
-          {blogs.map((blog) => <BlogCard key={blog.id || blog.slug} blog={blog} locale="en" />)}
-        </section>
-      </main>
+      <JsonLd schema={page?.seo?.structure_schema} />
+      <AllBlogsPage page={page} listing={listing} categories={categories} faqs={faqs} locale="en" initialTitle={initialTitle} />
     </SiteShell>
   );
 }
