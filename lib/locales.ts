@@ -27,6 +27,19 @@ export function isLocale(value: string | undefined): value is Locale {
   return !!value && (locales as readonly string[]).includes(value);
 }
 
+export function localeFromPathname(pathname: string): Locale {
+  const firstSegment = pathname.split("/").filter(Boolean)[0];
+  return isLocale(firstSegment) && firstSegment !== "en" ? firstSegment : "en";
+}
+
+export function decodePathSegment(segment: string) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
 export function localePrefix(locale: Locale) {
   return locale === "en" ? "" : `/${locale}`;
 }
@@ -34,6 +47,10 @@ export function localePrefix(locale: Locale) {
 export function withLocale(path: string, locale: Locale) {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${localePrefix(locale)}${normalized === "/" ? "" : normalized}` || "/";
+}
+
+export function tourPath(slug: string, locale: Locale) {
+  return withLocale(`/tour/${encodeURIComponent(slug)}`, locale);
 }
 
 export function stripLocale(path: string) {

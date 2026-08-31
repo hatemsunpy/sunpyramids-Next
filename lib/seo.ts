@@ -122,6 +122,23 @@ export function metadataFromPage(
   };
 }
 
+export function commercePageMetadata(
+  page: "cart" | "checkout",
+  locale: Locale,
+): Metadata {
+  const checkout = page === "checkout";
+  return metadataFromPage(
+    {
+      title: checkout ? "Secure Checkout" : "Shopping Cart",
+      description: checkout
+        ? "Review your booking details and complete your Sun Pyramids Tours checkout."
+        : "Review the tours in your Sun Pyramids Tours shopping cart.",
+    },
+    withLocale(checkout ? "/cart/checkout" : "/cart", locale),
+    locale,
+  );
+}
+
 function brandedTitle(title: string) {
   return title.toLocaleLowerCase().includes(BRAND_NAME.toLocaleLowerCase())
     ? title

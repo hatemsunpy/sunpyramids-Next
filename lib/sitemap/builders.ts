@@ -1,4 +1,5 @@
 import { FRONTEND_ORIGIN } from "@/lib/seo";
+import { tourPath } from "@/lib/locales";
 import {
   SITEMAP_LOCALES,
   SITEMAP_MAX_URLS,
@@ -173,7 +174,7 @@ export function buildSitemapCatalog(dataset: SitemapDataset): SitemapCatalog {
   const taxonomies = uniqueGroup([...categoryRecords, ...destinationRecords], globallySeen);
 
   const tours = uniqueGroup(dataset.tours.map((entity) =>
-    entity.slug && isIndexable(entity) ? sitemapRecord(`/tour/${entity.slug}`, entity) : null,
+    entity.slug && isIndexable(entity) ? sitemapRecord(tourPath(entity.slug, "en"), entity) : null,
   ), globallySeen);
 
   return { pages, posts, events, travelGuide, taxonomies, tourChunks: chunkTours(tours) };

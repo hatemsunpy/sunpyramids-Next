@@ -162,7 +162,19 @@ export function TripsListingPage({
   );
 }
 
-export function TravelGuidePage({ page, categories, blogs, locale = "en" }: { page: ApiPage | null; categories: ApiPage[]; blogs?: ApiPage[]; locale?: Locale }) {
+export function TravelGuidePage({
+  page,
+  categories,
+  blogs,
+  categoryBasePath = "/egypt-travel-guide",
+  locale = "en",
+}: {
+  page: ApiPage | null;
+  categories: ApiPage[];
+  blogs?: ApiPage[];
+  categoryBasePath?: string;
+  locale?: Locale;
+}) {
   return (
     <main>
       <section className="original-page-hero" style={{ backgroundImage: `linear-gradient(rgba(0,0,0,.2), rgba(0,0,0,.55)), url(${page?.banner || "/images/blogsHero.png"})` }}>
@@ -171,7 +183,7 @@ export function TravelGuidePage({ page, categories, blogs, locale = "en" }: { pa
       <section className="faq-search-section"><div className="container-shell"><input placeholder="Search Egypt travel guide" /></div></section>
       {categories.length ? (
         <section className="destination-grid-section">
-          {categories.map((category) => <DestinationCard key={category.id || category.slug} destination={category} basePath="/egypt-travel-guide" locale={locale} />)}
+          {categories.map((category) => <DestinationCard key={category.id || category.slug} destination={category} basePath={categoryBasePath} locale={locale} />)}
         </section>
       ) : null}
       {blogs?.length ? <section className="section-pad container-shell grid-cards blog-grid">{blogs.map((blog) => <BlogCard key={blog.id || blog.slug} blog={blog} locale={locale} />)}</section> : null}

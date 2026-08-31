@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import type { Locale } from "@/types/api";
 import { languageOptions } from "@/lib/locales";
+import { UI_DEFAULT_CURRENCY } from "@/lib/currencies";
 import { useCurrency } from "@/components/CurrencyProvider";
 
 export function LanguageCurrencyTrigger({ locale, onClick, className = "" }: { locale: Locale; onClick: () => void; className?: string }) {
@@ -13,7 +14,7 @@ export function LanguageCurrencyTrigger({ locale, onClick, className = "" }: { l
     <button className={`header-language ${className}`} type="button" onClick={onClick} aria-label="Language and currency">
       <Image src="/icons/language.svg" alt="" width={20} height={20} aria-hidden="true" />
       <span>
-        {locale.toUpperCase()} - {selected.name}
+        {locale.toUpperCase()} - {selected?.name ?? UI_DEFAULT_CURRENCY.name}
       </span>
     </button>
   );
@@ -29,7 +30,7 @@ export function LanguageCurrencyModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { currencies, selected, setCurrency } = useCurrency();
+  const { currencies, selected, source, setCurrency } = useCurrency();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   // Capture the element that opened the modal so focus can be restored on close.
@@ -104,7 +105,7 @@ export function LanguageCurrencyModal({
               <button
                 key={currency.id}
                 type="button"
-                className={`lc-tile ${currency.id === selected.id ? "lc-tile-active" : ""}`}
+                className={`lc-tile ${currency.id === selected?.id ? "lc-tile-active" : ""}`}
                 onClick={() => setCurrency(currency)}
               >
                 <span className="lc-tile-title">{currency.title}</span>
@@ -113,6 +114,9 @@ export function LanguageCurrencyModal({
                 </span>
               </button>
             ))}
+            {source === "unavailable" ? (
+              <p className="lc-unavailable" role="status">Currency options are temporarily unavailable.</p>
+            ) : null}
           </div>
         </div>
 

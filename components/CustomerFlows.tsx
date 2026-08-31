@@ -678,6 +678,11 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
 
   async function checkoutSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!selected) {
+      setState("error");
+      setMessage("Currency options are temporarily unavailable. Please try again before checkout.");
+      return;
+    }
     setState("loading");
     setMessage("");
     const form = new FormData(event.currentTarget);
@@ -694,7 +699,7 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
       pickup_location: String(form.get("pickupLocation") || ""),
       notes: String(form.get("note") || ""),
       payment_method: paymentMethod,
-      currency_id: selected.id || Number(form.get("currencyId") || 1),
+      currency_id: selected.id,
       coupon_id: couponIdFrom(coupon) || checkoutData?.discountID || undefined,
     };
     if (paymentMethod === "card") {
@@ -737,14 +742,14 @@ export function CartFlow({ checkout = false, locale = "en" }: { checkout?: boole
           <input name="country" placeholder={copy.country} required />
           <input name="state" placeholder={copy.state} required />
           <input name="pickupLocation" placeholder={copy.pickupLocation} />
-          <input name="currencyId" type="hidden" value={selected.id} />
           <select name="paymentMethod" defaultValue="card" required aria-label={copy.paymentMethod}>
             <option value="card">{copy.card}</option>
             <option value="paypal">{copy.paypal}</option>
           </select>
           <textarea name="note" placeholder={copy.note} rows={4} />
-          <button className="btn-primary" type="submit" disabled={state === "loading"}>{state === "loading" ? copy.checkoutLoading : copy.checkoutNow}</button>
+          <button className="btn-primary" type="submit" disabled={state === "loading" || !selected}>{state === "loading" ? copy.checkoutLoading : copy.checkoutNow}</button>
         </form>
+        {!selected && state !== "loading" ? <p className="form-message error">Currency options are temporarily unavailable. Checkout is paused.</p> : null}
         {message ? <p className={statusClass(state)}>{message}</p> : null}
       </div>
     );
@@ -875,6 +880,9 @@ export function PlannerRequestFlow({ route, locale = "en" }: { route: "make-your
 
     try {
       if (isCar) {
+        if (!selected) {
+          throw new Error("Currency options are temporarily unavailable. Please try again before booking a rental.");
+        }
         const returnDate = String(form.get("returnDate") || "");
         const returnTime = String(form.get("returnTime") || "");
         if (form.get("type") === "roundTrip" && (!returnDate || !returnTime)) {

@@ -1,45 +1,49 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  DEFAULT_CURRENCY,
-  FALLBACK_CURRENCIES,
+  UI_DEFAULT_CURRENCY,
   fetchCurrencies,
   readCurrencyCookie,
   writeCurrencyCookie,
   type Currency,
+  type CurrencyLoadResult,
 } from "@/lib/currencies";
 
 type CurrencyContextValue = {
   currencies: Currency[];
-  selected: Currency;
+  selected: Currency | null;
+  source: CurrencyLoadResult["source"] | "loading";
   setCurrency: (currency: Currency) => void;
   format: (amount: number | string | null | undefined) => string;
 };
 
 const CurrencyContext = createContext<CurrencyContextValue>({
-  currencies: FALLBACK_CURRENCIES,
-  selected: DEFAULT_CURRENCY,
+  currencies: [],
+  selected: null,
+  source: "loading",
   setCurrency: () => undefined,
-  format: (amount) => `$${Number(amount || 0).toFixed(2)}`,
+  format: (amount) => `${UI_DEFAULT_CURRENCY.symbol}${Number(amount || 0).toFixed(2)}`,
 });
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const readInitialCurrency = () => {
-    const saved = readCurrencyCookie();
-    return FALLBACK_CURRENCIES.find((c) => c.name === saved) ?? FALLBACK_CURRENCIES.find((c) => c.name === "USD") ?? DEFAULT_CURRENCY;
-  };
-
-  const [currencies, setCurrencies] = useState<Currency[]>(FALLBACK_CURRENCIES);
-  const [selected, setSelected] = useState<Currency>(readInitialCurrency);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [selected, setSelected] = useState<Currency | null>(null);
+  const [source, setSource] = useState<CurrencyContextValue["source"]>("loading");
 
   useEffect(() => {
     let active = true;
-    fetchCurrencies().then((list) => {
+    fetchCurrencies().then((result) => {
       if (!active) return;
-      setCurrencies(list);
       const saved = readCurrencyCookie();
-      setSelected(list.find((c) => c.name === saved) ?? list.find((c) => c.name === "USD") ?? list[0] ?? DEFAULT_CURRENCY);
+      setCurrencies(result.currencies);
+      setSelected(
+        result.currencies.find((currency) => currency.name === saved) ??
+        result.currencies.find((currency) => currency.name === "USD") ??
+        result.currencies[0] ??
+        null,
+      );
+      setSource(result.source);
     });
     return () => {
       active = false;
@@ -54,13 +58,19 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const format = useCallback(
     (amount: number | string | null | undefined) => {
       const numeric = Number(amount || 0);
-      const value = Number.isFinite(numeric) ? numeric * selected.exchange_rate : 0;
-      return `${selected.symbol}${value.toFixed(2)}`;
+      const baseValue = Number.isFinite(numeric) ? numeric : 0;
+      if (!selected) {
+        return `${UI_DEFAULT_CURRENCY.symbol}${baseValue.toFixed(2)}`;
+      }
+      return `${selected.symbol}${(baseValue * selected.exchange_rate).toFixed(2)}`;
     },
     [selected],
   );
 
-  const value = useMemo(() => ({ currencies, selected, setCurrency, format }), [currencies, selected, setCurrency, format]);
+  const value = useMemo(
+    () => ({ currencies, selected, source, setCurrency, format }),
+    [currencies, selected, source, setCurrency, format],
+  );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }

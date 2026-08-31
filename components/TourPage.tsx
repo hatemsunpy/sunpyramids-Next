@@ -133,9 +133,16 @@ function TourLeftPanel({ tour, locale, title, selectedOptions, onSelectedOptions
 
 function TourGallery({ tour, locale }: { tour: Tour | null; locale: Locale }) {
   const [active, setActive] = useState(0);
+  const [thumbnailsReady, setThumbnailsReady] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const { actionMessage, favoriteTour, shareTour } = useTourActions(tour, locale);
   const gallery = tour?.gallery?.length ? tour.gallery : [tour?.featured_image || "/images/mainBanner.png"];
+  const thumbnailWindowSize = 5;
+  const thumbnailStart = Math.min(
+    Math.max(active - Math.floor(thumbnailWindowSize / 2), 0),
+    Math.max(gallery.length - thumbnailWindowSize, 0),
+  );
+  const visibleThumbnails = gallery.slice(thumbnailStart, thumbnailStart + thumbnailWindowSize);
 
   function showPhoto(index: number) {
     setActive((index + gallery.length) % gallery.length);
@@ -153,17 +160,18 @@ function TourGallery({ tour, locale }: { tour: Tour | null; locale: Locale }) {
           touchStartX.current = null;
         }}
       >
-        {gallery.map((src, index) => (
-          <Image
-            key={`${src}-${index}`}
-            src={src}
-            alt={`${tour?.title || "Tour"} photo ${index + 1}`}
-            fill
-            priority={index === 0}
-            sizes="(max-width: 1024px) 100vw, 70vw"
-            className={`tour-gallery-slide ${index === active ? "is-active" : ""}`}
-          />
-        ))}
+        <Image
+          key={`${gallery[active]}-${active}`}
+          src={gallery[active]}
+          alt={`${tour?.title || "Tour"} photo ${active + 1}`}
+          fill
+          preload={active === 0}
+          fetchPriority={active === 0 ? "high" : "auto"}
+          loading={active === 0 ? "eager" : "lazy"}
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 62vw, 967px"
+          className="tour-gallery-slide is-active"
+          onLoad={() => setThumbnailsReady(true)}
+        />
         {gallery.length > 1 ? (
           <>
             <button className="tour-gallery-arrow tour-gallery-prev" type="button" onClick={() => showPhoto(active - 1)} aria-label="Previous photo">‹</button>
@@ -177,7 +185,9 @@ function TourGallery({ tour, locale }: { tour: Tour | null; locale: Locale }) {
         <a className="tour-gallery-expand" href={gallery[active]} target="_blank" rel="noreferrer" aria-label="Open current photo">↗</a>
       </div>
       <div className="tour-gallery-thumbs">
-        {gallery.map((src, index) => (
+        {visibleThumbnails.map((src, offset) => {
+          const index = thumbnailStart + offset;
+          return (
           <button
             key={`thumb-${src}-${index}`}
             type="button"
@@ -185,9 +195,12 @@ function TourGallery({ tour, locale }: { tour: Tour | null; locale: Locale }) {
             onClick={() => setActive(index)}
             aria-label={`View photo ${index + 1}`}
           >
-            <Image src={src} alt="" width={80} height={80} />
+            {thumbnailsReady || index === active ? (
+              <Image src={src} alt="" width={80} height={80} loading="lazy" />
+            ) : null}
           </button>
-        ))}
+          );
+        })}
       </div>
       <span className="tour-gallery-count" aria-live="polite">{active + 1} / {gallery.length}</span>
       {actionMessage ? <p className="tour-gallery-message" role="status">{actionMessage}</p> : null}
@@ -292,6 +305,29 @@ function destinationMapUrl(destinations: TourDestination[], activeDestination: T
   return `https://www.openstreetmap.org/export/embed.html?bbox=${bounds.join("%2C")}&layer=mapnik&marker=${activeLatitude}%2C${activeLongitude}`;
 }
 
+function DeferredTourMapImage({ sizes }: { sizes: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) return;
+      setVisible(true);
+      observer.disconnect();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="tour-deferred-map-image">
+      {visible ? <Image src="/images/map.png" alt="Tour destinations map" fill sizes={sizes} /> : null}
+    </div>
+  );
+}
+
 function DestinationMap({ destinations, activeDestination }: { destinations: TourDestination[]; activeDestination: TourDestination }) {
   const mapUrl = destinationMapUrl(destinations, activeDestination);
   return (
@@ -299,7 +335,7 @@ function DestinationMap({ destinations, activeDestination }: { destinations: Tou
       {mapUrl ? (
         <iframe key={mapUrl} src={mapUrl} title={`Map showing ${activeDestination.title || "tour destination"}`} loading="lazy" />
       ) : (
-        <Image src="/images/map.png" alt="Tour destinations map" fill sizes="(max-width: 800px) 100vw, 50vw" />
+        <DeferredTourMapImage sizes="(max-width: 800px) 100vw, 50vw" />
       )}
     </div>
   );
@@ -381,7 +417,7 @@ function TourHighlights({ tour, locale }: { tour: Tour | null; locale: Locale })
         ) : (
           <>
             <div className="tour-highlights-map">
-              <Image src="/images/map.png" alt="Tour destinations map" fill sizes="100vw" />
+              <DeferredTourMapImage sizes="100vw" />
               <button type="button" className="tour-map-button" onClick={() => setDestinationsOpen(true)}>
                 <Image src="/images/eye-white.png" alt="" width={20} height={20} />
                 View Destinations
@@ -772,7 +808,7 @@ function TourSocialGallery({ socials }: { socials?: { image?: string; icon?: str
         <div className="tour-social-scroll">
           {items.map((item, index) => (
             <a key={index} href={item.url || "#"} target="_blank" rel="noreferrer" className="tour-social-card">
-              <Image src={item.image || "/images/shorts.png"} alt="" fill sizes="20vw" loading="eager" />
+              <Image src={item.image || "/images/shorts.png"} alt="" fill sizes="20vw" loading="lazy" />
               <Image src={item.icon || "/images/shorts-gallary.png"} alt="Social gallery icon" width={72} height={72} className="tour-social-icon" />
             </a>
           ))}

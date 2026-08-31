@@ -8,6 +8,7 @@ import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
 import { getCategoryReliable, getDestinationReliable, getDestinations, getPageReliable, getTours, tourListData, tourMeta } from "@/lib/data";
 import { formatApiError, type ApiResult } from "@/lib/api";
+import { decodePathSegment } from "@/lib/locales";
 import { resolvePrefixedLocale } from "@/lib/route-helpers";
 import { metadataFromPage } from "@/lib/seo";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
@@ -32,7 +33,7 @@ type Props = {
 };
 
 function routePath(slug: string[]) {
-  return `/egypt-tours/${slug.join("/")}`;
+  return `/egypt-tours/${slug.map(encodeURIComponent).join("/")}`;
 }
 
 async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<ApiResult<ApiPage | null>> {
@@ -54,17 +55,19 @@ async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<Ap
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolved = await params;
+  const slug = resolved.slug.map(decodePathSegment);
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const result = await resolveEgyptToursPage(resolved.slug, locale);
+  const result = await resolveEgyptToursPage(slug, locale);
   if (!result.ok) {
     if (result.reason === "not_found") notFound();
-    throw new Error(`Failed to fetch egypt-tours page "${resolved.slug.join("/")}": ${formatApiError(result)}`);
+    throw new Error(`Failed to fetch egypt-tours page "${slug.join("/")}": ${formatApiError(result)}`);
   }
-  return metadataFromPage(result.value, `/${locale}${routePath(resolved.slug)}`, locale);
+  return metadataFromPage(result.value, `/${locale}${routePath(slug)}`, locale);
 }
 
 export default async function Page({ params, searchParams }: Props) {
   const resolved = await params;
+  const slug = resolved.slug.map(decodePathSegment);
   const query = await searchParams;
   const rawPage = query.page;
   const currentPage = Math.max(
@@ -72,12 +75,12 @@ export default async function Page({ params, searchParams }: Props) {
     parseInt(Array.isArray(rawPage) ? rawPage[0] : rawPage || "1", 10) || 1,
   );
   const locale = await resolvePrefixedLocale(Promise.resolve({ locale: resolved.locale }));
-  const isOneDayRoute = resolved.slug?.[0] === "one-day-tours";
-  const isOneDayIndex = isOneDayRoute && resolved.slug.length === 1;
-  const filterSlug = resolved.slug.at(-1) || resolved.slug[0];
+  const isOneDayRoute = slug?.[0] === "one-day-tours";
+  const isOneDayIndex = isOneDayRoute && slug.length === 1;
+  const filterSlug = slug.at(-1) || slug[0];
   const limit = isOneDayRoute ? 24 : 12;
   const [pageResult, itemsResponse] = await Promise.all([
-    resolveEgyptToursPage(resolved.slug, locale),
+    resolveEgyptToursPage(slug, locale),
     isOneDayIndex
       ? getDestinations("destinations?parent.slug=egypt&order_by=display_order,asc", locale)
       : isOneDayRoute
@@ -91,7 +94,7 @@ export default async function Page({ params, searchParams }: Props) {
   ]);
   if (!pageResult.ok) {
     if (pageResult.reason === "not_found") notFound();
-    throw new Error(`Failed to fetch egypt-tours page "${resolved.slug.join("/")}": ${formatApiError(pageResult)}`);
+    throw new Error(`Failed to fetch egypt-tours page "${slug.join("/")}": ${formatApiError(pageResult)}`);
   }
   const page = pageResult.value;
   if (!page) notFound();
@@ -103,7 +106,7 @@ export default async function Page({ params, searchParams }: Props) {
   // Validate the requested page against the API-provided last page and redirect
   // back to a valid page instead of rendering an empty out-of-range listing.
   if (!isOneDayIndex && meta && currentPage > meta.lastPage) {
-    redirect(meta.lastPage > 1 ? `/${locale}${routePath(resolved.slug)}?page=${meta.lastPage}` : `/${locale}${routePath(resolved.slug)}`);
+    redirect(meta.lastPage > 1 ? `/${locale}${routePath(slug)}?page=${meta.lastPage}` : `/${locale}${routePath(slug)}`);
   }
 
   return (
@@ -134,7 +137,7 @@ export default async function Page({ params, searchParams }: Props) {
                 <Pagination
                   page={currentPage}
                   lastPage={meta.lastPage}
-                  basePath={`/${locale}${routePath(resolved.slug)}`}
+                  basePath={`/${locale}${routePath(slug)}`}
                   query={new URLSearchParams()}
                 />
               )}
