@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { HtmlLangSynchronizer } from "@/components/HtmlLangSynchronizer";
 import { ThirdPartyScripts } from "@/components/ThirdPartyScripts";
 import { isLocale } from "@/lib/locales";
 import "./globals.scss";
@@ -25,6 +26,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang={lang}>
       <body>
+        <HtmlLangSynchronizer />
         <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-KDF33T7"

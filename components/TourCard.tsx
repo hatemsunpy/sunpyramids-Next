@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Locale, Tour } from "@/types/api";
-import { withLocale } from "@/lib/locales";
+import { tourPath } from "@/lib/locales";
 import { PriceText } from "@/components/PriceText";
 
 function imageOf(item: Tour) {
@@ -29,7 +29,7 @@ export function TourCard({ tour, locale = "en" }: { tour: Tour; locale?: Locale 
 
   return (
     <article className="tour-card">
-      <Link href={withLocale(`/tour/${slug}`, locale)}>
+      <Link href={tourPath(slug, locale)}>
         <div className="tour-card-media">
           <Image src={imageOf(tour)} alt={title} fill sizes="(max-width: 768px) 100vw, 25vw" />
         </div>

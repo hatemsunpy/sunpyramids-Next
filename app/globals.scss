@@ -2055,10 +2055,6 @@ select {
 }
 
 @media (max-width: 640px) {
-  .site-header-home {
-    position: sticky;
-  }
-
   .header-main {
     gap: 0.75rem;
     padding-top: 1rem;
@@ -2467,6 +2463,11 @@ select {
   margin: 0;
   color: var(--primary);
   font-size: 0.85rem;
+}
+
+.tour-deferred-map-image {
+  position: absolute;
+  inset: 0;
 }
 
 .tour-info-grid {
@@ -4339,11 +4340,16 @@ select {
   text-align: center;
 }
 
-.blog-post-adventure-art img {
+.blog-post-adventure-media {
+  position: absolute;
+  inset: 0;
+}
+
+.blog-post-adventure-media img {
   object-fit: contain;
 }
 
-.blog-post-adventure-art .blog-post-adventure-egypt {
+.blog-post-adventure-media .blog-post-adventure-egypt {
   z-index: 2;
   transform: translateY(17%);
 }

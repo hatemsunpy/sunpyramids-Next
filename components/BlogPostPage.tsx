@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { BlogCard } from "@/components/BlogCard";
 import { BlogTableOfContents, type BlogHeading } from "@/components/BlogTableOfContents";
+import { DeferredBlogAdventureMedia } from "@/components/DeferredBlogAdventureMedia";
 import { HomeNeedHelpForm } from "@/components/HomeNeedHelpForm";
 import { TourCard } from "@/components/TourCard";
 import { blogPostCopy } from "@/lib/blog-copy";
@@ -67,8 +67,7 @@ function AdventureCard({ locale }: { locale: Locale }) {
     <aside className="blog-post-adventure">
       <div className="blog-post-adventure-art">
         <h2>{copy.plan}</h2>
-        <Image src="/lottie/Animation - 1740995069688 (1).gif" alt="" fill unoptimized sizes="360px" />
-        <Image className="blog-post-adventure-egypt" src="/lottie/Egypt.gif" alt="" fill unoptimized sizes="360px" />
+        <DeferredBlogAdventureMedia />
       </div>
       <div className="blog-post-adventure-actions">
         <Link className="btn-outline" href={withLocale("/trips", locale)}>{copy.explore}</Link>

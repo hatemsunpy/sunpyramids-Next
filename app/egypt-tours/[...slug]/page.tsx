@@ -8,6 +8,7 @@ import { SiteShell } from "@/components/SiteShell";
 import { TourCard } from "@/components/TourCard";
 import { getCategoryReliable, getDestinationReliable, getDestinations, getPageReliable, getTours, tourListData, tourMeta } from "@/lib/data";
 import { formatApiError, type ApiResult } from "@/lib/api";
+import { decodePathSegment } from "@/lib/locales";
 import { metadataFromPage } from "@/lib/seo";
 import type { ApiList, ApiPage, Locale, Tour } from "@/types/api";
 
@@ -31,7 +32,7 @@ type Props = {
 };
 
 function routePath(slug: string[]) {
-  return `/egypt-tours/${slug.join("/")}`;
+  return `/egypt-tours/${slug.map(encodeURIComponent).join("/")}`;
 }
 
 async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<ApiResult<ApiPage | null>> {
@@ -52,7 +53,7 @@ async function resolveEgyptToursPage(slug: string[], locale: Locale): Promise<Ap
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const slug = (await params).slug.map(decodePathSegment);
   const result = await resolveEgyptToursPage(slug, "en");
   if (!result.ok) {
     if (result.reason === "not_found") notFound();
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Page({ params, searchParams }: Props) {
-  const { slug } = await params;
+  const slug = (await params).slug.map(decodePathSegment);
   const query = await searchParams;
   const rawPage = query.page;
   const currentPage = Math.max(

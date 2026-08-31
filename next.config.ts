@@ -2,6 +2,19 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
+  async headers() {
+    return [
+      {
+        source: "/lottie/:decorativeGif*.gif",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     return [
       { source: "/sitemap-tours-:chunk.xml", destination: "/sitemap-tours/:chunk" },
